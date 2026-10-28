@@ -1,0 +1,491 @@
+{
+  "id": "c8085dfb-79a3-4e29-b574-dd4d1f87d07e",
+  "revision": 0,
+  "last_node_id": 9,
+  "last_link_id": 9,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "MarkdownNote",
+      "pos": [
+        20,
+        20
+      ],
+      "size": [
+        560,
+        470
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "## Fish Audio Drama 3 - single speaker, clone\n\nModel: `drama3_fp8experts_bf16.safetensors` (models/diffusion_models)\nCodec: `drama3_codec.safetensors` (models/vae)\n\nVoice 0 is cloned from `#9 LoadAudio` -> `#8 Drama3EncodeVoice` (default `fox_voice_a.wav`). Set the clip and the exact transcript in those nodes, and upload the clip to every target box. Text uses speaker 0 only.\n\nSave prefix: `COMFY_WORKFLOWS/FISHDRAMA3_TTS_SOLO_CLONE`"
+      ],
+      "widgets_values_named": {
+        "text": "## Fish Audio Drama 3 - single speaker, clone\n\nModel: `drama3_fp8experts_bf16.safetensors` (models/diffusion_models)\nCodec: `drama3_codec.safetensors` (models/vae)\n\nVoice 0 is cloned from `#9 LoadAudio` -> `#8 Drama3EncodeVoice` (default `fox_voice_a.wav`). Set the clip and the exact transcript in those nodes, and upload the clip to every target box. Text uses speaker 0 only.\n\nSave prefix: `COMFY_WORKFLOWS/FISHDRAMA3_TTS_SOLO_CLONE`"
+      },
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 2,
+      "type": "Drama3Loader",
+      "pos": [
+        602.2222222222223,
+        20
+      ],
+      "size": [
+        360,
+        154
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "DRAMA3_MODEL",
+          "type": "DRAMA3_MODEL",
+          "links": [
+            1
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "PedroMarinhoDev/ComfyUI-Drama3",
+        "ver": "8cb3c64379d4988b9693cae9f3436b8fd54b22ad",
+        "Node name for S&R": "Drama3Loader",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "model_name": true,
+            "experts": true,
+            "expert_cache_gb": true,
+            "second_gpu": true,
+            "split_layer": true
+          },
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "drama3_fp8experts_bf16.safetensors",
+        "in RAM",
+        0,
+        "none",
+        0
+      ],
+      "widgets_values_named": {
+        "model_name": "drama3_fp8experts_bf16.safetensors",
+        "experts": "in RAM",
+        "expert_cache_gb": 0,
+        "second_gpu": "none",
+        "split_layer": 0
+      }
+    },
+    {
+      "id": 3,
+      "type": "Drama3CodecLoader",
+      "pos": [
+        606,
+        223
+      ],
+      "size": [
+        360,
+        58
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "DRAMA3_CODEC",
+          "type": "DRAMA3_CODEC",
+          "links": [
+            2,
+            8
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "PedroMarinhoDev/ComfyUI-Drama3",
+        "ver": "8cb3c64379d4988b9693cae9f3436b8fd54b22ad",
+        "Node name for S&R": "Drama3CodecLoader",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "codec_name": true
+          },
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "drama3_codec.safetensors"
+      ],
+      "widgets_values_named": {
+        "codec_name": "drama3_codec.safetensors"
+      }
+    },
+    {
+      "id": 4,
+      "type": "Drama3Generate",
+      "pos": [
+        1020,
+        20
+      ],
+      "size": [
+        396.6666666666665,
+        360
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "DRAMA3_MODEL",
+          "link": 1
+        },
+        {
+          "name": "voices.voice0",
+          "shape": 7,
+          "type": "DRAMA3_VOICE",
+          "link": 9
+        }
+      ],
+      "outputs": [
+        {
+          "name": "DRAMA3_CODES",
+          "type": "DRAMA3_CODES",
+          "links": [
+            3
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "PedroMarinhoDev/ComfyUI-Drama3",
+        "ver": "8cb3c64379d4988b9693cae9f3436b8fd54b22ad",
+        "Node name for S&R": "Drama3Generate",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "text": true,
+            "seed": true,
+            "temperature": true,
+            "top_p": true,
+            "top_k": true,
+            "max_frames": true,
+            "split_long_text": true
+          },
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "<|speaker:0|> [warm, curious] You're back early. Did the trail go cold?\n<|speaker:1|> [bright, amused] Not cold. I found an orchard behind the ridge. [small laugh] Apples everywhere.\n<|speaker:0|> [soft, thoughtful] Then we eat well tonight. [pause] Sit. Tell me the rest.",
+        808537437152901,
+        "randomize",
+        1,
+        0.9,
+        0,
+        600,
+        true,
+        "one take per line"
+      ],
+      "widgets_values_named": {
+        "text": "<|speaker:0|> [warm, curious] You're back early. Did the trail go cold?\n<|speaker:1|> [bright, amused] Not cold. I found an orchard behind the ridge. [small laugh] Apples everywhere.\n<|speaker:0|> [soft, thoughtful] Then we eat well tonight. [pause] Sit. Tell me the rest.",
+        "seed": 808537437152901,
+        "control_after_generate": "randomize",
+        "temperature": 1,
+        "top_p": 0.9,
+        "top_k": 0,
+        "max_frames": 600,
+        "split_long_text": true,
+        "speakers": "one take per line"
+      }
+    },
+    {
+      "id": 5,
+      "type": "Drama3Decode",
+      "pos": [
+        1440,
+        20
+      ],
+      "size": [
+        260,
+        78
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "codec",
+          "type": "DRAMA3_CODEC",
+          "link": 2
+        },
+        {
+          "name": "codes",
+          "type": "DRAMA3_CODES",
+          "link": 3
+        }
+      ],
+      "outputs": [
+        {
+          "name": "AUDIO",
+          "type": "AUDIO",
+          "links": [
+            4
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "PedroMarinhoDev/ComfyUI-Drama3",
+        "ver": "8cb3c64379d4988b9693cae9f3436b8fd54b22ad",
+        "Node name for S&R": "Drama3Decode",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        true
+      ],
+      "widgets_values_named": {
+        "shorten_long_pauses": true
+      }
+    },
+    {
+      "id": 6,
+      "type": "SaveAudio",
+      "pos": [
+        1442.7399999999996,
+        146.410303030303
+      ],
+      "size": [
+        360,
+        112
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 4
+        }
+      ],
+      "outputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.42.0",
+        "Node name for S&R": "SaveAudio",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "filename_prefix": true,
+            "audioUI": true
+          },
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "COMFY_WORKFLOWS/FISHDRAMA3_TTS_SOLO_CLONE"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "COMFY_WORKFLOWS/FISHDRAMA3_TTS_SOLO_CLONE"
+      }
+    },
+    {
+      "id": 8,
+      "type": "Drama3EncodeVoice",
+      "pos": [
+        593.9232222222219,
+        -347.4302222222222
+      ],
+      "size": [
+        374.44444444444446,
+        108
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "codec",
+          "type": "DRAMA3_CODEC",
+          "link": 8
+        },
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "DRAMA3_VOICE",
+          "type": "DRAMA3_VOICE",
+          "links": [
+            9
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "PedroMarinhoDev/ComfyUI-Drama3",
+        "ver": "8cb3c64379d4988b9693cae9f3436b8fd54b22ad",
+        "Node name for S&R": "Drama3EncodeVoice",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog."
+      ],
+      "widgets_values_named": {
+        "transcript": "The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog."
+      }
+    },
+    {
+      "id": 9,
+      "type": "LoadAudio",
+      "pos": [
+        271.4454462246368,
+        -360.76355555555546
+      ],
+      "size": [
+        282.7333297729492,
+        136
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "AUDIO",
+          "type": "AUDIO",
+          "links": [
+            7
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.42.0",
+        "Node name for S&R": "LoadAudio",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "example.wav",
+        ""
+      ],
+      "widgets_values_named": {
+        "audio": "example.wav",
+        "upload": ""
+      }
+    }
+  ],
+  "links": [
+    [
+      2,
+      3,
+      0,
+      5,
+      0,
+      "DRAMA3_CODEC"
+    ],
+    [
+      3,
+      4,
+      0,
+      5,
+      1,
+      "DRAMA3_CODES"
+    ],
+    [
+      4,
+      5,
+      0,
+      6,
+      0,
+      "AUDIO"
+    ],
+    [
+      7,
+      9,
+      0,
+      8,
+      1,
+      "AUDIO"
+    ],
+    [
+      8,
+      3,
+      0,
+      8,
+      0,
+      "DRAMA3_CODEC"
+    ],
+    [
+      1,
+      2,
+      0,
+      4,
+      0,
+      "DRAMA3_MODEL"
+    ],
+    [
+      9,
+      8,
+      0,
+      4,
+      1,
+      "DRAMA3_VOICE"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.8264462809917354,
+      "offset": [
+        -127.67281101010126,
+        488.34850292929286
+      ]
+    },
+    "ue_links": [],
+    "links_added_by_ue": [],
+    "frontendVersion": "1.57.1",
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true
+  },
+  "version": 0.4,
+  "seed_widgets": {
+    "4": 1
+  }
+}

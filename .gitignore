@@ -1,0 +1,25 @@
+# Agent workspace
+work/*
+!work/README.md
+!work/logs/
+!work/logs/run-log.md
+
+# Local environments
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Generated media accidentally placed at the root
+*.mp4
+*.mov
+*.wav
+*.flac
+*.png
+*.jpg
