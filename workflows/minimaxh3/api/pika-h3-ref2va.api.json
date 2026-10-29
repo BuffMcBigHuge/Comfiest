@@ -1,0 +1,222 @@
+{
+  "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+      "unet_name": "minimax\\minimax_h3_ref2va_pruned_int8_convrot.safetensors",
+      "weight_dtype": "default"
+    },
+    "_meta": {
+      "title": "Load H3 base"
+    }
+  },
+  "2": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+      "model": [
+        "1",
+        0
+      ],
+      "lora_name": "minimax\\pika\\pika_h3_flex_ref2va_v1_bf16.safetensors",
+      "strength_model": 1.0
+    },
+    "_meta": {
+      "title": "Pika H3 Flex adapter"
+    }
+  },
+  "3": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen3vl_32b_minimax_h3_int8_convrot.safetensors",
+      "type": "minimax",
+      "device": "default"
+    },
+    "_meta": {
+      "title": "Load CLIP"
+    }
+  },
+  "4": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "minimax\\minimax_h3_video_vae_fp16.safetensors"
+    },
+    "_meta": {
+      "title": "Load video VAE"
+    }
+  },
+  "5": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "minimax\\minimax_h3_audio_vae_fp32.safetensors"
+    },
+    "_meta": {
+      "title": "Load audio VAE"
+    }
+  },
+  "20": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "example.png"
+    },
+    "_meta": {
+      "title": "Reference picture"
+    }
+  },
+  "6": {
+    "class_type": "MiniMaxH3ReferenceToVideo",
+    "inputs": {
+      "clip": [
+        "3",
+        0
+      ],
+      "prompt": "subject_definitions:\n<Subject 1> is the red fox from Picture 1, retaining its russet fur, white chest, muzzle, and amber eyes.\n<Subject 2> is the snowy pine forest from Picture 1, used only as a loose reference for setting and light.\n\nsummary:\n[reference generation] <Subject 1> trots through a moonlit snowy clearing, breath visible in the cold air.\n\nretention_analysis:\n<Subject 1> (appears in [Shot 1]): fully_preserved - retain fur color, body shape, and markings.\n<Subject 2> (appears in [Shot 1]): weak_reference - borrow the snowy pines; redesign the exact framing.\n\ndetailed_description:\nThe video is live-action with a cinematic winter look.\n[Shot 1] A medium shot follows <Subject 1> as it trots across fresh snow between tall pines, pauses, and looks toward the camera. Soft moonlight and a faint dawn glow rim its fur; falling snow drifts through the frame.\n\noverall_soundscape: Quiet winter forest, soft wind, crisp snow crunch, a distant owl.\n\nnon_diegetic_music: N/A",
+      "width": 736,
+      "height": 416,
+      "length": 124,
+      "ref_image_size": "max",
+      "vae": [
+        "4",
+        0
+      ],
+      "audio_vae": [
+        "5",
+        0
+      ],
+      "ref_images.ref_image_0": [
+        "20",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Prompt + latent"
+    }
+  },
+  "8": {
+    "class_type": "BasicGuider",
+    "inputs": {
+      "model": [
+        "2",
+        0
+      ],
+      "conditioning": [
+        "6",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Basic guider (cfg 1)"
+    }
+  },
+  "9": {
+    "class_type": "RandomNoise",
+    "inputs": {
+      "noise_seed": 20261029
+    },
+    "_meta": {
+      "title": "Noise"
+    }
+  },
+  "10": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+      "sampler_name": "lcm"
+    },
+    "_meta": {
+      "title": "LCM sampler"
+    }
+  },
+  "12": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+      "noise": [
+        "9",
+        0
+      ],
+      "guider": [
+        "8",
+        0
+      ],
+      "sampler": [
+        "10",
+        0
+      ],
+      "sigmas": [
+        "11",
+        0
+      ],
+      "latent_image": [
+        "6",
+        1
+      ]
+    },
+    "_meta": {
+      "title": "Sampler"
+    }
+  },
+  "13": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "12",
+        0
+      ],
+      "vae": [
+        "4",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Decode video"
+    }
+  },
+  "14": {
+    "class_type": "VAEDecodeAudio",
+    "inputs": {
+      "samples": [
+        "12",
+        0
+      ],
+      "vae": [
+        "5",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Decode audio"
+    }
+  },
+  "15": {
+    "class_type": "VHS_VideoCombine",
+    "inputs": {
+      "images": [
+        "13",
+        0
+      ],
+      "audio": [
+        "14",
+        0
+      ],
+      "frame_rate": 24,
+      "loop_count": 0,
+      "filename_prefix": "COMFY_WORKFLOWS/PIKA_REF2VA",
+      "format": "video/h264-mp4",
+      "pingpong": false,
+      "save_output": true,
+      "pix_fmt": "yuv420p",
+      "crf": 16,
+      "save_metadata": false,
+      "trim_to_audio": false
+    },
+    "_meta": {
+      "title": "Save"
+    }
+  },
+  "11": {
+    "class_type": "ManualSigmas",
+    "inputs": {
+      "sigmas": "1.0, 0.972973, 0.923077, 0.8, 0.571429, 0.333333, 0.0"
+    },
+    "_meta": {
+      "title": "Pika 6-step sigmas"
+    }
+  }
+}

@@ -42,7 +42,7 @@ Built for the [Comfy Org Open Source Higgsfield](https://comfy.org/open-source-h
 | **Image edits** | Krea 2 Edit, Flux.2 Klein 9B reference edit |
 | **Speech** | Fish Audio Drama 3 — single/dual speaker, voice clone |
 | **Music** | YuE2 3B, MiniMax Music 3 |
-| **Video from text or references** | MiniMax H3 — text-to-video, 1–2 pictures, video/audio references, forced lip-sync, character swap |
+| **Video from text or references** | MiniMax H3 — Pika H3 Flex 6-step default, fastvideo variants, 1–2 pictures, video/audio references, forced lip-sync, character swap |
 | **2K upscale / refine** | MiniMax H3 refiner — latent-space t2v/v2v upscale to 2560×1440 |
 | **Seamless loops** | MiniMax H3 Perfect Loop — text-to-looping-video with synchronized audio |
 | **Mattes / segmentation** | SAM3 — text-prompted image/video luma mattes, native ComfyUI nodes |
@@ -72,18 +72,19 @@ The agent should:
 If your agent supports skills:
 
 - Copy `skills/SKILL.md` to `<client-skills>/comfiest/SKILL.md` for the umbrella rules and routing.
-- Copy `skills/minimaxh3/`, `skills/minimaxh3-character-replace/`, `skills/minimaxh3-upscale/`,
-  `skills/minimaxh3-perfect-loop/`, `skills/sam3/`, `skills/prompt-writing/`,
-  `skills/workflow-development/`, and `skills/fish-audio-drama3/` as sibling skill directories if
-  your client discovers each skill separately. `skills/prompt-writing/` contains six family skills;
-  copy its child directories individually if your client requires a flat layout.
+- Copy `skills/minimaxh3/`, `skills/minimaxh3-pika/`, `skills/minimaxh3-character-replace/`,
+  `skills/minimaxh3-upscale/`, `skills/minimaxh3-perfect-loop/`, `skills/sam3/`,
+  `skills/prompt-writing/`, `skills/workflow-development/`, and `skills/fish-audio-drama3/` as
+  sibling skill directories if your client discovers each skill separately. `skills/prompt-writing/`
+  contains six family skills; copy its child directories individually if your client requires a flat
+  layout.
 
 The umbrella carries the hard rules and routing; the subskills carry family and recipe detail.
 
 ## What your agent gets
 
 - **Routing that respects hardware.** Krea/Flux/MOSS for images, YuE2/Music 3 for songs, Drama 3 for
-  speech, MiniMax H3 for video, 2K refine, and seamless loops. Heavy models are called out before
+  speech, MiniMax H3/Pika for video, 2K refine, and seamless loops. Heavy models are called out before
   they blow up a 24 GB card.
 - **Workflow templates that actually run.** UI files for ComfyUI, pre-slimmed `api/*.api.json`
   mirrors for MCP execution, and conversion notes for the frontend-only nodes that break API runs.
@@ -183,7 +184,7 @@ host:
 | Song from style + lyrics | YuE2 3B | [Style + lyrics](workflows/text2music-yue2.json) | 120 s, vocals |
 | Song from caption + lyrics | MiniMax Music 3 | [Caption + lyrics](workflows/text2music-minimaxmusic3.json) | tiled audio decode |
 | Speech / voice clone | Fish Audio Drama 3 | [Speech workflows](workflows/fishdrama3/) | 4 variants, 1–2 speakers |
-| Video + audio | MiniMax H3 | [Video workflows](workflows/minimaxh3/) | 14 variants + 3 char-replace workflows |
+| Video + audio | MiniMax H3 / Pika H3 Flex | [Pika T2V](workflows/minimaxh3/api/pika-h3-t2v.api.json), [FL2VA](workflows/minimaxh3/api/pika-h3-fl2va.api.json), [Ref2VA](workflows/minimaxh3/api/pika-h3-ref2va.api.json) | Pika 6-step default; 14 fastvideo variants + 3 char-replace drafts |
 | 2K upscale / refine | MiniMax H3 + refiner | [Upscale workflows](workflows/minimaxh3/api/) | t2v/v2v; 2560×1440; 5 s and 8 s |
 | Seamless video loop | MiniMax H3 Perfect Loop | [Perfect loop workflow](workflows/minimaxh3/api/perfect-loop-minimax-h3.api.json) | 154 f / 6.42 s; audio; ×2 seam check |
 | Image or video matte | SAM3 | [SAM3 workflows](workflows/sam3/api/) | text-prompted luma matte; image + video + tracker |
@@ -211,7 +212,8 @@ Music 3, and Drama 3; the index maps each to its workflow.
 │   └── logo.png             # project logo
 ├── skills/
 │   ├── SKILL.md             # umbrella: rules, routing, operating loop
-│   ├── minimaxh3/SKILL.md   # H3 variant matrix and execution notes
+│   ├── minimaxh3/SKILL.md   # fastvideo variant matrix and execution notes
+│   ├── minimaxh3-pika/SKILL.md  # Pika H3 Flex 6-step default
 │   ├── minimaxh3-character-replace/SKILL.md
 │   ├── minimaxh3-upscale/SKILL.md
 │   ├── minimaxh3-perfect-loop/SKILL.md
@@ -225,7 +227,7 @@ Music 3, and Drama 3; the index maps each to its workflow.
 │   ├── validate_workflow.py # check an API graph against a live target
 │   ├── wait_job.py          # poll /history when the MCP wait fails
 │   └── fetch_output.py      # download outputs when fetch_outputs fails
-├── workflows/               # 51 workflow templates
+├── workflows/               # 54 workflow templates
 │   ├── *.json
 │   ├── fishdrama3/          # TTS base + variants
 │   ├── sam3/                # native image/video matte graphs
@@ -255,8 +257,8 @@ Music 3, and Drama 3; the index maps each to its workflow.
 This repository is the sanitized public edition of a working production suite:
 
 - Non-functional LoRAs (character, style, anatomy, adult-oriented) were removed. The surviving LoRAs
-  are functional: MiniMax H3 turbo adapters (v1.0/v1.2 and 4–8 step), the 2K refiner and LMS
-  sharpener, and the MOSS-Image DMD sampler.
+  are functional: MiniMax H3 turbo adapters (v1.2 and 4–8 step), Pika H3 Flex fl2va/ref2va, the 2K
+  refiner and LMS sharpener, and the MOSS-Image DMD sampler.
 - Every baked-in prompt was replaced with a neutral demo prompt (fox-themed for t2v). Reference
   image, video, and audio names were genericized to `example.*`.
 - UI workflows were conversion-validated against a live ComfyUI target; the sanitized graphs have not
@@ -275,8 +277,8 @@ fork rather than editing the shipped template.
   Optional: Frame-Interpolation (the H3 graphs use Fill-Nodes `FL_RIFE`), the latent upscaler, and
   ComfyUI-GGUF (legacy GGUF graphs only).
 - Models: Krea 2 Turbo/Edit, Flux.2 Klein 9B + Qwen3-8B fp8mixed, MOSS-Image, YuE2 3B, MiniMax Music 3,
-  Fish Audio Drama 3, MiniMax H3 fastvideo stack + 2K refiner/upscaler and the loop Turbo adapter,
-  SAM3 segmentation. Exact filenames live in the workflow sections of
+  Fish Audio Drama 3, MiniMax H3 fastvideo stack + Pika H3 Flex adapters + 2K refiner/upscaler and the
+  loop Turbo adapter, SAM3 segmentation. Exact filenames live in the workflow sections of
   [`skills/SKILL.md`](skills/SKILL.md); verify each host with `/object_info/<LoaderClass>` option
   lists. `/models/<folder>` can return an empty body even when the model is installed.
   The full download list, Hugging Face locations, and folder layout are in

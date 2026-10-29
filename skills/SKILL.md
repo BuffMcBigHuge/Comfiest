@@ -28,7 +28,7 @@ one target for its lifetime.
 | `LICENSE` | MIT license for this repository. |
 
 `workflows/minimaxh3/`, `workflows/sam3/`, and `workflows/fishdrama3/` are workflow-family
-subdirectories. Their usage notes live in `skills/minimaxh3/`,
+subdirectories. Their usage notes live in `skills/minimaxh3/`, `skills/minimaxh3-pika/`,
 `skills/minimaxh3-character-replace/`, `skills/minimaxh3-upscale/`,
 `skills/minimaxh3-perfect-loop/`, `skills/sam3/`, `skills/workflow-development/`,
 `skills/prompt-writing/`, and `skills/fish-audio-drama3/`.
@@ -46,6 +46,7 @@ subdirectories. Their usage notes live in `skills/minimaxh3/`,
 ├── skills/
 │   ├── SKILL.md                    # this file
 │   ├── minimaxh3/SKILL.md
+│   ├── minimaxh3-pika/SKILL.md
 │   ├── minimaxh3-character-replace/SKILL.md
 │   ├── minimaxh3-upscale/SKILL.md
 │   ├── minimaxh3-perfect-loop/SKILL.md
@@ -83,7 +84,8 @@ directory) and reuse that absolute prefix for the session.
   no line-ending, whitespace, or key-order normalization.
 - **Maintained additions:** the two `*-forced` UI files, their two API mirrors, the three
   `charreplace-*` API workflows, the three `upscale-*` API workflows, the three `sam3-*` API
-  workflows, and `perfect-loop-minimax-h3.api.json` are maintained rather than one-off templates.
+  workflows, the three `pika-h3-*` API workflows, and `perfect-loop-minimax-h3.api.json` are
+  maintained rather than one-off templates.
   Edit them only on an explicit user request.
 - **Markdown documentation lives in `skills/`.** Inventory and usage notes belong in this file or in
   the family/recipe subskills (`skills/minimaxh3/`, `skills/minimaxh3-character-replace/`,
@@ -213,7 +215,7 @@ explicit approval.
 | Fast photoreal still or keyframe | MOSS-Image | `workflows/text2image-moss.json` | 8-step DMD; 3:2 2 MP (1776×1184); optional prompt upsampler |
 | Song from style + lyrics | YuE2 3B | `workflows/text2music-yue2.json` | full-song model with vocals; 120 s |
 | Song from caption + lyrics | MiniMax Music 3 | `workflows/text2music-minimaxmusic3.json` | caption-driven; tiled audio decode |
-| Video from text or references | MiniMax H3 | `workflows/minimaxh3/*.json` + `api/*.api.json` | 8 s, audio, 14 P/V/A variants + 3 charreplace workflows |
+| Video from text or references | MiniMax H3 / Pika H3 Flex | `workflows/minimaxh3/api/pika-h3-*.api.json` + fastvideo variants | Pika 6-step default; fastvideo 8-step drafts; 3 Pika + 14 fastvideo + 3 charreplace |
 | 2K upscale / refine | MiniMax H3 + refiner | `workflows/minimaxh3/api/upscale-*.api.json` | t2v/v2v latent upscale; 2560×1440 output |
 | Seamless video loop | MiniMax H3 Perfect Loop | `workflows/minimaxh3/api/perfect-loop-minimax-h3.api.json` | 154 f / 6.42 s; audio included; ×2 seam check |
 | Image or video matte | SAM3 (native) | `workflows/sam3/api/*.api.json` | text-prompted luma matte; image, video, tracker |
@@ -680,12 +682,15 @@ Shared rules and pitfalls:
 
 ### MiniMax H3 — video with generated audio and optional references
 
-Generates an 8-second, 9:16 video with its own synchronized audio from a prompt, optionally conditioned
-on subject pictures, a reference video, and standalone audio. The family ships 14 pre-wired UI variants
-plus API mirrors, all using the same fastvideo model, single turbo LoRA, 3-step sampling, and RIFE
-interpolation to 48 fps. Two `*-forced` variants add the forced-audio latent chain for driving the
-mouth from a supplied track. Three API-first `charreplace-*` workflows replace the performer in a
-source video with a different character.
+**Pika H3 Flex is the default generation path.** Three API-first graphs — `pika-h3-t2v`, `pika-h3-fl2va`,
+and `pika-h3-ref2va` — use the official 6-step LCM contract, 24 fps, and stronger text/signage/edge/
+reference quality. See [`minimaxh3-pika/SKILL.md`](minimaxh3-pika/SKILL.md).
+
+The older fastvideo family ships 14 pre-wired UI variants plus API mirrors, all using the fastvideo
+model, v1.2 turbo LoRA, 8-step beta sampling, and RIFE to 48 fps. Use those for fast drafts and the
+Pika graphs for finals. Two `*-forced` fastvideo variants add the forced-audio latent chain for
+driving the mouth from a supplied track. Three API-first `charreplace-*` workflows replace the
+performer in a source video with a different character.
 
 **Use it when** you need a short performance/b-roll clip, especially with a character reference or a
 previous clip for continuity. **Don't use it for** long-form video or silent clips (every variant
@@ -693,8 +698,9 @@ carries an audio stream). Plain audio references condition voice and energy, not
 `*-forced` variants or the character-replacement workflows when the supplied track must drive the
 mouth.
 
-**Inputs:** prompt, 1–2 pictures, 0–1 video, 0–1 audio, seed; resolution/aspect and length come from
-the settings subgraph. **Output:** h264 MP4 with audio, 48 fps, per-variant prefix.
+**Inputs:** prompt, 1–2 pictures, 0–1 video, 0–1 audio, seed; Pika exposes width/height/length
+directly, fastvideo takes resolution/aspect and length from the settings subgraph. **Output:** h264
+MP4 with audio; Pika 24 fps, fastvideo 48 fps after RIFE.
 
 #### Base template
 
@@ -1096,6 +1102,8 @@ Before production:
 | Perfect loop has an audible gap at the seam | `VHS_VideoCombine` cut audio at the last video DTS | Keep the shipped `CreateVideo` -> `SaveVideo` path; check stream durations with `ffprobe`. |
 | SAM3 matte drifts or plays at the wrong speed | `20.frame_rate` does not match the source fps | Set it to the source fps; the loader fps is not wired to the saver. |
 | H3 8 s clip is 7.979 s and the timeline drifts | 192-frame request becomes 383 frames after RIFE; the container adds an AAC tail | Probe the video stream, not `format=duration`; pad/trim or request 209 frames. |
+| Pika H3 output is mushy or broken | 8-step scheduler, sigma-shift node, or a stacked turbo adapter | Use `lcm`, the seven Pika sigmas, one adapter at 1.0, and no sigma-shift node. |
+| Pika Ref2VA loses reference identity | Wrong base/adapter pairing | Use `ref2va_pruned` + `pika_h3_flex_ref2va_v1_bf16`; fl2va is for T2V/FL2VA. |
 | SAM3 returns a nearly-full matte | Absent target falls back to the salient object, or categories union | Use one specific category, raise `13.threshold`, and check mean luma; never stack speculative categories. |
 | SAM3 video frame count multiplies | `13.individual_masks=true` on video | Keep it `false` for video. |
 | SAM3 classes missing or resolve to an old custom pack | ComfyUI lacks core `comfy_extras.nodes_sam3` | Update to 0.43.0+; verify `/object_info/SAM3_Detect` reports `comfy_extras.nodes_sam3`. |
@@ -1163,7 +1171,8 @@ This file is the repository's operating skill. Keep it portable and current.
 ## Family notes
 
 - `README.md` — quick start, model list, contribution guide.
-- `skills/minimaxh3/SKILL.md` — variant matrix and lip-sync guidance.
+- `skills/minimaxh3/SKILL.md` — fastvideo variant matrix, timing, and lip-sync guidance.
+- `skills/minimaxh3-pika/SKILL.md` — Pika H3 Flex default 6-step generation (T2V/FL2VA/Ref2VA).
 - `skills/minimaxh3-character-replace/SKILL.md` — character-replacement setup and run examples.
 - `skills/minimaxh3-upscale/SKILL.md` — 2K t2v/v2v upscale and refine.
 - `skills/minimaxh3-perfect-loop/SKILL.md` — seamless 154-frame T2AV loop and seam checks.

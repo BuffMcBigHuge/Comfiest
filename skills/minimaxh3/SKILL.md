@@ -1,6 +1,6 @@
 ---
 name: minimaxh3
-description: MiniMax H3 video workflows in Comfiest — 14 reference-permutation variants, 8-second audio-video clips, resolution/timing, forced-audio lip-sync, and execution notes. Use for text-to-video, reference-to-video, or H3 lip-sync work.
+description: MiniMax H3 video workflows in Comfiest — Pika H3 Flex 6-step default plus 14 fastvideo reference-permutation variants, 8-second audio-video clips, resolution/timing, forced-audio lip-sync, and execution notes.
 ---
 
 # MiniMax H3 Family
@@ -10,12 +10,14 @@ description: MiniMax H3 video workflows in Comfiest — 14 reference-permutation
 > first. Scratch files and outputs go in `../../work/`.
 
 MiniMax H3 generates an 8-second, 9:16 clip with synchronized generated audio from text and optional
-picture/video/audio references. Every variant uses the same fastvideo stack, a single turbo LoRA,
-3-step sampling, and RIFE to 48 fps.
+picture/video/audio references. **Pika H3 Flex is the default generation path**: 6-step LCM, 24 fps,
+stronger text/signage/edge/reference quality. See [`../minimaxh3-pika/SKILL.md`](../minimaxh3-pika/SKILL.md).
+The fastvideo variants below are the faster 8-step draft path (v1.2 turbo, RIFE to 48 fps).
 
 ## Files
 
-- `../../workflows/minimaxh3/*.json` — UI-format workflows. Open these in ComfyUI.
+- `../../workflows/minimaxh3/api/pika-h3-*.api.json` — Pika H3 Flex default graphs (T2V, FL2VA, Ref2VA).
+- `../../workflows/minimaxh3/*.json` — UI-format fastvideo workflows. Open these in ComfyUI.
 - `../../workflows/minimaxh3/text2video-minimax-base.json` — the 97-node base/control surface. Use it
   only for slots the variants do not expose; it is not a production run file.
 - `../../workflows/minimaxh3/api/*.api.json` — pre-slimmed API workflows for `run_workflow`.
@@ -25,10 +27,18 @@ picture/video/audio references. Every variant uses the same fastvideo stack, a s
 - `../minimaxh3-perfect-loop/SKILL.md` — seamless 154-frame T2AV loop, seam math, and save path.
 - `../sam3/SKILL.md` — native SAM3 mattes when you only need segmentation, not a full replacement.
 
+**Pika default graphs** (API-first, 6-step):
+
+| ID | API file | Inputs |
+| - | - | - |
+| `pika-t2v` | `pika-h3-t2v.api.json` | text |
+| `pika-fl2va` | `pika-h3-fl2va.api.json` | text + first/last image |
+| `pika-ref2va` | `pika-h3-ref2va.api.json` | text + reference image |
+
 ## Variant matrix
 
-Each UI file has a matching API mirror; the character-replacement workflows are API-first. File names
-below are relative to `../../workflows/minimaxh3/`.
+Each fastvideo UI file has a matching API mirror; the character-replacement workflows are API-first. The
+Pika graphs are API-first only. File names below are relative to `../../workflows/minimaxh3/`.
 
 | ID | UI file | Inputs | Historical status |
 | - | - | - | - |
@@ -55,7 +65,7 @@ with an encoded reference track (`LoadAudio` → `VAEEncodeAudio` → zero `SetL
 `LTXVConcatAVLatent` → sampler `latent_image`) so the output audio follows the supplied track. They
 default to 1.0 MP and 8 s. Save prefixes: `MINIMAX_1A_FORCED` and `MINIMAX_1P1A_FORCED`.
 
-All variants use the original 8-second length (192 frames at 24 fps, then RIFE to 48 fps). Generate
+All fastvideo variants use the original 8-second length (192 frames at 24 fps, then RIFE to 48 fps). Generate
 with headroom and trim to the edit timeline; the requested duration can be quantized.
 
 For the `*a` variants, `a` means an **audio reference**, not an audio-driven lip-sync track; the model
@@ -117,6 +127,9 @@ Leave every `SaveImage`/`VHS_VideoCombine` save prefix exactly as shipped. Ident
 
 ## Resolution and timing
 
+**Pika default:** 736×416 at 124 frames (5.17 s), 24 fps, no RIFE; local ceiling is 768p. Change
+width/height/length directly on the graph. **Fastvideo drafts:** the scaling rules below apply.
+
 - The `Resolution Selector` is driven by the outer `megapixels` widget on the settings subgraph, not
   by the `width`/`height` widgets on the R2V node.
 - `0.3` MP (default) = **416×736** for 9:16.
@@ -136,7 +149,7 @@ Leave every `SaveImage`/`VHS_VideoCombine` save prefix exactly as shipped. Ident
 
 ## Compatibility fixes applied to every variant
 
-1. **RIFE is active on every variant.** `FL_RIFE` (#310) and the 48 fps target (#168) are active.
+1. **RIFE is active on every fastvideo variant.** `FL_RIFE` (#310) and the 48 fps target (#168) are active.
    The earlier `'dict' object has no attribute 'shape'` failure was not a RIFE incompatibility:
    `Final Images` was selecting a bypassed upscale latent, so RIFE received a latent dict instead of
    decoded images.
@@ -224,12 +237,19 @@ RIFE. The output audio is forced from the source video.
 
 ## Model / LoRA stack
 
+**Pika default (6-step):** `fl2va_pruned` base + `pika_h3_flex_fl2va_v1_bf16` for T2V/FL2VA;
+`ref2va_pruned` base + `pika_h3_flex_ref2va_v1_bf16` for Ref2VA. LoRA strength 1.0, `lcm`, seven
+sigmas `1.0, 0.972973, 0.923077, 0.8, 0.571429, 0.333333, 0.0`, no sigma-shift node, no extra turbo,
+24 fps. Full contract: [`../minimaxh3-pika/SKILL.md`](../minimaxh3-pika/SKILL.md).
+
+**Fastvideo draft stack (8-step):**
+
 - UNET: `minimax\minimax_h3_fastvideo_vsa_datafree_1300step_4step_int8_convrot.safetensors`
 - CLIP: `qwen3vl_32b_minimax_h3_int8_convrot.safetensors`
 - Video VAE: `minimax\minimax_h3_video_vae_fp16.safetensors`
 - Audio VAE: `minimax\minimax_h3_audio_vae_fp32.safetensors`
 
-Active LoRA (same preset in every UI variant and API mirror):
+Fastvideo active LoRA (same preset in every UI variant and API mirror):
 
 | LoRA | Strength |
 | - | - |
@@ -253,5 +273,6 @@ the user judges the result.
 - Video generation is heavy; submit with `wait: false` and poll `job(action="wait")`.
 - If `job(action="wait")` returns a tool-level error, the server job may still be running. Poll
   `/history/<prompt_id>` and `/queue` directly; `status_str: "success"` is the completion signal.
-- RIFE is mandatory in this family; do not bypass `FL_RIFE` or the 48 fps target.
+- RIFE is mandatory for the fastvideo variants; do not bypass `FL_RIFE` or the 48 fps target there.
+  Pika is native 24 fps and does not use RIFE.
 - Intercut generated clips with b-roll and use a consistent grade in post.

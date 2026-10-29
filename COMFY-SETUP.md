@@ -4,7 +4,7 @@ This file is written for an AI agent (or a patient human) setting up a machine f
 in order. Every command is meant to be run by the agent, with the user's confirmation before large
 downloads or package changes.
 
-**Target:** a Linux or Windows machine with an NVIDIA GPU (24 GB class or better) and about **240 GB
+**Target:** a Linux or Windows machine with an NVIDIA GPU (24 GB class or better) and about **280 GB
 of free disk**. AMD, Apple Silicon, and CPU-only setups are not supported by this exact graph set:
 the workflows use CUDA `int8_convrot` models, TensorRT depth, and NVIDIA-oriented custom nodes.
 
@@ -18,7 +18,7 @@ core `CreateVideo`/`SaveVideo` nodes.
 3. 16 required custom-node packs (plus 3 optional), including the MiniMax H3 compatibility/acceleration
 
    nodes.
-4. About 210 GB of model files, downloaded from Hugging Face into the right folders.
+4. About 235 GB of model files, downloaded from Hugging Face into the right folders.
 5. A TensorRT depth engine for the character-replacement workflows.
 6. Optionally, the `comfy-mcp` bridge from [`MCP-SETUP.md`](MCP-SETUP.md) so an agent can submit jobs.
 
@@ -221,7 +221,10 @@ Paths are relative to `ComfyUI/`. Sizes are approximate.
 | H3 | <https://huggingface.co/Comfy-Org/MiniMax-H3> | `text_encoders/qwen3vl_32b_minimax_h3_int8_convrot.safetensors` | `models/text_encoders/qwen3vl_32b_minimax_h3_int8_convrot.safetensors` | 27.1 GB |
 | H3 | <https://huggingface.co/Comfy-Org/MiniMax-H3> | `vae/minimax_h3_video_vae_fp16.safetensors` | `models/vae/minimax/minimax_h3_video_vae_fp16.safetensors` | 5.2 GB |
 | H3 | <https://huggingface.co/Comfy-Org/MiniMax-H3> | `vae/minimax_h3_audio_vae_fp32.safetensors` | `models/vae/minimax/minimax_h3_audio_vae_fp32.safetensors` | 0.6 GB |
-| H3 2K | <https://huggingface.co/Comfy-Org/MiniMax-H3> | `diffusion_models/minimax_h3_fl2va_pruned_int8_convrot.safetensors` | `models/diffusion_models/minimax/minimax_h3_fl2va_pruned_int8_convrot.safetensors` | 21.0 GB |
+| H3 / 2K | <https://huggingface.co/Comfy-Org/MiniMax-H3> | `diffusion_models/minimax_h3_fl2va_pruned_int8_convrot.safetensors` | `models/diffusion_models/minimax/minimax_h3_fl2va_pruned_int8_convrot.safetensors` | 21.0 GB |
+| Pika H3 | <https://huggingface.co/Comfy-Org/MiniMax-H3> | `diffusion_models/minimax_h3_ref2va_pruned_int8_convrot.safetensors` | `models/diffusion_models/minimax/minimax_h3_ref2va_pruned_int8_convrot.safetensors` | 21.0 GB |
+| Pika H3 | <https://huggingface.co/Comfy-Org/MiniMax-H3> | `loras/pika_h3_flex_fl2va_v1_bf16.safetensors` | `models/loras/minimax/pika/pika_h3_flex_fl2va_v1_bf16.safetensors` | 2.0 GB |
+| Pika H3 | <https://huggingface.co/Comfy-Org/MiniMax-H3> | `loras/pika_h3_flex_ref2va_v1_bf16.safetensors` | `models/loras/minimax/pika/pika_h3_flex_ref2va_v1_bf16.safetensors` | 2.0 GB |
 | H3 2K | <https://huggingface.co/LBH-123-AI/Minimax_h3_latent_Upscaler> | `minimax_h3_latent_upscaler_3d_conv_v1/minimax_h3_latent_upscaler_3d_conv_v1_bf16.safetensors` | `models/latent_upscale_models/minimax_h3_latent_upscaler_3d_bf16.safetensors` | 0.7 GB |
 | H3 2K | <https://huggingface.co/Kijai/MiniMax-H3-experimental> | `loras/minimax_h3_open_regenerate_2k_refiner_rank_16_bf16.safetensors` | `models/loras/minimax/minimax_h3_open_regenerate_2k_refiner_rank_16_bf16.safetensors` | 0.2 GB |
 | H3 / 2K | <https://huggingface.co/lightx2v/Minimax-h3-Turbo> | `minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors` | `models/loras/minimax/minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors` | 2.0 GB |
@@ -386,6 +389,7 @@ comfy run --workflow workflows/text2image-moss.json         --print-prompt --hos
 comfy run --workflow workflows/minimaxh3/ref2video-minimax-1p.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/minimaxh3/api/upscale-minimax-2k-v2v.api.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/minimaxh3/api/perfect-loop-minimax-h3.api.json --print-prompt --host 127.0.0.1 --port 8188
+comfy run --workflow workflows/minimaxh3/api/pika-h3-t2v.api.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/sam3/api/sam3-mask-video.api.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/text2music-yue2.json         --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/text2music-minimaxmusic3.json --print-prompt --host 127.0.0.1 --port 8188
@@ -455,6 +459,7 @@ Check each model card before commercial use:
 | Fish Audio Drama 3 | Fish Audio Community License |
 | SAM3 | Meta SAM license |
 | LightX2V turbo LoRA | See LightX2V model card |
+| Pika H3 Flex adapters | MiniMax H3 Community License; see the Pika model card |
 
 If a use case requires commercial rights, verify the current model card rather than relying on this
 table.
@@ -465,7 +470,7 @@ table.
 
 Run in order, stopping to ask the user before the multi-gigabyte steps:
 
-- [ ] Confirm NVIDIA GPU, 24 GB+ VRAM, 240 GB free disk, Python 3.12.
+- [ ] Confirm NVIDIA GPU, 24 GB+ VRAM, 280 GB free disk, Python 3.12.
 - [ ] Install ComfyUI + CUDA 13 PyTorch (`comfy install --nvidia --cuda-version 13.0 --version latest`).
 - [ ] Verify `torch.cuda.is_available()`.
 - [ ] Run `python scripts/install_nodes.py --comfyui "$COMFYUI"`.

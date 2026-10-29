@@ -9,6 +9,9 @@ Operating rules live in `../SKILL.md`; the H3 family guide is in `../minimaxh3/S
 upscale + Regenerate-2K refine for MiniMax H3. The 768P draft never leaves latent space between
 generation and the 2K refine: one VAE decode at the end, and for v2v one VAE encode at the front.
 
+Pika H3 Flex is a 768p generator; use this chain when you need 2K. The Pika adapters are not part of
+the refiner stack.
+
 ```text
 t2v:  prompt -> 768P draft latent --\
                                      +--> H3 latent upscale 2x -> 2-step refine -> decode

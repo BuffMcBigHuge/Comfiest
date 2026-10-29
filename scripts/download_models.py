@@ -82,6 +82,13 @@ MODELS = [
      "models/vae/minimax/minimax_h3_audio_vae_fp32.safetensors", 0.6, False),
     ("h3", "Comfy-Org/MiniMax-H3", "diffusion_models/minimax_h3_fl2va_pruned_int8_convrot.safetensors",
      "models/diffusion_models/minimax/minimax_h3_fl2va_pruned_int8_convrot.safetensors", 21.0, False),
+    ("h3", "Comfy-Org/MiniMax-H3", "diffusion_models/minimax_h3_ref2va_pruned_int8_convrot.safetensors",
+     "models/diffusion_models/minimax/minimax_h3_ref2va_pruned_int8_convrot.safetensors", 21.0, False),
+    # Pika H3 Flex (default 6-step adapters)
+    ("h3", "Comfy-Org/MiniMax-H3", "loras/pika_h3_flex_fl2va_v1_bf16.safetensors",
+     "models/loras/minimax/pika/pika_h3_flex_fl2va_v1_bf16.safetensors", 2.0, False),
+    ("h3", "Comfy-Org/MiniMax-H3", "loras/pika_h3_flex_ref2va_v1_bf16.safetensors",
+     "models/loras/minimax/pika/pika_h3_flex_ref2va_v1_bf16.safetensors", 2.0, False),
     ("h3", "LBH-123-AI/Minimax_h3_latent_Upscaler",
      "minimax_h3_latent_upscaler_3d_conv_v1/minimax_h3_latent_upscaler_3d_conv_v1_bf16.safetensors",
      "models/latent_upscale_models/minimax_h3_latent_upscaler_3d_bf16.safetensors", 0.7, False),
