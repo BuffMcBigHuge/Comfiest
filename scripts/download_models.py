@@ -38,6 +38,16 @@ MODELS = [
     ("flux", "Comfy-Org/Flux-2-Klein-9B", "split_files/vae/flux2-vae.safetensors",
      "models/vae/flux2-vae.safetensors", 0.3, False),
 
+    # MOSS-Image (shares flux2-vae with Flux)
+    ("moss", "lodestones/Kromoss", "diffusion_models/kromoss_int8_convrot.safetensors",
+     "models/diffusion_models/moss/kromoss_int8_convrot.safetensors", 5.4, False),
+    ("moss", "Comfy-Org/MOSS-Image", "text_encoders/qwen3.5_9b_int8_convrot.safetensors",
+     "models/text_encoders/qwen3.5_9b_int8_convrot.safetensors", 9.7, False),
+    ("moss", "lodestones/MOSS-Image-Base-8-steps-dmd", "lora.safetensors",
+     "models/loras/moss/MOSS-Image-Base-8-steps-dmd.safetensors", 1.2, False),
+    ("moss", "Comfy-Org/MOSS-Image", "vae/flux2-vae.safetensors",
+     "models/vae/flux2-vae.safetensors", 0.3, False),
+
     # YuE2
     ("yue2", "Comfy-Org/YuE2", "checkpoints/yue2_3b_int8_convrot.safetensors",
      "models/checkpoints/yue2_3b_int8_convrot.safetensors", 4.0, False),
@@ -118,7 +128,7 @@ def main() -> int:
     ap.add_argument("--comfyui", default=str(Path.home() / "ComfyUI"),
                     help="Path to the ComfyUI install (default: ~/ComfyUI)")
     ap.add_argument("--only", default=None,
-                    help="Comma-separated families: krea,flux,yue2,music3,drama3,h3,sam3")
+                    help="Comma-separated families: krea,flux,moss,yue2,music3,drama3,h3,sam3")
     ap.add_argument("--include-optional", action="store_true",
                     help="Also download optional extras (character-swap LoRA)")
     ap.add_argument("--force", action="store_true", help="Re-download existing files")

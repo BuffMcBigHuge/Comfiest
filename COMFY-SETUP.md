@@ -15,7 +15,7 @@ the workflows use CUDA `int8_convrot` models, TensorRT depth, and NVIDIA-oriente
 3. 17 required custom-node packs (plus 2 optional), including the MiniMax H3 compatibility/acceleration
 
    nodes.
-4. About 170 GB of model files, downloaded from Hugging Face into the right folders.
+4. About 185 GB of model files, downloaded from Hugging Face into the right folders.
 5. A TensorRT depth engine for the character-replacement workflows.
 6. Optionally, the `comfy-mcp` bridge from [`MCP-SETUP.md`](MCP-SETUP.md) so an agent can submit jobs.
 
@@ -195,6 +195,9 @@ Paths are relative to `ComfyUI/`. Sizes are approximate.
 | Flux | <https://huggingface.co/black-forest-labs/FLUX.2-klein-9b-fp8> | `flux-2-klein-9b-fp8.safetensors` | `models/diffusion_models/flux/flux-2-klein-9b-fp8.safetensors` | 9.4 GB |
 | Flux | <https://huggingface.co/DreamFast/qwen3-8b-heretic> | `gguf/qwen3-8b-heretic-Q6_K.gguf` | `models/text_encoders/Qwen3-8B-heretic.Q6_K.gguf` | 6.7 GB |
 | Flux | <https://huggingface.co/Comfy-Org/Flux-2-Klein-9B> | `split_files/vae/flux2-vae.safetensors` | `models/vae/flux2-vae.safetensors` | 0.3 GB |
+| MOSS | <https://huggingface.co/lodestones/Kromoss> | `diffusion_models/kromoss_int8_convrot.safetensors` | `models/diffusion_models/moss/kromoss_int8_convrot.safetensors` | 5.4 GB |
+| MOSS | <https://huggingface.co/Comfy-Org/MOSS-Image> | `text_encoders/qwen3.5_9b_int8_convrot.safetensors` | `models/text_encoders/qwen3.5_9b_int8_convrot.safetensors` | 9.7 GB |
+| MOSS | <https://huggingface.co/lodestones/MOSS-Image-Base-8-steps-dmd> | `lora.safetensors` | `models/loras/moss/MOSS-Image-Base-8-steps-dmd.safetensors` | 1.2 GB |
 | YuE2 | <https://huggingface.co/Comfy-Org/YuE2> | `checkpoints/yue2_3b_int8_convrot.safetensors` | `models/checkpoints/yue2_3b_int8_convrot.safetensors` | 4.0 GB |
 | YuE2 | <https://huggingface.co/Comfy-Org/YuE2> | `audio_encoders/sheetsage2_bf16.safetensors` | `models/audio_encoders/sheetsage2_bf16.safetensors` | 1.4 GB |
 | Music 3 | <https://huggingface.co/Comfy-Org/MiniMax-Music-3> | `diffusion_models/minimax_music3_dit_fp16.safetensors` | `models/diffusion_models/minimax/minimax_music3_dit_fp16.safetensors` | 4.9 GB |
@@ -212,6 +215,9 @@ Paths are relative to `ComfyUI/`. Sizes are approximate.
 
 The optional character-swap LoRA is **not** in the shipped char-replace graphs; add it to a scratch
 copy if you want stronger identity transfer.
+
+MOSS-Image uses the same `flux2-vae.safetensors` as Flux. The downloader includes it in the `moss`
+family too, so `--only moss` works without a separate Flux download.
 
 ### Notes on filenames
 
@@ -333,6 +339,7 @@ Repeat for one workflow per family:
 
 ```bash
 comfy run --workflow workflows/text2image-fluxklein.json    --print-prompt --host 127.0.0.1 --port 8188
+comfy run --workflow workflows/text2image-moss.json         --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/minimaxh3/ref2video-minimax-1p.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/text2music-yue2.json         --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/text2music-minimaxmusic3.json --print-prompt --host 127.0.0.1 --port 8188

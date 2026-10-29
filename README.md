@@ -34,7 +34,7 @@ Built for the [Comfy Org Open Source Higgsfield](https://comfy.org/open-source-h
 
 | Create | Models and capabilities |
 | --- | --- |
-| **Images from text** | Krea 2 Turbo, Flux.2 Klein 9B |
+| **Images from text** | Krea 2 Turbo, Flux.2 Klein 9B, MOSS-Image |
 | **Image edits** | Krea 2 Edit, Flux.2 Klein 9B reference edit |
 | **Speech** | Fish Audio Drama 3 — single/dual speaker, voice clone |
 | **Music** | YuE2 3B, MiniMax Music 3 |
@@ -161,6 +161,7 @@ host:
 | Identity-preserving edit | Krea 2 Edit | [Image edit](workflows/image2image-krea-edit.json) | reference image + instruction |
 | Stylized text → image | Flux.2 Klein 9B | [Text to image](workflows/text2image-fluxklein.json) | 4-step RES4LYF |
 | Reference edit | Flux.2 Klein 9B | [Reference edit](workflows/image2image-fluxklein.json) | source-size canvas |
+| Fast photoreal still / keyframe | MOSS-Image | [Text to image](workflows/text2image-moss.json) | 8-step DMD; 1776×1184; optional prompt upsampler |
 | Song from style + lyrics | YuE2 3B | [Style + lyrics](workflows/text2music-yue2.json) | 120 s, vocals |
 | Song from caption + lyrics | MiniMax Music 3 | [Caption + lyrics](workflows/text2music-minimaxmusic3.json) | tiled audio decode |
 | Speech / voice clone | Fish Audio Drama 3 | [Speech workflows](workflows/fishdrama3/) | 4 variants, 1–2 speakers |
@@ -189,7 +190,7 @@ forced-audio lip-sync, and character replacement. See
 ├── scripts/
 │   ├── install_nodes.py     # clone/update custom nodes, pip requirements
 │   └── download_models.py   # Hugging Face downloads into ComfyUI folders
-├── workflows/               # 43 workflow templates
+├── workflows/               # 44 workflow templates
 │   ├── *.json
 │   ├── fishdrama3/          # TTS base + variants
 │   └── minimaxh3/           # H3 base, UI variants, api/ mirrors
@@ -235,8 +236,8 @@ fork rather than editing the shipped template.
   RES4LYF, WAS, Easy-Use, various, KJNodes, VideoHelperSuite, Drama3, krea2edit, Conditioning
   Rebalance, PlagueKind, Fill-Nodes, Spectrum, Impact Pack, SAM3, and Depth-Anything-TensorRT.
   Frame-Interpolation is optional (the H3 graphs use Fill-Nodes `FL_RIFE`).
-- Models: Krea 2 Turbo/Edit, Flux.2 Klein 9B + Qwen3-8B GGUF, YuE2 3B, MiniMax Music 3, Fish Audio
-  Drama 3, MiniMax H3 fastvideo stack. Exact filenames live in the workflow sections of
+- Models: Krea 2 Turbo/Edit, Flux.2 Klein 9B + Qwen3-8B GGUF, MOSS-Image, YuE2 3B, MiniMax Music 3,
+  Fish Audio Drama 3, MiniMax H3 fastvideo stack. Exact filenames live in the workflow sections of
   [`skills/SKILL.md`](skills/SKILL.md); verify each host with `/models/<folder>` and `/object_info`.
   The full download list, Hugging Face locations, and folder layout are in
   [`COMFY-SETUP.md`](COMFY-SETUP.md).

@@ -197,6 +197,7 @@ explicit approval.
 | Identity-preserving image edit | Krea 2 Edit | `workflows/image2image-krea-edit.json` | reference image + instruction; edit conditioning |
 | Stylized or detailed text → image | Flux.2 Klein 9B | `workflows/text2image-fluxklein.json` | 4-step RES4LYF; no custom LoRAs after sanitization |
 | Reference-based Flux edit | Flux.2 Klein 9B | `workflows/image2image-fluxklein.json` | keeps source pose/size; reference latent |
+| Fast photoreal still or keyframe | MOSS-Image | `workflows/text2image-moss.json` | 8-step DMD; 3:2 2 MP (1776×1184); optional prompt upsampler |
 | Song from style + lyrics | YuE2 3B | `workflows/text2music-yue2.json` | full-song model with vocals; 120 s |
 | Song from caption + lyrics | MiniMax Music 3 | `workflows/text2music-minimaxmusic3.json` | caption-driven; tiled audio decode |
 | Video from text or references | MiniMax H3 | `workflows/minimaxh3/*.json` + `api/*.api.json` | 8 s, audio, 14 P/V/A variants + 3 charreplace workflows |
@@ -214,7 +215,7 @@ How to use the table:
 
 Routing constraints:
 
-- One job at a time per target. Krea/Flux are light; Music 3 and MiniMax H3 are heavy; Drama 3 is
+- One job at a time per target. Krea/Flux/MOSS are light; Music 3 and MiniMax H3 are heavy; Drama 3 is
   heavy on system RAM.
 - The workflow JSON is the final authority on node IDs and model filenames. The family sections call
   out known traps: dead branches, decoy LoRA loaders, optional files that are not installed.
@@ -387,6 +388,68 @@ Active sampler path and traps:
   the existing one. Do not treat this workflow as segmentation/compositing.
 - The subgraph is named “Image Edit” even in the T2I file; that is expected.
 - Keep `SaveImage` prefixes static; no `%date:...%` tokens.
+
+### MOSS-Image — fast photoreal stills and keyframes
+
+MOSS-Image is an 8-step photoreal model paired with a Qwen3.5 text encoder. The generation graph is one
+subgraph instance: prompt, resolution, and seed come from top-level nodes, while the sampler, models,
+and optional branches are set on the instance. A built-in prompt upsampler can turn a short idea into a
+detailed caption.
+
+**File:** `workflows/text2image-moss.json`. **Output:** PNG, prefix `COMFY_WORKFLOWS/MOSS`.
+
+**Use it when** you want a fast photoreal still or a video keyframe. **Don't use it for** motion:
+generate the still here and feed it to MiniMax H3 as `picture_1` or the first-frame guide.
+
+**Main trap:** the subgraph instance overrides the inner KSampler, seed, size, and loaders. Editing the
+inner nodes does nothing. Change `#18` (steps/cfg/sampler/scheduler/negative/models),
+`ResolutionSelector #19` (size), and `SeedNode #3072` (seed).
+
+Effective stack (the subgraph instance overrides the inner loaders):
+
+| Item | Effective value |
+| - | - |
+| UNET | `moss\kromoss_int8_convrot.safetensors` |
+| Text encoder | `qwen3.5_9b_int8_convrot.safetensors` (type `moss_image`) |
+| VAE | `flux2-vae.safetensors` (shared with Flux) |
+
+- The inner loader widgets still name `moss_image_sft_int8_convrot.safetensors`,
+  `qwen3.5_9b_w4a8_gptq.safetensors`, and `flux2-vae_small.safetensors`. Those are upstream defaults,
+  may not be installed, and are not used. Change the subgraph instance values, not the inner loaders.
+- Node packs: `was-node-suite-comfyui` (`Text Multiline`) and `rgthree-comfy`
+  (`Power Lora Loader`). Everything else is core: `TextGenerate`, `ResolutionSelector`, `SeedNode`,
+  `ComfySwitchNode`, `SkipLayerGuidanceDiTSimple`, `EmptyFlux2LatentImage`, `PreviewAny`.
+
+Inputs and effective settings:
+
+- Prompt: top-level `Text Multiline #3084` (`@prompt`); the inner `Text (User Prompt) #17` is overridden
+  by that link.
+- `ResolutionSelector #19`: `3:2 (Photo)`, 2 MP, multiple 8 → **1776×1184**. The instance width/height
+  widgets and the inner `EmptyFlux2LatentImage` are overridden.
+- Seed: `SeedNode #3072`, fixed `441725079545389` with `randomize`; the instance and inner KSampler
+  seeds are overridden.
+- Subgraph instance `#18`: 8 steps, cfg 2.5, `exp_heun_2_x0_sde`, `beta57`, denoise 1; negative
+  prompt `worst quality, bad anatomy, watermark, jpeg artifact`; SLG off; prompt upsampler off.
+- The inner `KSampler #7` widgets (25 steps, `er_sde`, `simple`) are dead; the instance values above
+  override them.
+- `enable_prompt_upsampler #16`: when on, `TextGenerate #11` rewrites the prompt through the same
+  Qwen3.5 encoder using system prompt `#14` (max 4096 tokens, temperature 0.7, top-k 64, top-p 0.95).
+  `PreviewAny #13` exposes the final caption as `text_outputs`; off by default. It adds a generation
+  pass and can drift from the request.
+- `SLG #24`: when on, `SkipLayerGuidanceDiTSimple #15` applies `single_layers="22"` from 0 to 0.5.
+- Keep the save prefix static; no `%date:...%` tokens.
+
+Active LoRA (sanitized):
+
+| LoRA | Strength |
+| - | - |
+| `moss\MOSS-Image-Base-8-steps-dmd.safetensors` | 1.0 |
+
+The DMD LoRA is the 8-step distillation/speed adapter and stays. The public graph strips the
+style/adult-oriented LoRAs; add your own in a scratch copy.
+
+**Status:** conversion-validated after sanitization (20 nodes). The pre-sanitization graph had completed
+runs at 1776×1184; re-run the sanitized graph before production.
 
 ### YuE2 3B — full songs from style + lyrics
 
@@ -897,6 +960,8 @@ creative approval; the user judges the result.
 Current run-record gaps (portable summary):
 
 - YuE2 has a short test-copy record only; re-run at full length before production.
+- MOSS-Image has pre-sanitization verification runs; the public graph is conversion-validated only, so
+  re-run it once after sanitization.
 - In `workflows/fishdrama3/`, only `single-speaker-no-reference` has a completed run; the other three
   variants are conversion-validated only.
 - The H3 `1v1a`, `1p1v1a`, `2p1v`, `2p1a`, and `2p1v1a` variants are generated-only.
@@ -919,6 +984,7 @@ Before production:
 | `'dict' object has no attribute 'shape'` in MiniMax H3 | RIFE received a latent dict because `Final Images`/`Final Audio` selected the bypassed upscale path | Select the active single-pass decoders; disconnect `any_01`. |
 | `SaveImage` fails with `WinError 123` | `%date:...%` or another unresolved frontend token in the save prefix | Use a static save prefix. |
 | Outputs land in unexpected remote folders | An agent changed a workflow save prefix | Never change `filename_prefix`; collect the run by `prompt_id` into `work/outputs`. |
+| `text2image-moss.json` ignores edits to the inner KSampler, seed, size, or loaders | The subgraph instance overrides those widgets | Edit instance `#18` (steps/cfg/sampler/scheduler/negative/models), `ResolutionSelector #19` (size), and `SeedNode #3072` (seed). |
 | Job state stays `queued` after the server reports `completed` | Local job-state lag | Download the `outputs[0]` URL from the `job` result and size-check it. |
 | `fetch_outputs` errors connecting to a local address | Local state missing; tool fell back to a local ComfyUI URL | Use the remote output URL from `job` directly. |
 | `fetch_outputs` returns `download_job_not_found` | The `prompt_id` was submitted by another machine/agent, or local state was cleared | Download the output URL directly; only inspect files tied to your own `prompt_id`. |
