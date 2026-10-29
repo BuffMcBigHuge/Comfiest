@@ -56,3 +56,5 @@ Notes:
 - Drama 3 is heavy: first run loads the file, and expect roughly 20–25 ms per frame on a 3090/4090
   (real time is 46 ms/frame). One job per target. A 64 GB host is tight; 128 GB+ is safer.
 - Verify with ASR (words and speaker turns) and librosa (duration/silence), not visual inspection.
+- Leave the `SaveAudio` prefix exactly as shipped; collect the run by `prompt_id` instead of renaming
+  the remote output folder.

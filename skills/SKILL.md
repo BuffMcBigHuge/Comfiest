@@ -82,6 +82,11 @@ directory) and reuse that absolute prefix for the session.
 - **Runtime edits are allowed; saving is not.** Change widgets and links in the ComfyUI UI for a run,
   but do not save over a workflow file. For a modified graph, write a copy under `work/scratch/` and
   never copy it back into a workflow directory.
+- **Never change save prefixes.** Leave `filename_prefix` on `SaveImage`, `VHS_VideoCombine`,
+  `SaveAudio`, and `SaveAudioAdvanced` exactly as shipped — including in scratch copies. Output
+  identity is the `prompt_id`; a changed prefix scatters untraceable files through the shared ComfyUI
+  `output/` tree. Collect into `work/outputs/<project>/<date>/<prompt_id>/` instead. This is not valid
+  workflow-editing etiquette; only change a prefix if the user explicitly asks for it.
 - **Do not point file-writing tools at the workflow tree.** `set_workflow_slot`, `vary_workflow`,
   `fetch_template`, `emit_partner_workflow`, and similar tools create or modify JSON; use
   `work/scratch/` for their output.
@@ -913,6 +918,7 @@ Before production:
 | `missing_node_type` for `Fast Groups Bypasser (rgthree)`, `Label (rgthree)`, `MarkdownNote`, or `Note` | Frontend-only nodes in an API graph | Strip them in a scratch copy. Never edit the template file. `Power Lora Loader (rgthree)` is a backend node and stays. |
 | `'dict' object has no attribute 'shape'` in MiniMax H3 | RIFE received a latent dict because `Final Images`/`Final Audio` selected the bypassed upscale path | Select the active single-pass decoders; disconnect `any_01`. |
 | `SaveImage` fails with `WinError 123` | `%date:...%` or another unresolved frontend token in the save prefix | Use a static save prefix. |
+| Outputs land in unexpected remote folders | An agent changed a workflow save prefix | Never change `filename_prefix`; collect the run by `prompt_id` into `work/outputs`. |
 | Job state stays `queued` after the server reports `completed` | Local job-state lag | Download the `outputs[0]` URL from the `job` result and size-check it. |
 | `fetch_outputs` errors connecting to a local address | Local state missing; tool fell back to a local ComfyUI URL | Use the remote output URL from `job` directly. |
 | `fetch_outputs` returns `download_job_not_found` | The `prompt_id` was submitted by another machine/agent, or local state was cleared | Download the output URL directly; only inspect files tied to your own `prompt_id`. |

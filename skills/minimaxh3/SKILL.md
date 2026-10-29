@@ -98,6 +98,9 @@ To inspect a workflow, open the UI file in ComfyUI. The rgthree `Fast Groups Byp
 present for editing; the API files omit them. Do not save over the template file; work on a copy in
 `../../work/scratch` if you need to change it.
 
+Leave every `SaveImage`/`VHS_VideoCombine` save prefix exactly as shipped. Identify and collect runs by
+`prompt_id`; changing the prefix scatters untraceable files through the shared ComfyUI `output/` tree.
+
 ## Resolution and timing
 
 - The `Resolution Selector` is driven by the outer `megapixels` widget on the settings subgraph, not

@@ -124,7 +124,8 @@ const job = await tools["comfy-<host>-<port>"].job({
 });
 ```
 
-Run one job per target. Parallelize only across different targets.
+Run one job per target. Parallelize only across different targets. Leave the `VHS_VideoCombine` save
+prefix untouched; collect the run by `prompt_id`.
 
 ## Tuning
 

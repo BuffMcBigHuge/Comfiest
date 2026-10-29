@@ -34,6 +34,10 @@ work/
 - `outputs/` preserves the remote filename and adds a date + prompt_id folder:
   `outputs/<project>/<YYYY-MM-DD>/<prompt_id>/<original-name>`. The `prompt_id` is the provenance
   anchor for vision.
+- **Do not change workflow save prefixes.** Leave `filename_prefix` on `SaveImage`,
+  `VHS_VideoCombine`, `SaveAudio`, and `SaveAudioAdvanced` untouched; identify and collect every run
+  by its `prompt_id`. Changing prefixes scatters untraceable files through the shared ComfyUI
+  `output/` tree.
 - `logs/run-log.md` is append-only. Follow the run-log template in `../skills/SKILL.md`.
 - Vision is allowed only on the current run's own inputs/outputs, traceable to its own `prompt_id` and
   run-log entry. Never inspect another agent's files or files discovered in ComfyUI folders. See the

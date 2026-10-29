@@ -209,6 +209,8 @@ forced-audio lip-sync, and character replacement. See
 4. **One job per target.** Parallel work only across different ComfyUI hosts.
 5. **Provenance over vibes.** A `prompt_id`, a run-log row, and a non-zero file size prove a run
    happened. Vision is QA, not verification.
+6. **Stable save prefixes.** Never rewrite a workflow's save prefix; identify and collect runs by
+   `prompt_id`. The shared ComfyUI `output/` tree is not a place to invent folder names.
 
 ## Public-release sanitization
 
@@ -251,6 +253,7 @@ ergonomics.
   `workflows/<family>/api/`.
 - Update `skills/SKILL.md` and the family README with inputs, settings, save prefix, and known traps.
 - Run `comfy run --workflow <file> --print-prompt --host <host> --port <port>` before submitting.
+- Never change a workflow's save prefix (`filename_prefix`) — retrieval is by `prompt_id`.
 - Never commit `work/` contents, model weights, generated outputs, or credentials.
 
 ## License
