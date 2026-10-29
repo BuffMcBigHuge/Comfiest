@@ -1,6 +1,22 @@
-# Comfiest
+<p align="center">
+  <img src="assets/logo.png" alt="Comfiest — a sleeping cat on a cozy purple armchair" width="480">
+</p>
 
-**A local-first, open-weights video production suite for ComfyUI — driven by your agent.**
+<h1 align="center">Comfiest</h1>
+
+<p align="center">
+  <strong>A local-first, open-weights video production suite for ComfyUI — driven by your agent.</strong>
+</p>
+
+<p align="center">
+  <a href="#start-here-point-your-agent-at-the-repo">Start here</a> ·
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#workflow-catalog">Workflows</a> ·
+  <a href="#requirements">Requirements</a> ·
+  <a href="#contributing">Contributing</a>
+</p>
+
+---
 
 Comfiest packages the parts of an AI production pipeline that normally live in someone's head:
 model routing, workflow templates, hardware limits, submission loops, output provenance, and the
@@ -9,15 +25,15 @@ bridge, pick the right model for a shot, run it, and collect the result.
 
 Built for the [Comfy Org Open Source Higgsfield](https://comfy.org/open-source-higgsfield) challenge.
 
-```text
-text → image        Krea 2 Turbo, Flux.2 Klein 9B
-image → image       Krea 2 Edit, Flux.2 Klein 9B reference edit
-text → speech       Fish Audio Drama 3 (single/dual speaker, voice clone)
-text → music        YuE2 3B, MiniMax Music 3
-text/refs → video   MiniMax H3 (t2v, 1–2 pictures, video/audio refs, forced lip-sync, character swap)
-```
+| Create | Models and capabilities |
+| --- | --- |
+| **Images from text** | Krea 2 Turbo, Flux.2 Klein 9B |
+| **Image edits** | Krea 2 Edit, Flux.2 Klein 9B reference edit |
+| **Speech** | Fish Audio Drama 3 — single/dual speaker, voice clone |
+| **Music** | YuE2 3B, MiniMax Music 3 |
+| **Video from text or references** | MiniMax H3 — text-to-video, 1–2 pictures, video/audio references, forced lip-sync, character swap |
 
-No partner nodes. No API keys. No credits. Everything runs on your own ComfyUI with open weights.
+**No partner nodes. No API keys. No credits.** Everything runs on your own ComfyUI with open weights.
 
 ---
 
@@ -36,6 +52,8 @@ The agent should:
 4. Confirm the target with `server_info()` and `/system_stats`.
 5. Pick a workflow from the routing table and submit it with `run_workflow`.
 6. Collect the output into `work/outputs/<project>/<date>/<prompt_id>/` and verify its size.
+
+### Add the skills to your agent
 
 If your agent supports skills:
 
@@ -60,7 +78,7 @@ The umbrella carries the hard rules and routing; the subskills carry family and 
 
 ## Quick start
 
-### 1. ComfyUI
+### 1. Set up ComfyUI
 
 Install ComfyUI 0.42 or newer with the node packs and models listed in
 [`skills/SKILL.md`](skills/SKILL.md#target-requirements). A 24 GB-class GPU is the baseline. Drama 3
@@ -74,7 +92,7 @@ python scripts/install_nodes.py --comfyui "$COMFYUI"
 python scripts/download_models.py --comfyui "$COMFYUI"
 ```
 
-### 2. The MCP bridge
+### 2. Connect the MCP bridge
 
 Comfiest talks to ComfyUI through [`comfy-mcp`](https://github.com/Comfy-Org/comfy-mcp), a thin stdio
 server around `comfy-cli`.
@@ -95,7 +113,7 @@ Then register one server per ComfyUI target. Full instructions, environment vari
 snippets for OpenCode, Claude Code/Desktop, Codex, Cursor, Hermes, and a generic stdio client are in
 [`MCP-SETUP.md`](MCP-SETUP.md).
 
-### 3. First run
+### 3. Run your first workflow
 
 Ask the agent for the fox demo, or submit directly:
 
@@ -120,26 +138,26 @@ The demo prompts are self-contained, but the reference-driven workflows expect f
 host:
 
 | Workflow | Expected input | How to supply it |
-| - | - | - |
+| --- | --- | --- |
 | Krea / Flux edit | `example.png` | Stage in `work/uploads/<project>/`, upload with `upload_file`. |
 | Drama 3 clone variants | `example.wav` | Upload clean single-speaker clips and replace the transcript placeholders to match. |
 | MiniMax H3 reference variants | `example.png`, `example.mp4`, `example.wav` | Upload the slots the variant uses; every image slot uses the same placeholder. |
 
-The transcripts in the TTS templates are placeholders (“The quick brown fox…”). A clone only works
-when the transcript matches the clip word for word, so replace both.
+> **Voice-clone inputs:** The transcripts in the TTS templates are placeholders (“The quick brown
+> fox…”). A clone only works when the transcript matches the clip word for word, so replace both.
 
 ## Workflow catalog
 
 | Task | Model | Workflow | Notes |
-| - | - | - | - |
-| Photoreal text → image | Krea 2 Turbo | [`workflows/text2image-krea.json`](workflows/text2image-krea.json) | 1024×1280, 14 steps, no LoRA |
-| Identity-preserving edit | Krea 2 Edit | [`workflows/image2image-krea-edit.json`](workflows/image2image-krea-edit.json) | reference image + instruction |
-| Stylized text → image | Flux.2 Klein 9B | [`workflows/text2image-fluxklein.json`](workflows/text2image-fluxklein.json) | 4-step RES4LYF |
-| Reference edit | Flux.2 Klein 9B | [`workflows/image2image-fluxklein.json`](workflows/image2image-fluxklein.json) | source-size canvas |
-| Song from style + lyrics | YuE2 3B | [`workflows/text2music-yue2.json`](workflows/text2music-yue2.json) | 120 s, vocals |
-| Song from caption + lyrics | MiniMax Music 3 | [`workflows/text2music-minimaxmusic3.json`](workflows/text2music-minimaxmusic3.json) | tiled audio decode |
-| Speech / voice clone | Fish Audio Drama 3 | [`workflows/fishdrama3/`](workflows/fishdrama3/) | 4 variants, 1–2 speakers |
-| Video + audio | MiniMax H3 | [`workflows/minimaxh3/`](workflows/minimaxh3/) | 14 variants + 3 char-replace workflows |
+| --- | --- | --- | --- |
+| Photoreal text → image | Krea 2 Turbo | [Text to image](workflows/text2image-krea.json) | 1024×1280, 14 steps, no LoRA |
+| Identity-preserving edit | Krea 2 Edit | [Image edit](workflows/image2image-krea-edit.json) | reference image + instruction |
+| Stylized text → image | Flux.2 Klein 9B | [Text to image](workflows/text2image-fluxklein.json) | 4-step RES4LYF |
+| Reference edit | Flux.2 Klein 9B | [Reference edit](workflows/image2image-fluxklein.json) | source-size canvas |
+| Song from style + lyrics | YuE2 3B | [Style + lyrics](workflows/text2music-yue2.json) | 120 s, vocals |
+| Song from caption + lyrics | MiniMax Music 3 | [Caption + lyrics](workflows/text2music-minimaxmusic3.json) | tiled audio decode |
+| Speech / voice clone | Fish Audio Drama 3 | [Speech workflows](workflows/fishdrama3/) | 4 variants, 1–2 speakers |
+| Video + audio | MiniMax H3 | [Video workflows](workflows/minimaxh3/) | 14 variants + 3 char-replace workflows |
 
 MiniMax H3 is the video workhorse: text-to-video, 1–2 picture references, video/audio references,
 forced-audio lip-sync, and character replacement. See
@@ -150,23 +168,25 @@ forced-audio lip-sync, and character replacement. See
 
 ```text
 .
-├── README.md                  # this file
-├── LICENSE                    # MIT (repository); model weights keep their upstream licenses
-├── COMFY-SETUP.md             # install ComfyUI, nodes, models, TensorRT engine
-├── MCP-SETUP.md               # install, register, verify comfy-mcp
+├── README.md                # this file
+├── LICENSE                  # MIT (repository); model weights keep their upstream licenses
+├── COMFY-SETUP.md           # install ComfyUI, nodes, models, TensorRT engine
+├── MCP-SETUP.md             # install, register, verify comfy-mcp
+├── assets/
+│   └── logo.png             # project logo
 ├── skills/
-│   ├── SKILL.md               # umbrella: rules, routing, operating loop
-│   ├── minimaxh3/SKILL.md     # H3 variant matrix and execution notes
+│   ├── SKILL.md             # umbrella: rules, routing, operating loop
+│   ├── minimaxh3/SKILL.md   # H3 variant matrix and execution notes
 │   ├── minimaxh3-character-replace/SKILL.md
 │   └── fish-audio-drama3/SKILL.md
 ├── scripts/
-│   ├── install_nodes.py       # clone/update custom nodes, pip requirements
-│   └── download_models.py     # Hugging Face downloads into ComfyUI folders
-├── workflows/                 # 43 workflow templates
+│   ├── install_nodes.py     # clone/update custom nodes, pip requirements
+│   └── download_models.py   # Hugging Face downloads into ComfyUI folders
+├── workflows/               # 43 workflow templates
 │   ├── *.json
-│   ├── fishdrama3/            # TTS base + variants
-│   └── minimaxh3/             # H3 base, UI variants, api/ mirrors
-└── work/                      # writable agent workspace (not required to run)
+│   ├── fishdrama3/          # TTS base + variants
+│   └── minimaxh3/           # H3 base, UI variants, api/ mirrors
+└── work/                    # writable agent workspace (not required to run)
     ├── inbox/  scratch/  uploads/  outputs/
     ├── analysis/  post/  exports/  logs/
     └── README.md
