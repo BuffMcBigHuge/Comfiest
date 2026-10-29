@@ -202,7 +202,7 @@ appear to hang and then exit. `--version` and `--help` are the only terminal-saf
 | Variable | Required | Purpose |
 | - | - | - |
 | `COMFY_BIN` | In practice, yes | Absolute path to `comfy.exe`. MCP clients launch servers with their own environment, which often does not include your shell's `PATH`. |
-| `COMFYUI_URL` | Yes for a remote | Base URL of the target, e.g. `http://192.0.2.10:8195`. Redirects run/job/upload tools and makes `fetch_outputs` pull from that target. |
+| `COMFYUI_URL` | Yes for a remote | Base URL of the target, e.g. `http://192.0.2.10:8195`. Redirects run/job/upload tools and makes `fetch_outputs` pull from that target. It is also the base for a direct `/view` download when local job state is missing. |
 | `COMFY_API_KEY` | Only for partner-API nodes | Never needed by the local workflows in this repository. Do not add it unless a specific workflow requires it. |
 | `COMFY_MCP_ASSUME_CONSENT` | Optional | Pre-authorizes lifecycle confirmations (`install_node,update_all,version_switch,kill_untracked,network_exposure` or `all`). It does **not** authorize spending. Leave unset for this repository. |
 | `COMFY_MCP_DEBUG_LOG` | Optional | Path to the opt-in failure log. |
@@ -580,6 +580,7 @@ tools["comfy-render-8195"].job({ action: "queue" })
 | `download_model` refuses | `COMFYUI_URL` is set | Install the model on the remote host; do not bypass with `COMFY_MCP_REMOTE_SHARED_MODELS` unless storage really is shared. |
 | `launch_comfyui` / `stop_comfyui` / `install_node` affects the wrong install | Those are local-only | Do not use them for remote targets; manage the remote host directly. |
 | `fetch_outputs` stays `queued` after the job completed | comfy-cli 1.23.0 local state lag | Use the `outputs[0]` URL from the `job` result and download it directly; then size-check. |
+| `fetch_outputs` returns `download_job_not_found` or a local-address error | The prompt ID was submitted by another machine/agent, or local comfy-cli state was cleared | Build `http://<comfy-host>:<port>/view?filename=<filename>&subfolder=<subfolder>&type=output` from the target's `outputs[0]`; `scripts/fetch_output.py` does this. |
 | An image/video exists in a remote `output/` or `input/` folder | It is not your file | Do not inspect it; collect only your own `prompt_id` output into your project's `prompt_id` folder. |
 | `missing_node_type` for `Fast Groups Bypasser`, `Label`, `Note` | Frontend-only nodes in a UI export | Use an API-format file or strip them in `work/scratch`; never edit a shipped template. |
 | `SaveImage` fails with `WinError 123` | Unresolved `%date:...%` token in the prefix | Use a static save prefix. |
@@ -588,6 +589,22 @@ tools["comfy-render-8195"].job({ action: "queue" })
 | ChatGPT web cannot add the server | ChatGPT web is remote-only | Use the ChatGPT desktop app/Codex CLI, Comfy Cloud MCP, or a bridge + tunnel. |
 | Partner node returns 401/403 | No Comfy credential, or an expired session | Only relevant to partner nodes. These workflows are local; remove the partner node instead of adding a key. |
 | A tool keeps using an old version after an upgrade | The client loaded the server at session start | Restart the client, or start a new session. |
+
+### 9.1 `fetch_outputs` and the target URL
+
+`fetch_outputs` is scoped by local comfy-cli job state, not only by `COMFYUI_URL`. If it returns
+`download_job_not_found` or tries a local address, the job was not recorded on this machine (or the
+state was cleared). Download from the render target directly:
+
+```text
+http://<comfy-host>:<port>/view?filename=<filename>&subfolder=<subfolder>&type=output
+```
+
+- `<comfy-host>:<port>` is the same base as the target's `COMFYUI_URL`; it is not the MCP host.
+- `filename`, `subfolder`, and `type` come from the `outputs[0]` entry in the `job` result or
+  `/history/<prompt_id>`.
+- URL-encode spaces and special characters. `scripts/fetch_output.py` builds this URL from the
+  history entry and saves the files for you.
 
 ## 10. Security and scope for this repository
 
@@ -736,6 +753,21 @@ keep the `COMFY_BIN` path pointing at the `comfy` binary you actually want to dr
 | Collect | `fetch_outputs({ prompt_id, out_dir })` |
 | Vision provenance | own `prompt_id` + run-log entry + `work/outputs/<project>/<date>/<prompt_id>/` |
 | Verify | technical size/metadata first; vision only on own inputs/outputs |
+
+## 13. Develop and deliver a workflow
+
+The transport above is enough to run a shipped graph. To adapt one, use
+[`skills/workflow-development/SKILL.md`](skills/workflow-development/SKILL.md):
+
+1. Inspect the UI/API source and the target's `/object_info` + `/models`.
+2. Copy to `work/scratch/<project>/`; never edit `workflows/` in place.
+3. Build or patch the API graph, then validate it:
+   `python scripts/validate_workflow.py <graph>.api.json --url http://<host>:<port>`.
+4. Preview with `comfy run --print-prompt` (does not queue), then submit with
+   `run_workflow({ workflow_path, wait: false })`.
+5. Poll `/history/<prompt_id>` with `scripts/wait_job.py` if the MCP wait fails.
+6. Collect with `fetch_outputs`, or `scripts/fetch_output.py` / the `outputs[0]` URL.
+7. Log the run, then promote only after the public-release checklist passes.
 
 Official references:
 

@@ -583,18 +583,18 @@
               "Node name for S&R": "UNETLoader",
               "models": [
                 {
-                  "name": "krea2_turbo_fp8_scaled.safetensors",
-                  "url": "https://huggingface.co/Comfy-Org/Krea-2/resolve/main/diffusion_models/krea2_turbo_fp8_scaled.safetensors",
-                  "directory": "diffusion_models"
+                  "name": "kroma-v0.3.1-turbo-opd.safetensors",
+                  "url": "https://huggingface.co/lodestones/Kroma/resolve/main/kroma-v0.3.1-turbo-opd.safetensors",
+                  "directory": "diffusion_models/krea"
                 }
               ]
             },
             "widgets_values": [
-              "krea\\krea2_turbo_fp8.safetensors",
+              "krea\\kroma-v0.3.1-turbo-opd.safetensors",
               "default"
             ],
             "widgets_values_named": {
-              "unet_name": "krea\\krea2_turbo_fp8.safetensors",
+              "unet_name": "krea\\kroma-v0.3.1-turbo-opd.safetensors",
               "weight_dtype": "default"
             }
           },
@@ -755,12 +755,12 @@
               ]
             },
             "widgets_values": [
-              "Huihui-Qwen3-VL-4B-Instruct-abliterated-fp8_scaled.safetensors",
+              "qwen3vl_4b_fp8_scaled.safetensors",
               "krea2",
               "default"
             ],
             "widgets_values_named": {
-              "clip_name": "Huihui-Qwen3-VL-4B-Instruct-abliterated-fp8_scaled.safetensors",
+              "clip_name": "qwen3vl_4b_fp8_scaled.safetensors",
               "type": "krea2",
               "device": "default"
             }

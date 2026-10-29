@@ -72,8 +72,8 @@ If your agent supports skills:
 
 - Copy `skills/SKILL.md` to `<client-skills>/comfiest/SKILL.md` for the umbrella rules and routing.
 - Copy `skills/minimaxh3/`, `skills/minimaxh3-character-replace/`, `skills/minimaxh3-upscale/`,
-  `skills/minimaxh3-perfect-loop/`, and `skills/fish-audio-drama3/` as sibling skill directories if
-  your client discovers each skill separately.
+  `skills/minimaxh3-perfect-loop/`, `skills/workflow-development/`, and `skills/fish-audio-drama3/`
+  as sibling skill directories if your client discovers each skill separately.
 
 The umbrella carries the hard rules and routing; the subskills carry family and recipe detail.
 
@@ -84,6 +84,9 @@ The umbrella carries the hard rules and routing; the subskills carry family and 
   they blow up a 24 GB card.
 - **Workflow templates that actually run.** UI files for ComfyUI, pre-slimmed `api/*.api.json`
   mirrors for MCP execution, and conversion notes for the frontend-only nodes that break API runs.
+- **A development loop for new workflows.** Scratch copies, UI-to-API conversion, target preflight,
+  submit/poll/collect, run-log entries, and a promotion checklist in
+  [`skills/workflow-development/SKILL.md`](skills/workflow-development/SKILL.md).
 - **A submission loop that survives real life.** `wait: false` + `/history` polling, direct output
   URL fallback when local job state lags, one-job-per-target discipline.
 - **Provenance by default.** Every file lands under a `prompt_id` folder with a run-log entry; vision
@@ -200,10 +203,14 @@ forced-audio lip-sync, and character replacement. See
 │   ├── minimaxh3-character-replace/SKILL.md
 │   ├── minimaxh3-upscale/SKILL.md
 │   ├── minimaxh3-perfect-loop/SKILL.md
+│   ├── workflow-development/SKILL.md   # edit -> validate -> run -> promote
 │   └── fish-audio-drama3/SKILL.md
 ├── scripts/
 │   ├── install_nodes.py     # clone/update custom nodes, pip requirements
-│   └── download_models.py   # Hugging Face downloads into ComfyUI folders
+│   ├── download_models.py   # Hugging Face downloads into ComfyUI folders
+│   ├── validate_workflow.py # check an API graph against a live target
+│   ├── wait_job.py          # poll /history when the MCP wait fails
+│   └── fetch_output.py      # download outputs when fetch_outputs fails
 ├── workflows/               # 48 workflow templates
 │   ├── *.json
 │   ├── fishdrama3/          # TTS base + variants
@@ -251,7 +258,7 @@ fork rather than editing the shipped template.
   RES4LYF, WAS, Easy-Use, various, KJNodes, VideoHelperSuite, Drama3, krea2edit, Conditioning
   Rebalance, PlagueKind, Context-Loop, Fill-Nodes, Spectrum, Impact Pack, SAM3, and
   Depth-Anything-TensorRT. Frame-Interpolation is optional (the H3 graphs use Fill-Nodes `FL_RIFE`).
-- Models: Krea 2 Turbo/Edit, Flux.2 Klein 9B + Qwen3-8B GGUF, MOSS-Image, YuE2 3B, MiniMax Music 3,
+- Models: Krea 2 Turbo/Edit, Flux.2 Klein 9B + Qwen3-8B fp8mixed, MOSS-Image, YuE2 3B, MiniMax Music 3,
   Fish Audio Drama 3, MiniMax H3 fastvideo stack + 2K refiner/upscaler and the loop Turbo adapter.
   Exact filenames live in the workflow sections of [`skills/SKILL.md`](skills/SKILL.md); verify each
   host with `/models/<folder>` and `/object_info`.

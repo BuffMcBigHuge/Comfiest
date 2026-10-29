@@ -18,7 +18,7 @@ core `CreateVideo`/`SaveVideo` nodes.
 3. 18 required custom-node packs (plus 2 optional), including the MiniMax H3 compatibility/acceleration
 
    nodes.
-4. About 210 GB of model files, downloaded from Hugging Face into the right folders.
+4. About 212 GB of model files, downloaded from Hugging Face into the right folders.
 5. A TensorRT depth engine for the character-replacement workflows.
 6. Optionally, the `comfy-mcp` bridge from [`MCP-SETUP.md`](MCP-SETUP.md) so an agent can submit jobs.
 
@@ -126,7 +126,7 @@ python scripts/install_nodes.py --comfyui "$COMFYUI" --include-optional  # laten
 | Pack                                              | Source                                                             | Comfiest nodes                                                                                                                                           | Notes                                                                                                 |
 | ------------------------------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | `rgthree-comfy`                                   | <https://github.com/rgthree/rgthree-comfy>                         | `Power Lora Loader (rgthree)`, `Any Switch`                                                                                                              | Core to every H3/TTS graph.                                                                           |
-| `ComfyUI-GGUF`                                    | <https://github.com/city96/ComfyUI-GGUF>                           | `CLIPLoaderGGUF`                                                                                                                                         | Loads the Flux Qwen3 GGUF text encoder.                                                               |
+| `ComfyUI-GGUF`                                    | <https://github.com/city96/ComfyUI-GGUF>                           | `CLIPLoaderGGUF`                                                                                                                                         | Optional legacy loader; the public Flux graphs use the Comfy safetensors encoder.                     |
 | `RES4LYF`                                         | <https://github.com/ClownsharkBatwing/RES4LYF>                     | `ClownSampler_Beta`, `SharkSampler_Beta`, `SharkOptions_Beta`                                                                                            | Flux.2 Klein 4-step branch.                                                                           |
 | `was-node-suite-comfyui`                          | <https://github.com/WASasquatch/was-node-suite-comfyui>            | `Text Multiline`, `Seed`                                                                                                                                 | Text and seed widgets used by Krea/Flux/H3.                                                           |
 | `ComfyUI-Easy-Use`                                | <https://github.com/yolain/ComfyUI-Easy-Use>                       | `easy seed`                                                                                                                                              | H3 seed control.                                                                                      |
@@ -201,7 +201,7 @@ Paths are relative to `ComfyUI/`. Sizes are approximate.
 | Krea | <https://huggingface.co/Comfy-Org/Krea-2> | `text_encoders/qwen3vl_4b_fp8_scaled.safetensors` | `models/text_encoders/qwen3vl_4b_fp8_scaled.safetensors` | 5.2 GB |
 | Krea | <https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged> | `split_files/vae/wan_2.1_vae.safetensors` | `models/vae/wan/Wan2_1_VAE_bf16.safetensors` | 0.3 GB |
 | Flux | <https://huggingface.co/black-forest-labs/FLUX.2-klein-9b-fp8> | `flux-2-klein-9b-fp8.safetensors` | `models/diffusion_models/flux/flux-2-klein-9b-fp8.safetensors` | 9.4 GB |
-| Flux | <https://huggingface.co/DreamFast/qwen3-8b-heretic> | `gguf/qwen3-8b-heretic-Q6_K.gguf` | `models/text_encoders/Qwen3-8B-heretic.Q6_K.gguf` | 6.7 GB |
+| Flux | <https://huggingface.co/Comfy-Org/Flux-2-Klein-9B> | `split_files/text_encoders/qwen_3_8b_fp8mixed.safetensors` | `models/text_encoders/qwen_3_8b_fp8mixed.safetensors` | 8.7 GB |
 | Flux | <https://huggingface.co/Comfy-Org/Flux-2-Klein-9B> | `split_files/vae/flux2-vae.safetensors` | `models/vae/flux2-vae.safetensors` | 0.3 GB |
 | MOSS | <https://huggingface.co/lodestones/Kromoss> | `diffusion_models/kromoss_int8_convrot.safetensors` | `models/diffusion_models/moss/kromoss_int8_convrot.safetensors` | 5.4 GB |
 | MOSS | <https://huggingface.co/Comfy-Org/MOSS-Image> | `text_encoders/qwen3.5_9b_int8_convrot.safetensors` | `models/text_encoders/qwen3.5_9b_int8_convrot.safetensors` | 9.7 GB |
@@ -249,7 +249,6 @@ The workflows load models by exact filename, including subfolders. The downloade
 renames for you:
 
 - `wan_2.1_vae.safetensors` → `Wan2_1_VAE_bf16.safetensors` (Krea's VAELoader expects this name).
-- `qwen3-8b-heretic-Q6_K.gguf` → `Qwen3-8B-heretic.Q6_K.gguf`.
 - `minimax_h3_fl2v_lightx2v_turbo_4to8step_v0.1-v1.0_768p_v4_step600_dareties_fro095_pruned.safetensors`
   → `minimax_h3_fl2v_lightx2v_v0.1_dareties_v4_step600_comfy_fro_fulladaln.safetensors` (the
   perfect-loop graph's Turbo adapter).
@@ -343,7 +342,7 @@ Then confirm the custom classes exist. URL-encode spaces in class names:
 
 ```bash
 curl "http://127.0.0.1:8188/object_info/Power%20Lora%20Loader%20(rgthree)"
-curl "http://127.0.0.1:8188/object_info/CLIPLoaderGGUF"
+curl "http://127.0.0.1:8188/object_info/CLIPLoader"
 curl "http://127.0.0.1:8188/object_info/H3AdaLNLoRAFix"
 curl "http://127.0.0.1:8188/object_info/MMH3UltimateUpscale"
 curl "http://127.0.0.1:8188/object_info/MiniMaxH3LatentUpscaleWithModel"
@@ -462,6 +461,8 @@ Run in order, stopping to ask the user before the multi-gigabyte steps:
 - [ ] Run `python scripts/download_models.py --comfyui "$COMFYUI"`.
 - [ ] For char-replace: build `depth_anything_v2_vitl-fp16.engine`.
 - [ ] Run `python scripts/download_models.py --comfyui "$COMFYUI" --verify`.
+- [ ] For a new or adapted workflow, follow `skills/workflow-development/SKILL.md` and validate with
+      `python scripts/validate_workflow.py <graph>.api.json --url http://<host>:<port>`.
 - [ ] Confirm key nodes with `/object_info`.
 - [ ] Convert one workflow per family with `comfy run --print-prompt`.
 - [ ] Run Krea T2I end-to-end and verify the output file size.

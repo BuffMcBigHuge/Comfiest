@@ -29,7 +29,8 @@ one target for its lifetime.
 
 `workflows/minimaxh3/` and `workflows/fishdrama3/` are workflow-family subdirectories. Their usage
 notes live in `skills/minimaxh3/`, `skills/minimaxh3-character-replace/`,
-`skills/minimaxh3-upscale/`, `skills/minimaxh3-perfect-loop/`, and `skills/fish-audio-drama3/`.
+`skills/minimaxh3-upscale/`, `skills/minimaxh3-perfect-loop/`,
+`skills/workflow-development/`, and `skills/fish-audio-drama3/`.
 `work/` is the only writable area of the repository.
 
 ```text
@@ -47,6 +48,7 @@ notes live in `skills/minimaxh3/`, `skills/minimaxh3-character-replace/`,
 │   ├── minimaxh3-character-replace/SKILL.md
 │   ├── minimaxh3-upscale/SKILL.md
 │   ├── minimaxh3-perfect-loop/SKILL.md
+│   ├── workflow-development/SKILL.md
 │   └── fish-audio-drama3/SKILL.md
 ├── workflows/
 │   ├── *.json                      # root workflows
@@ -192,6 +194,9 @@ explicit approval.
    local job state lags, download the `outputs[0]` URL directly. Keep the remote filename.
 7. **Verify and log.** Check non-zero size, append the run to `work/logs/run-log.md`, and only then
    use vision (if needed) on your own file.
+8. **Building or adapting a workflow?** Follow
+   [`workflow-development/SKILL.md`](workflow-development/SKILL.md) from inspection through promotion.
+   The shipped tree is read-only; edits belong in `work/scratch/`.
 
 ## Choose a workflow
 
@@ -225,6 +230,7 @@ Routing constraints:
   and the perfect loop are heavy; Drama 3 is heavy on system RAM.
 - The workflow JSON is the final authority on node IDs and model filenames. The family sections call
   out known traps: dead branches, decoy LoRA loaders, optional files that are not installed.
+- To build or adapt a graph, use [`workflow-development/SKILL.md`](workflow-development/SKILL.md).
 
 ## Working directory
 
@@ -326,8 +332,9 @@ Effective settings and gotchas:
   release; add it in a scratch copy if identity drift is unacceptable. Active custom nodes:
   `Krea2EditModelPatch #3063`, `Krea2EditGroundedEncode #3066`, `ConditioningKrea2Rebalance #3055`
   (ref_boost 1, fit mode).
-- The subgraph's inner UNETLoader still names `krea\krea2_turbo_fp8.safetensors`, which is **not
-  installed**. The instance value (`kroma`) wins; do not “fix” the inner loader.
+- The subgraph's inner `UNETLoader` and `CLIPLoader` now name the same models as the instance
+  (`krea\kroma-v0.3.1-turbo-opd.safetensors` and `qwen3vl_4b_fp8_scaled.safetensors`); the graph is
+  self-consistent and has no dead `krea2_turbo_fp8` reference.
 - Output size comes from `PrimitiveInt #74` / `#73`, not from the subgraph `EmptyLatentImage` widget.
   Change both primitives together; 768×1344 gives 9:16.
 - Prompts must be explicitly photorealistic: “cinematic photograph, 35mm, natural skin texture, no
@@ -348,8 +355,8 @@ production graph used four for realism, anatomy, and skin/detail control. The I2
 | `workflows/text2image-fluxklein.json` | text → image | 1024×1280; 4 steps; cfg 1; SharkSampler |
 | `workflows/image2image-fluxklein.json` | image → image | source-size output; reference latent; same edit stack |
 
-**Stack:** `flux\flux-2-klein-9b-fp8.safetensors` UNET, `Qwen3-8B-heretic.Q6_K.gguf` via
-`CLIPLoaderGGUF`, `flux2-vae.safetensors` VAE. Custom packs: `ComfyUI-GGUF`, `RES4LYF`,
+**Stack:** `flux\flux-2-klein-9b-fp8.safetensors` UNET, `qwen_3_8b_fp8mixed.safetensors`
+via `CLIPLoader` (type `flux2`), `flux2-vae.safetensors` VAE. Custom packs: `RES4LYF`,
 `rgthree-comfy`, `was-node-suite-comfyui`, `comfyui-easy-use`, `comfyui-various`.
 
 **Use it when** you want a faster 4-step image with a different aesthetic, or a reference-driven edit
@@ -815,6 +822,10 @@ Run one job before production for any `generated` or `unverified` file.
 
 ## MCP behavior and findings
 
+The full edit/validate/run/promote loop is in
+[`workflow-development/SKILL.md`](workflow-development/SKILL.md). The findings below are the parts
+that most often decide whether a run succeeds.
+
 ### Workflow format
 
 - The MCP accepts both API-format and UI-export JSON, but complex UI exports can fail because
@@ -856,6 +867,10 @@ Run one job before production for any `generated` or `unverified` file.
 - comfy-cli can leave local job state at `queued` after the server reports `completed`; in that case
   `fetch_outputs` may fall back to a local address and fail. Download the `outputs[0]` URL from the
   `job` result directly into the run's `prompt_id` folder and size-check the file.
+- **The target base URL is the ComfyUI URL, not the MCP host.** `outputs[0]` carries `filename`,
+  `subfolder`, and `type`; build the fallback as
+  `http://<comfy-host>:<port>/view?filename=<filename>&subfolder=<subfolder>&type=output`
+  (URL-encode spaces and special characters). `scripts/fetch_output.py` does this automatically.
 - Do not pass `inline_images: true`; collect the local copy, verify provenance, then read that copy if
   vision is needed.
 
@@ -877,8 +892,8 @@ Run one job before production for any `generated` or `unverified` file.
   - `/models/<folder>` for model files.
   - `/system_stats` for version, package versions, VRAM, and uptime.
 - `/object_info` option lists are authoritative; they can reveal files in model paths that `/models`
-  does not list. Example: `Qwen3-8B-heretic.Q6_K.gguf` appears in `CLIPLoaderGGUF` options but not
-  under `/models/text_encoders`.
+  does not list. GGUF encoders appear in `CLIPLoaderGGUF` options but not under
+  `/models/text_encoders`.
 - `/object_info/Drama3Generate` shows the autogrow voice slots (max 16) and speaker-mode options.
   `/object_info/LoadAudio` lists the input clips; sample clips differ between targets, so upload your
   own.
@@ -1002,10 +1017,10 @@ Before production:
 | Perfect loop fails with missing `MiniMaxH3ContexMaskedAVBridge` | `ComfyUI-MiniMaxH3-Context-Loop` is missing or old | Install/update the pack, restart ComfyUI, then `--print-prompt` again. |
 | Perfect loop has an audible gap at the seam | `VHS_VideoCombine` cut audio at the last video DTS | Keep the shipped `CreateVideo` -> `SaveVideo` path; check stream durations with `ffprobe`. |
 | Job state stays `queued` after the server reports `completed` | Local job-state lag | Download the `outputs[0]` URL from the `job` result and size-check it. |
-| `fetch_outputs` errors connecting to a local address | Local state missing; tool fell back to a local ComfyUI URL | Use the remote output URL from `job` directly. |
-| `fetch_outputs` returns `download_job_not_found` | The `prompt_id` was submitted by another machine/agent, or local state was cleared | Download the output URL directly; only inspect files tied to your own `prompt_id`. |
+| `fetch_outputs` errors connecting to a local address | Local state missing; tool fell back to a local ComfyUI URL | Build `http://<comfy-host>:<port>/view?filename=...&subfolder=...&type=output` from `outputs[0]`, or use `scripts/fetch_output.py`. |
+| `fetch_outputs` returns `download_job_not_found` | The `prompt_id` was submitted by another machine/agent, or local state was cleared | Download from the target's `/view` URL; only inspect files tied to your own `prompt_id`. |
 | A file in `work/outputs` or the target's `output/` looks interesting, but you did not submit its job | It belongs to another agent or an older run | Do not use vision. Only inspect files traceable to your own `prompt_id` + run-log entry. |
-| `Qwen3-8B-heretic.Q6_K.gguf` looks missing from `/models/text_encoders` | GGUF files are not listed in that folder | Check `/object_info/CLIPLoaderGGUF`; use `CLIPLoaderGGUF`, not `CLIPLoader`. |
+| A GGUF text encoder looks missing from `/models/text_encoders` | GGUF files are not listed in that folder | Check `/object_info/CLIPLoaderGGUF`; use `CLIPLoaderGGUF`, not `CLIPLoader`. |
 | `server_info` shows a local GPU that is not the target host | `hardware` describes the MCP host; `comfy_target` describes the target | Route on `comfy_target`; use the target's `/system_stats` for the actual host. |
 | `system_stats`/`free_memory` reports the wrong GPU | Those tools are not redirected by `COMFYUI_URL`; they describe the local comfy-cli install | Query `http://<target>/system_stats` for the target host. `free_memory` cannot free a remote or another process. |
 | `download_model` refuses | `COMFYUI_URL` is set | Install the model on the target host; do not bypass with `COMFY_MCP_REMOTE_SHARED_MODELS` unless storage really is shared. |
@@ -1052,7 +1067,7 @@ This file is the repository's operating skill. Keep it portable and current.
   `/object_info/<Class>` rather than assuming the reference deployment's inventory.
 - Optional bypassed models that may be absent and are **not** on any effective path:
   `minimax_h3_latent_upscaler_3d_bf16`, `minimax_h3_video_vae_int8_convrot`,
-  `qwen3vl_32b_minimax_h3_nvfp4_awq`, `krea2_turbo_fp8` (inner loader), and
+  `qwen3vl_32b_minimax_h3_nvfp4_awq`, and
   `krea2bypass_balanced`/`krea2filterbypass3` (disabled slots).
 - RAM/VRAM: all documented workflows assume a 24 GB-class GPU. Drama 3 loads 38.6 GB of experts into
   system RAM; prefer a target with ample RAM and confirm with `/system_stats`.
@@ -1064,5 +1079,6 @@ This file is the repository's operating skill. Keep it portable and current.
 - `skills/minimaxh3-character-replace/SKILL.md` — character-replacement setup and run examples.
 - `skills/minimaxh3-upscale/SKILL.md` — 2K t2v/v2v upscale and refine.
 - `skills/minimaxh3-perfect-loop/SKILL.md` — seamless 154-frame T2AV loop and seam checks.
+- `skills/workflow-development/SKILL.md` — scratch edits, validation, MCP submission, and promotion.
 - `skills/fish-audio-drama3/SKILL.md` — TTS variant index and reference requirements.
 - `work/README.md` — workspace rules and the pointer to this file.

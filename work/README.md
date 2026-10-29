@@ -6,6 +6,22 @@ findings live in [`../skills/SKILL.md`](../skills/SKILL.md).
 Read that first. Everything an agent creates goes here; keep `../workflows/` intact. The only
 exception is editing Markdown documentation there when the rules require it.
 
+## Development loop
+
+To adapt a workflow, follow [`../skills/workflow-development/SKILL.md`](../skills/workflow-development/SKILL.md).
+The short version:
+
+1. Inspect the source graph and the target (`/object_info`, `/models`, `/system_stats`).
+2. Copy it to `scratch/<project>/` and build or patch an API graph there.
+3. Validate with `python ../scripts/validate_workflow.py <graph>.api.json --url http://<host>:<port>`.
+4. Preview with `comfy run --print-prompt` (does not queue), then submit one job through the MCP.
+5. Poll `/history/<prompt_id>` with `../scripts/wait_job.py` if the MCP wait fails.
+6. Collect with `fetch_outputs`, or `../scripts/fetch_output.py`; keep the `prompt_id` folder.
+7. Log the run, then promote only after the public-release checklist passes.
+
+`workflows/` is the shipped, read-only tree. A scratch graph moves back only through promotion, never
+by copying it over a shipped file.
+
 ## Layout
 
 ```text

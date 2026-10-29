@@ -33,8 +33,8 @@ MODELS = [
     # Flux.2 Klein
     ("flux", "black-forest-labs/FLUX.2-klein-9b-fp8", "flux-2-klein-9b-fp8.safetensors",
      "models/diffusion_models/flux/flux-2-klein-9b-fp8.safetensors", 9.4, False),
-    ("flux", "DreamFast/qwen3-8b-heretic", "gguf/qwen3-8b-heretic-Q6_K.gguf",
-     "models/text_encoders/Qwen3-8B-heretic.Q6_K.gguf", 6.7, False),
+    ("flux", "Comfy-Org/Flux-2-Klein-9B", "split_files/text_encoders/qwen_3_8b_fp8mixed.safetensors",
+     "models/text_encoders/qwen_3_8b_fp8mixed.safetensors", 8.7, False),
     ("flux", "Comfy-Org/Flux-2-Klein-9B", "split_files/vae/flux2-vae.safetensors",
      "models/vae/flux2-vae.safetensors", 0.3, False),
 

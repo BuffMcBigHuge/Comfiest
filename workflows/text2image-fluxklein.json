@@ -241,7 +241,7 @@
         "flux\\flux-2-klein-9b-fp8.safetensors",
         "flux2-vae.safetensors",
         "",
-        "Qwen3-8B-heretic.Q6_K.gguf",
+        "qwen_3_8b_fp8mixed.safetensors",
         233592233064240,
         0,
         0
@@ -250,7 +250,7 @@
         "unet_name": "flux\\flux-2-klein-9b-fp8.safetensors",
         "vae_name": "flux2-vae.safetensors",
         "text": "",
-        "clip_name": "Qwen3-8B-heretic.Q6_K.gguf",
+        "clip_name": "qwen_3_8b_fp8mixed.safetensors",
         "noise_seed": 233592233064240,
         "value": 0,
         "value_1": 0
@@ -1635,7 +1635,7 @@
           },
           {
             "id": 420,
-            "type": "CLIPLoaderGGUF",
+            "type": "CLIPLoader",
             "pos": [
               -460,
               390
@@ -1677,17 +1677,26 @@
                 "input_ue_unconnectable": {},
                 "version": "7.5.2"
               },
-              "cnr_id": "comfyui-gguf",
-              "ver": "6ea2651e7df66d7585f6ffee804b20e92fb38b8a",
-              "Node name for S&R": "CLIPLoaderGGUF"
+              "Node name for S&R": "CLIPLoader",
+              "cnr_id": "comfy-core",
+              "ver": "0.25.0",
+              "models": [
+                {
+                  "name": "qwen_3_8b_fp8mixed.safetensors",
+                  "url": "https://huggingface.co/Comfy-Org/Flux-2-Klein-9B/resolve/main/split_files/text_encoders/qwen_3_8b_fp8mixed.safetensors",
+                  "directory": "text_encoders"
+                }
+              ]
             },
             "widgets_values": [
-              "Qwen3-8B-heretic.Q6_K.gguf",
-              "flux2"
+              "qwen_3_8b_fp8mixed.safetensors",
+              "flux2",
+              "default"
             ],
             "widgets_values_named": {
-              "clip_name": "Qwen3-8B-heretic.Q6_K.gguf",
-              "type": "flux2"
+              "clip_name": "qwen_3_8b_fp8mixed.safetensors",
+              "type": "flux2",
+              "device": "default"
             }
           },
           {
