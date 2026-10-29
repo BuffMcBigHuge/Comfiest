@@ -8,14 +8,17 @@ downloads or package changes.
 of free disk**. AMD, Apple Silicon, and CPU-only setups are not supported by this exact graph set:
 the workflows use CUDA `int8_convrot` models, TensorRT depth, and NVIDIA-oriented custom nodes.
 
+The shipped graphs are validated on **ComfyUI 0.43.0**; the perfect-loop graph needs that build's
+core `CreateVideo`/`SaveVideo` nodes.
+
 **What gets installed**
 
 1. ComfyUI (latest stable) + a Python 3.12 environment.
 2. PyTorch built for CUDA 13.0 (required by the `int8_convrot` checkpoints).
-3. 17 required custom-node packs (plus 2 optional), including the MiniMax H3 compatibility/acceleration
+3. 18 required custom-node packs (plus 2 optional), including the MiniMax H3 compatibility/acceleration
 
    nodes.
-4. About 210 GB of model files, downloaded from Hugging Face into the right folders.
+4. About 212 GB of model files, downloaded from Hugging Face into the right folders.
 5. A TensorRT depth engine for the character-replacement workflows.
 6. Optionally, the `comfy-mcp` bridge from [`MCP-SETUP.md`](MCP-SETUP.md) so an agent can submit jobs.
 
@@ -135,6 +138,7 @@ python scripts/install_nodes.py --comfyui "$COMFYUI" --include-optional  # laten
 | `comfyui-krea2edit`                               | <https://github.com/lbouaraba/comfyui-krea2edit>                   | `Krea2EditModelPatch`, `Krea2EditGroundedEncode`                                                                                                         | Krea 2 identity edit.                                                                                 |
 | `ComfyUI-ConditioningKrea2Rebalance`              | <https://github.com/TuZZiL/ComfyUI-ConditioningKrea2Rebalance>     | `ConditioningKrea2Rebalance`                                                                                                                             | Krea 2 conditioning taps.                                                                             |
 | `ComfyUI-PlagueKind-Nodes`                        | <https://github.com/PlagueKind/ComfyUI-PlagueKind-Nodes>           | `H3AdaLNLoRAFix`, `H3SLAAttention`                                                                                                                       | Required by the H3 variants.                                                                          |
+| `ComfyUI-MiniMaxH3-Context-Loop`                  | <https://github.com/ethanfel/ComfyUI-MiniMaxH3-Context-Loop>       | `MiniMaxH3ContexMaskedAVBridge`                                                                                                                          | Perfect-loop graph; the repo keeps the intentional "Contex" spelling in class names.                  |
 | `ComfyUI_Fill-Nodes`                              | <https://github.com/filliptm/ComfyUI_Fill-Nodes>                   | `FL_RIFE`                                                                                                                                                | Frame interpolation to 48 fps.                                                                        |
 | `ComfyUI-Spectrum-MiniMax-H3`                     | <https://github.com/xmarre/ComfyUI-Spectrum-MiniMax-H3>            | `SpectrumApplyMiniMaxH3`                                                                                                                                 | H3 sampler acceleration.                                                                              |
 | `ComfyUI-Impact-Pack`                             | <https://github.com/ltdrdata/ComfyUI-Impact-Pack>                  | `ImpactSwitch`                                                                                                                                           | Switch used in the H3 graph.                                                                          |
@@ -145,6 +149,10 @@ python scripts/install_nodes.py --comfyui "$COMFYUI" --include-optional  # laten
 If a clone or pip install fails, install that pack from ComfyUI-Manager by searching its name, then
 restart ComfyUI. SAM3 in particular uses the experimental `comfy-env`/pixi installer; Manager is the
 more reliable route if `python install.py` fails.
+
+`ComfyUI-MiniMaxH3-Context-Loop` is distributed under two folder spellings. The installer clones the
+canonical `Context` repository; if a `ComfyUI-MiniMaxH3-Contex-Loop` clone already exists, update that
+one instead of installing a second copy. Both export `MiniMaxH3ContexMaskedAVBridge`.
 
 ### Restart and check imports
 
@@ -215,6 +223,8 @@ Paths are relative to `ComfyUI/`. Sizes are approximate.
 | H3 2K | <https://huggingface.co/Kijai/MiniMax-H3-experimental> | `loras/minimax_h3_open_regenerate_2k_refiner_rank_16_bf16.safetensors` | `models/loras/minimax/minimax_h3_open_regenerate_2k_refiner_rank_16_bf16.safetensors` | 0.2 GB |
 | H3 2K | <https://huggingface.co/lightx2v/Minimax-h3-Turbo> | `minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors` | `models/loras/minimax/minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors` | 2.0 GB |
 | H3 2K | <https://huggingface.co/RunningHubAI/rh-minimax-h3-lms-v1.0-r64.safetensors-lora> | `minimax_h3_lms_v1.0_r64.safetensors` | `models/loras/minimax/minimax_h3_lms_v1.0_r64.safetensors` | 1.2 GB |
+| H3 loop | <https://huggingface.co/HAOOOOOOO51/Minimax_h3_fl2v_lightx2v_turbo_4to8step_v0.1-v1.0_768p_v4_step600_dareties_fro095_pruned> | `minimax_h3_fl2v_lightx2v_turbo_4to8step_v0.1-v1.0_768p_v4_step600_dareties_fro095_pruned.safetensors` | `models/loras/minimax/minimax_h3_fl2v_lightx2v_v0.1_dareties_v4_step600_comfy_fro_fulladaln.safetensors` | 0.9 GB |
+| H3 loop | <https://huggingface.co/rzgar/minimax-h3_fl2v_8Step_motion_enhancer> | `minimax-h3_fl2v_8Step_motion_enhancer.safetensors` | `models/loras/minimax/minimax-h3_fl2v_8Step_motion_enhancer.safetensors` | 2.0 GB |
 | SAM3 | <https://huggingface.co/Comfy-Org/sam3.1> | `checkpoints/sam3.1_multiplex_fp16.safetensors` | `models/checkpoints/sam3.1_multiplex_fp16.safetensors` | 1.7 GB |
 | Optional | <https://huggingface.co/akatz-ai/MiniMax-H3-Character-Swap-LoRA> | `h3_character_swap_v1.5.safetensors` | `models/loras/minimax/h3_character_swap_v1.5.safetensors` | 0.2 GB |
 
@@ -227,6 +237,13 @@ family too, so `--only moss` works without a separate Flux download.
 The 2K upscale/refine graphs also need `MiniMaxH3LatentUpscaleWithModel` (ComfyUI PR #17412 or newer);
 verify it with `/object_info/MiniMaxH3LatentUpscaleWithModel`.
 
+The perfect-loop graph was verified with a full-AdaLN conversion of the LightX2V v0.1 4–8 step Turbo
+adapter. The published download is the author's pruned-backbone release of the same Turbo A
+conversion; it drops the 51 AdaLN pairs and keeps the backbone factors. The downloader renames it to
+the filename the graph expects, and `H3AdaLNLoRAFix(mode=port)` handles either form. Re-check the loop
+seam after substituting. It also needs `MiniMaxH3ContexMaskedAVBridge` from
+`ComfyUI-MiniMaxH3-Context-Loop`; verify with `/object_info/MiniMaxH3ContexMaskedAVBridge`.
+
 ### Notes on filenames
 
 The workflows load models by exact filename, including subfolders. The downloader performs these
@@ -234,6 +251,9 @@ renames for you:
 
 - `wan_2.1_vae.safetensors` → `Wan2_1_VAE_bf16.safetensors` (Krea's VAELoader expects this name).
 - `qwen3-8b-heretic-Q6_K.gguf` → `Qwen3-8B-heretic.Q6_K.gguf`.
+- `minimax_h3_fl2v_lightx2v_turbo_4to8step_v0.1-v1.0_768p_v4_step600_dareties_fro095_pruned.safetensors`
+  → `minimax_h3_fl2v_lightx2v_v0.1_dareties_v4_step600_comfy_fro_fulladaln.safetensors` (the
+  perfect-loop graph's Turbo adapter).
 - MiniMax files keep the `minimax/` subfolder used by the graphs.
 
 If you prefer `hf download` manually, download into a temporary folder and move the file to the
@@ -328,6 +348,8 @@ curl "http://127.0.0.1:8188/object_info/CLIPLoaderGGUF"
 curl "http://127.0.0.1:8188/object_info/H3AdaLNLoRAFix"
 curl "http://127.0.0.1:8188/object_info/MMH3UltimateUpscale"
 curl "http://127.0.0.1:8188/object_info/MiniMaxH3LatentUpscaleWithModel"
+curl "http://127.0.0.1:8188/object_info/MiniMaxH3ContexMaskedAVBridge"
+curl "http://127.0.0.1:8188/object_info/SaveVideo"
 curl "http://127.0.0.1:8188/object_info/SpectrumApplyMiniMaxH3"
 curl "http://127.0.0.1:8188/object_info/DepthAnythingTensorrt"
 curl "http://127.0.0.1:8188/object_info/SAM3_Detect"
@@ -352,6 +374,7 @@ comfy run --workflow workflows/text2image-fluxklein.json    --print-prompt --hos
 comfy run --workflow workflows/text2image-moss.json         --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/minimaxh3/ref2video-minimax-1p.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/minimaxh3/api/upscale-minimax-2k-v2v.api.json --print-prompt --host 127.0.0.1 --port 8188
+comfy run --workflow workflows/minimaxh3/api/perfect-loop-minimax-h3.api.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/text2music-yue2.json         --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/text2music-minimaxmusic3.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/fishdrama3/tts-fishdrama3-base.json          --print-prompt --host 127.0.0.1 --port 8188
@@ -421,6 +444,7 @@ Check each model card before commercial use:
 | Fish Audio Drama 3 | Fish Audio Community License |
 | SAM3 | Meta SAM license |
 | LightX2V turbo LoRA | See LightX2V model card |
+| H3 8-step motion enhancer | See the model card |
 
 If a use case requires commercial rights, verify the current model card rather than relying on this
 table.
@@ -436,6 +460,7 @@ Run in order, stopping to ask the user before the multi-gigabyte steps:
 - [ ] Verify `torch.cuda.is_available()`.
 - [ ] Run `python scripts/install_nodes.py --comfyui "$COMFYUI"`.
 - [ ] Restart ComfyUI; confirm no `IMPORT FAILED` in `comfy logs`.
+- [ ] Confirm ComfyUI 0.43.0+ and `/object_info/SaveVideo` for the perfect-loop graph.
 - [ ] Run `python scripts/download_models.py --comfyui "$COMFYUI"`.
 - [ ] For char-replace: build `depth_anything_v2_vitl-fp16.engine`.
 - [ ] Run `python scripts/download_models.py --comfyui "$COMFYUI" --verify`.

@@ -29,7 +29,7 @@ one target for its lifetime.
 
 `workflows/minimaxh3/` and `workflows/fishdrama3/` are workflow-family subdirectories. Their usage
 notes live in `skills/minimaxh3/`, `skills/minimaxh3-character-replace/`,
-`skills/minimaxh3-upscale/`, and `skills/fish-audio-drama3/`.
+`skills/minimaxh3-upscale/`, `skills/minimaxh3-perfect-loop/`, and `skills/fish-audio-drama3/`.
 `work/` is the only writable area of the repository.
 
 ```text
@@ -46,6 +46,7 @@ notes live in `skills/minimaxh3/`, `skills/minimaxh3-character-replace/`,
 │   ├── minimaxh3/SKILL.md
 │   ├── minimaxh3-character-replace/SKILL.md
 │   ├── minimaxh3-upscale/SKILL.md
+│   ├── minimaxh3-perfect-loop/SKILL.md
 │   └── fish-audio-drama3/SKILL.md
 ├── workflows/
 │   ├── *.json                      # root workflows
@@ -74,12 +75,14 @@ directory) and reuse that absolute prefix for the session.
 - Never add, edit, reformat, re-save, rename, or delete a `.json` under `workflows/`, including
   `workflows/minimaxh3/`, `workflows/minimaxh3/api/`, and `workflows/fishdrama3/`. Preserve bytes exactly:
   no line-ending, whitespace, or key-order normalization.
-- **Maintained additions:** the two `*-forced` UI files, their two API mirrors, and the three
-  `charreplace-*` API workflows are maintained rather than one-off templates. Edit them only on an
-  explicit user request.
+- **Maintained additions:** the two `*-forced` UI files, their two API mirrors, the three
+  `charreplace-*` API workflows, the three `upscale-*` API workflows, and
+  `perfect-loop-minimax-h3.api.json` are maintained rather than one-off templates. Edit them only on
+  an explicit user request.
 - **Markdown documentation lives in `skills/`.** Inventory and usage notes belong in this file or in
   the family/recipe subskills (`skills/minimaxh3/`, `skills/minimaxh3-character-replace/`,
-  `skills/fish-audio-drama3/`). Do not add Markdown to `workflows/`.
+  `skills/minimaxh3-upscale/`, `skills/minimaxh3-perfect-loop/`, `skills/fish-audio-drama3/`). Do
+  not add Markdown to `workflows/`.
 - **Runtime edits are allowed; saving is not.** Change widgets and links in the ComfyUI UI for a run,
   but do not save over a workflow file. For a modified graph, write a copy under `work/scratch/` and
   never copy it back into a workflow directory.
@@ -203,6 +206,7 @@ explicit approval.
 | Song from caption + lyrics | MiniMax Music 3 | `workflows/text2music-minimaxmusic3.json` | caption-driven; tiled audio decode |
 | Video from text or references | MiniMax H3 | `workflows/minimaxh3/*.json` + `api/*.api.json` | 8 s, audio, 14 P/V/A variants + 3 charreplace workflows |
 | 2K upscale / refine | MiniMax H3 + refiner | `workflows/minimaxh3/api/upscale-*.api.json` | t2v/v2v latent upscale; 2560×1440 output |
+| Seamless video loop | MiniMax H3 Perfect Loop | `workflows/minimaxh3/api/perfect-loop-minimax-h3.api.json` | 154 f / 6.42 s; audio included; ×2 seam check |
 | Speech or voice clone | Fish Audio Drama 3 | `workflows/fishdrama3/*.json` | 1–2 speaker TTS; four canonical variants |
 
 How to use the table:
@@ -217,8 +221,8 @@ How to use the table:
 
 Routing constraints:
 
-- One job at a time per target. Krea/Flux/MOSS are light; Music 3, MiniMax H3, and the 2K upscale path
-  are heavy; Drama 3 is heavy on system RAM.
+- One job at a time per target. Krea/Flux/MOSS are light; Music 3, MiniMax H3, the 2K upscale path,
+  and the perfect loop are heavy; Drama 3 is heavy on system RAM.
 - The workflow JSON is the final authority on node IDs and model filenames. The family sections call
   out known traps: dead branches, decoy LoRA loaders, optional files that are not installed.
 
@@ -738,6 +742,10 @@ stronger identity transfer. See `skills/minimaxh3-character-replace/SKILL.md` an
 For 2K upscale/refine (t2v and v2v), see `skills/minimaxh3-upscale/SKILL.md` and the three
 `workflows/minimaxh3/api/upscale-*.api.json` graphs. They are API-first and have no UI twins.
 
+For seamless text-to-video loops (154 frames / 6.42 s, with synchronized audio), see
+`skills/minimaxh3-perfect-loop/SKILL.md` and
+`workflows/minimaxh3/api/perfect-loop-minimax-h3.api.json`. It is API-first and has no UI twin.
+
 Reference placeholders: every image slot uses `example.png`, every video slot `example.mp4`, and every
 audio slot `example.wav`.
 
@@ -991,6 +999,8 @@ Before production:
 | Outputs land in unexpected remote folders | An agent changed a workflow save prefix | Never change `filename_prefix`; collect the run by `prompt_id` into `work/outputs`. |
 | `text2image-moss.json` ignores edits to the inner KSampler, seed, size, or loaders | The subgraph instance overrides those widgets | Edit instance `#18` (steps/cfg/sampler/scheduler/negative/models), `ResolutionSelector #19` (size), and `SeedNode #3072` (seed). |
 | 2K upscale fails with missing `MiniMaxH3LatentUpscaleWithModel` | ComfyUI is older than PR #17412 | Update ComfyUI; verify `/object_info/MiniMaxH3LatentUpscaleWithModel`. |
+| Perfect loop fails with missing `MiniMaxH3ContexMaskedAVBridge` | `ComfyUI-MiniMaxH3-Context-Loop` is missing or old | Install/update the pack, restart ComfyUI, then `--print-prompt` again. |
+| Perfect loop has an audible gap at the seam | `VHS_VideoCombine` cut audio at the last video DTS | Keep the shipped `CreateVideo` -> `SaveVideo` path; check stream durations with `ffprobe`. |
 | Job state stays `queued` after the server reports `completed` | Local job-state lag | Download the `outputs[0]` URL from the `job` result and size-check it. |
 | `fetch_outputs` errors connecting to a local address | Local state missing; tool fell back to a local ComfyUI URL | Use the remote output URL from `job` directly. |
 | `fetch_outputs` returns `download_job_not_found` | The `prompt_id` was submitted by another machine/agent, or local state was cleared | Download the output URL directly; only inspect files tied to your own `prompt_id`. |
@@ -1026,15 +1036,16 @@ This file is the repository's operating skill. Keep it portable and current.
 > A machine with nothing installed yet? Follow [`COMFY-SETUP.md`](../COMFY-SETUP.md) first. It covers
 > ComfyUI, PyTorch/CUDA, every custom-node pack, every model file, and the TensorRT depth engine.
 
-- ComfyUI 0.42.0 or newer.
+- ComfyUI 0.43.0 or newer (the perfect loop uses core `CreateVideo`/`SaveVideo`).
 - 2K upscale/refine needs `MiniMaxH3LatentUpscaleWithModel` (ComfyUI PR #17412 or newer).
 - ComfyUI frontend 1.57.1 or newer.
 - `comfy-aimdo` >= 0.6.0, `comfy-kitchen` >= 0.2.40, `comfyui-workflow-templates` >= 0.11.96.
 - Node packs: `rgthree-comfy`, `ComfyUI-GGUF`, `RES4LYF`, `was-node-suite-comfyui`,
   `comfyui-easy-use`, `comfyui-various`, `ComfyUI-KJNodes`, `ComfyUI-VideoHelperSuite`,
   `ComfyUI-Drama3`, `comfyui-krea2edit`, `ComfyUI-ConditioningKrea2Rebalance`,
-  `comfyui-plaguekind-nodes`, `ComfyUI_Fill-Nodes`, `ComfyUI-Spectrum-MiniMax-H3`,
-  `ComfyUI-Impact-Pack`, `ComfyUI-SAM3`, `ComfyUI-Depth-Anything-Tensorrt`.
+  `comfyui-plaguekind-nodes`, `ComfyUI-MiniMaxH3-Context-Loop`, `ComfyUI_Fill-Nodes`,
+  `ComfyUI-Spectrum-MiniMax-H3`, `ComfyUI-Impact-Pack`, `ComfyUI-SAM3`,
+  `ComfyUI-Depth-Anything-Tensorrt`.
   Optional: `ComfyUI-Frame-Interpolation` (the H3 graphs use Fill-Nodes `FL_RIFE`) and the latent
   upscaler pack.
 - Models: see the family sections. Verify each target with `/models/<folder>` and
@@ -1052,5 +1063,6 @@ This file is the repository's operating skill. Keep it portable and current.
 - `skills/minimaxh3/SKILL.md` — variant matrix and lip-sync guidance.
 - `skills/minimaxh3-character-replace/SKILL.md` — character-replacement setup and run examples.
 - `skills/minimaxh3-upscale/SKILL.md` — 2K t2v/v2v upscale and refine.
+- `skills/minimaxh3-perfect-loop/SKILL.md` — seamless 154-frame T2AV loop and seam checks.
 - `skills/fish-audio-drama3/SKILL.md` — TTS variant index and reference requirements.
 - `work/README.md` — workspace rules and the pointer to this file.

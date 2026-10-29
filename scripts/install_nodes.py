@@ -43,6 +43,8 @@ NODES = [
     ("ComfyUI-Depth-Anything-Tensorrt",
      "https://github.com/yuvraj108c/ComfyUI-Depth-Anything-Tensorrt.git", False, False),
     ("ComfyUI-SAM3", "https://github.com/PozzettiAndrea/ComfyUI-SAM3.git", True, False),
+    ("ComfyUI-MiniMaxH3-Context-Loop",
+     "https://github.com/ethanfel/ComfyUI-MiniMaxH3-Context-Loop.git", False, False),
     ("Comfyui_Minimax_h3_latent_Upscaler",
      "https://github.com/LBH-123-AI/Comfyui_Minimax_h3_latent_Upscaler.git", False, True),
 ]

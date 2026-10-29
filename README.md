@@ -40,6 +40,7 @@ Built for the [Comfy Org Open Source Higgsfield](https://comfy.org/open-source-h
 | **Music** | YuE2 3B, MiniMax Music 3 |
 | **Video from text or references** | MiniMax H3 — text-to-video, 1–2 pictures, video/audio references, forced lip-sync, character swap |
 | **2K upscale / refine** | MiniMax H3 refiner — latent-space t2v/v2v upscale to 2560×1440 |
+| **Seamless loops** | MiniMax H3 Perfect Loop — text-to-looping-video with synchronized audio |
 
 **No partner nodes. No API keys. No credits.** Everything runs on your own ComfyUI with open weights.
 
@@ -66,17 +67,17 @@ The agent should:
 If your agent supports skills:
 
 - Copy `skills/SKILL.md` to `<client-skills>/comfiest/SKILL.md` for the umbrella rules and routing.
-- Copy `skills/minimaxh3/`, `skills/minimaxh3-character-replace/`, `skills/minimaxh3-upscale/`, and
-  `skills/fish-audio-drama3/` as sibling skill directories if your client discovers each skill
-  separately.
+- Copy `skills/minimaxh3/`, `skills/minimaxh3-character-replace/`, `skills/minimaxh3-upscale/`,
+  `skills/minimaxh3-perfect-loop/`, and `skills/fish-audio-drama3/` as sibling skill directories if
+  your client discovers each skill separately.
 
 The umbrella carries the hard rules and routing; the subskills carry family and recipe detail.
 
 ## What your agent gets
 
 - **Routing that respects hardware.** Krea/Flux/MOSS for images, YuE2/Music 3 for songs, Drama 3 for
-  speech, MiniMax H3 for video and 2K refine. Heavy models are called out before they blow up a 24 GB
-  card.
+  speech, MiniMax H3 for video, 2K refine, and seamless loops. Heavy models are called out before
+  they blow up a 24 GB card.
 - **Workflow templates that actually run.** UI files for ComfyUI, pre-slimmed `api/*.api.json`
   mirrors for MCP execution, and conversion notes for the frontend-only nodes that break API runs.
 - **A submission loop that survives real life.** `wait: false` + `/history` polling, direct output
@@ -90,7 +91,7 @@ The umbrella carries the hard rules and routing; the subskills carry family and 
 
 ### 1. Set up ComfyUI
 
-Install ComfyUI 0.42 or newer with the node packs and models listed in
+Install ComfyUI 0.43 or newer with the node packs and models listed in
 [`skills/SKILL.md`](skills/SKILL.md#target-requirements). A 24 GB-class GPU is the baseline. Drama 3
 loads 38.6 GB of experts into system RAM; use a high-RAM host.
 
@@ -170,12 +171,14 @@ host:
 | Speech / voice clone | Fish Audio Drama 3 | [Speech workflows](workflows/fishdrama3/) | 4 variants, 1–2 speakers |
 | Video + audio | MiniMax H3 | [Video workflows](workflows/minimaxh3/) | 14 variants + 3 char-replace workflows |
 | 2K upscale / refine | MiniMax H3 + refiner | [Upscale workflows](workflows/minimaxh3/api/) | t2v/v2v; 2560×1440; 5 s and 8 s |
+| Seamless video loop | MiniMax H3 Perfect Loop | [Perfect loop workflow](workflows/minimaxh3/api/perfect-loop-minimax-h3.api.json) | 154 f / 6.42 s; audio; ×2 seam check |
 
 MiniMax H3 is the video workhorse: text-to-video, 1–2 picture references, video/audio references,
 forced-audio lip-sync, and character replacement. See
 [`skills/minimaxh3/SKILL.md`](skills/minimaxh3/SKILL.md) for the variant matrix and
-[`minimaxh3-character-replace`](skills/minimaxh3-character-replace/SKILL.md) for the swap pipeline and
-[`minimaxh3-upscale`](skills/minimaxh3-upscale/SKILL.md) for 2K t2v/v2v refine.
+[`minimaxh3-character-replace`](skills/minimaxh3-character-replace/SKILL.md) for the swap pipeline,
+[`minimaxh3-upscale`](skills/minimaxh3-upscale/SKILL.md) for 2K t2v/v2v refine, and
+[`minimaxh3-perfect-loop`](skills/minimaxh3-perfect-loop/SKILL.md) for seamless 154-frame loops.
 
 ## Repository layout
 
@@ -192,11 +195,12 @@ forced-audio lip-sync, and character replacement. See
 │   ├── minimaxh3/SKILL.md   # H3 variant matrix and execution notes
 │   ├── minimaxh3-character-replace/SKILL.md
 │   ├── minimaxh3-upscale/SKILL.md
+│   ├── minimaxh3-perfect-loop/SKILL.md
 │   └── fish-audio-drama3/SKILL.md
 ├── scripts/
 │   ├── install_nodes.py     # clone/update custom nodes, pip requirements
 │   └── download_models.py   # Hugging Face downloads into ComfyUI folders
-├── workflows/               # 47 workflow templates
+├── workflows/               # 48 workflow templates
 │   ├── *.json
 │   ├── fishdrama3/          # TTS base + variants
 │   └── minimaxh3/           # H3 base, UI variants, api/ mirrors
@@ -224,10 +228,11 @@ forced-audio lip-sync, and character replacement. See
 
 This repository is the sanitized public edition of a working production suite:
 
-- Non-turbo LoRAs (character, style, anatomy, adult-oriented) were removed. Only the MiniMax H3
-  `lightx2v`-family turbo LoRA remains, plus the model-native distilled samplers.
-- Every baked-in prompt was replaced with a fox-themed demo prompt. Reference audio/image names were
-  genericized.
+- Non-functional LoRAs (character, style, anatomy, adult-oriented) were removed. The surviving LoRAs
+  are functional: MiniMax H3 turbo adapters (v1.0/v1.2 and 4–8 step), the 2K refiner and LMS
+  sharpener, the 8-step motion enhancer, and the MOSS-Image DMD sampler.
+- Every baked-in prompt was replaced with a neutral demo prompt (fox-themed for t2v). Reference
+  image, video, and audio names were genericized to `example.*`.
 - UI workflows were conversion-validated against a live ComfyUI target; the sanitized graphs have not
   been executed end-to-end. Run one job before relying on a template in production.
 
@@ -236,16 +241,16 @@ fork rather than editing the shipped template.
 
 ## Requirements
 
-- ComfyUI 0.42+ and frontend 1.57.1+.
+- ComfyUI 0.43+ and frontend 1.57.1+.
 - `comfy-cli` + `comfy-mcp` (Python 3.12 tested).
 - Node packs: the full set is installed by [`COMFY-SETUP.md`](COMFY-SETUP.md) — rgthree, GGUF,
   RES4LYF, WAS, Easy-Use, various, KJNodes, VideoHelperSuite, Drama3, krea2edit, Conditioning
-  Rebalance, PlagueKind, Fill-Nodes, Spectrum, Impact Pack, SAM3, and Depth-Anything-TensorRT.
-  Frame-Interpolation is optional (the H3 graphs use Fill-Nodes `FL_RIFE`).
+  Rebalance, PlagueKind, Context-Loop, Fill-Nodes, Spectrum, Impact Pack, SAM3, and
+  Depth-Anything-TensorRT. Frame-Interpolation is optional (the H3 graphs use Fill-Nodes `FL_RIFE`).
 - Models: Krea 2 Turbo/Edit, Flux.2 Klein 9B + Qwen3-8B GGUF, MOSS-Image, YuE2 3B, MiniMax Music 3,
-  Fish Audio Drama 3, MiniMax H3 fastvideo stack + 2K refiner/upscaler. Exact filenames live in the
-  workflow sections of [`skills/SKILL.md`](skills/SKILL.md); verify each host with `/models/<folder>`
-  and `/object_info`.
+  Fish Audio Drama 3, MiniMax H3 fastvideo stack + 2K refiner/upscaler and loop adapters. Exact
+  filenames live in the workflow sections of [`skills/SKILL.md`](skills/SKILL.md); verify each host
+  with `/models/<folder>` and `/object_info`.
   The full download list, Hugging Face locations, and folder layout are in
   [`COMFY-SETUP.md`](COMFY-SETUP.md).
 - GPU: 24 GB-class for video and Drama 3; 128 GB+ system RAM recommended for Drama 3.

@@ -1,0 +1,609 @@
+{
+  "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+      "unet_name": "minimax\\minimax_h3_fastvideo_vsa_datafree_1300step_4step_int8_convrot.safetensors",
+      "weight_dtype": "default"
+    },
+    "_meta": {
+      "title": "Load Diffusion Model"
+    }
+  },
+  "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen3vl_32b_minimax_h3_int8_convrot.safetensors",
+      "type": "minimax",
+      "device": "default"
+    },
+    "_meta": {
+      "title": "Load CLIP"
+    }
+  },
+  "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "minimax\\minimax_h3_video_vae_fp16.safetensors"
+    },
+    "_meta": {
+      "title": "Load Video VAE"
+    }
+  },
+  "4": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "minimax\\minimax_h3_audio_vae_fp32.safetensors"
+    },
+    "_meta": {
+      "title": "Load Audio VAE"
+    }
+  },
+  "5": {
+    "class_type": "Power Lora Loader (rgthree)",
+    "inputs": {
+      "model": [
+        "1",
+        0
+      ],
+      "clip": [
+        "2",
+        0
+      ],
+      "PowerLoraLoaderHeaderWidget": {
+        "type": "PowerLoraLoaderHeaderWidget"
+      },
+      "lora_1": {
+        "on": true,
+        "lora": "minimax\\minimax_h3_fl2v_lightx2v_v0.1_dareties_v4_step600_comfy_fro_fulladaln.safetensors",
+        "strength": 0.8
+      },
+      "lora_2": {
+        "on": true,
+        "lora": "minimax\\minimax-h3_fl2v_8Step_motion_enhancer.safetensors",
+        "strength": 0.5
+      }
+    },
+    "_meta": {
+      "title": "LoRA Stack"
+    }
+  },
+  "6": {
+    "class_type": "H3AdaLNLoRAFix",
+    "inputs": {
+      "model": [
+        "5",
+        0
+      ],
+      "mode": "port"
+    },
+    "_meta": {
+      "title": "H3 AdaLN LoRA Fix"
+    }
+  },
+  "7": {
+    "class_type": "H3SLAAttention",
+    "inputs": {
+      "model": [
+        "6",
+        0
+      ],
+      "sparsity_ratio": 0.9,
+      "block_size": "64",
+      "min_seq_len": 8192,
+      "dense_last_steps": 0,
+      "protect_audio": true,
+      "enabled": false,
+      "dense_steps": "1",
+      "dense_backend": "comfy_kitchen",
+      "disable_fp16_accum": true,
+      "stabilize_motion": false,
+      "reference_protection": "Off",
+      "tail_correction": false,
+      "use_int8_qk": true,
+      "engine": "comfy_kitchen"
+    },
+    "_meta": {
+      "title": "H3 SLA Attention (dense)"
+    }
+  },
+  "8": {
+    "class_type": "BasicScheduler",
+    "inputs": {
+      "model": [
+        "7",
+        0
+      ],
+      "scheduler": "beta",
+      "steps": 8,
+      "denoise": 1.0
+    },
+    "_meta": {
+      "title": "Beta 8-Step Schedule"
+    }
+  },
+  "9": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+      "sampler_name": "er_sde"
+    },
+    "_meta": {
+      "title": "er_sde Sampler"
+    }
+  },
+  "10": {
+    "class_type": "PrimitiveStringMultiline",
+    "inputs": {
+      "value": "integrated_multimodal_description: [Shot 1] Continuous video, continuous single shot, no video cuts. Looping video. Video loops seamlessly at the end.\nA red fox trots through a snowy pine forest at dawn, camera slowly orbiting around the fox, soft golden light, detailed fur, falling snow.\noverall_soundscape: quiet winter forest, soft wind, crisp snow crunch.\nnon_diegetic_music: N/A"
+    },
+    "_meta": {
+      "title": "Prompt"
+    }
+  },
+  "11": {
+    "class_type": "MiniMaxH3ReferenceToVideo",
+    "inputs": {
+      "clip": [
+        "5",
+        1
+      ],
+      "prompt": [
+        "10",
+        0
+      ],
+      "width": 416,
+      "height": 736,
+      "length": 56,
+      "ref_image_size": "match",
+      "vae": [
+        "3",
+        0
+      ],
+      "audio_vae": [
+        "4",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Anchor 56f (T2AV)"
+    }
+  },
+  "12": {
+    "class_type": "RandomNoise",
+    "inputs": {
+      "noise_seed": 608531924772021
+    },
+    "_meta": {
+      "title": "Anchor Noise"
+    }
+  },
+  "13": {
+    "class_type": "BasicGuider",
+    "inputs": {
+      "model": [
+        "7",
+        0
+      ],
+      "conditioning": [
+        "11",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Anchor Guider"
+    }
+  },
+  "14": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+      "noise": [
+        "12",
+        0
+      ],
+      "guider": [
+        "13",
+        0
+      ],
+      "sampler": [
+        "9",
+        0
+      ],
+      "sigmas": [
+        "8",
+        0
+      ],
+      "latent_image": [
+        "11",
+        1
+      ]
+    },
+    "_meta": {
+      "title": "Anchor Sampler"
+    }
+  },
+  "15": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "14",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Decode Anchor Video"
+    }
+  },
+  "16": {
+    "class_type": "VAEDecodeAudio",
+    "inputs": {
+      "samples": [
+        "14",
+        0
+      ],
+      "vae": [
+        "4",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Decode Anchor Audio"
+    }
+  },
+  "17": {
+    "class_type": "GetImageRangeFromBatch",
+    "inputs": {
+      "images": [
+        "15",
+        0
+      ],
+      "start_index": 8,
+      "num_frames": 40
+    },
+    "_meta": {
+      "title": "Anchor Core 40f"
+    }
+  },
+  "18": {
+    "class_type": "TrimAudioDuration",
+    "inputs": {
+      "audio": [
+        "16",
+        0
+      ],
+      "start_index": 0.3333333333,
+      "duration": 1.6666666667
+    },
+    "_meta": {
+      "title": "Anchor Core Audio"
+    }
+  },
+  "19": {
+    "class_type": "EmptyMiniMaxH3LatentAV",
+    "inputs": {
+      "width": 416,
+      "height": 736,
+      "length": 192
+    },
+    "_meta": {
+      "title": "Bridge 192f Target"
+    }
+  },
+  "20": {
+    "class_type": "MiniMaxH3ContexMaskedAVBridge",
+    "inputs": {
+      "latent": [
+        "19",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ],
+      "audio_vae": [
+        "4",
+        0
+      ],
+      "start_frames": [
+        "17",
+        0
+      ],
+      "end_frames": [
+        "17",
+        0
+      ],
+      "start_fps": 24.0,
+      "end_fps": 24.0,
+      "preserve_frames": 39,
+      "crop": "disabled",
+      "start_audio": [
+        "18",
+        0
+      ],
+      "end_audio": [
+        "18",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Preserve Core Tail+Head"
+    }
+  },
+  "21": {
+    "class_type": "MiniMaxH3ReferenceToVideo",
+    "inputs": {
+      "clip": [
+        "5",
+        1
+      ],
+      "prompt": [
+        "10",
+        0
+      ],
+      "width": 416,
+      "height": 736,
+      "length": 192,
+      "ref_image_size": "match",
+      "vae": [
+        "3",
+        0
+      ],
+      "audio_vae": [
+        "4",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Bridge 192f (T2AV)"
+    }
+  },
+  "22": {
+    "class_type": "RandomNoise",
+    "inputs": {
+      "noise_seed": 987654321098765
+    },
+    "_meta": {
+      "title": "Bridge Noise"
+    }
+  },
+  "23": {
+    "class_type": "BasicGuider",
+    "inputs": {
+      "model": [
+        "7",
+        0
+      ],
+      "conditioning": [
+        "21",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Bridge Guider"
+    }
+  },
+  "24": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+      "noise": [
+        "22",
+        0
+      ],
+      "guider": [
+        "23",
+        0
+      ],
+      "sampler": [
+        "9",
+        0
+      ],
+      "sigmas": [
+        "8",
+        0
+      ],
+      "latent_image": [
+        "20",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Bridge Sampler"
+    }
+  },
+  "25": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "24",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Decode Bridge Video"
+    }
+  },
+  "26": {
+    "class_type": "VAEDecodeAudio",
+    "inputs": {
+      "samples": [
+        "24",
+        0
+      ],
+      "vae": [
+        "4",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Decode Bridge Audio"
+    }
+  },
+  "27": {
+    "class_type": "GetImageRangeFromBatch",
+    "inputs": {
+      "images": [
+        "25",
+        0
+      ],
+      "start_index": 39,
+      "num_frames": 114
+    },
+    "_meta": {
+      "title": "Bridge Middle 114f"
+    }
+  },
+  "28": {
+    "class_type": "TrimAudioDuration",
+    "inputs": {
+      "audio": [
+        "26",
+        0
+      ],
+      "start_index": 1.625,
+      "duration": 4.75
+    },
+    "_meta": {
+      "title": "Bridge Middle Audio"
+    }
+  },
+  "29": {
+    "class_type": "ImageBatch",
+    "inputs": {
+      "image1": [
+        "17",
+        0
+      ],
+      "image2": [
+        "27",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Loop 154f"
+    }
+  },
+  "30": {
+    "class_type": "AudioConcat",
+    "inputs": {
+      "audio1": [
+        "18",
+        0
+      ],
+      "audio2": [
+        "28",
+        0
+      ],
+      "direction": "after"
+    },
+    "_meta": {
+      "title": "Loop Audio"
+    }
+  },
+  "31": {
+    "class_type": "CreateVideo",
+    "inputs": {
+      "images": [
+        "29",
+        0
+      ],
+      "fps": 24.0,
+      "audio": [
+        "30",
+        0
+      ],
+      "bit_depth": 8,
+      "color_space": "sRGB",
+      "codec": "none"
+    },
+    "_meta": {
+      "title": "Encode Final Loop"
+    }
+  },
+  "37": {
+    "class_type": "SaveVideo",
+    "inputs": {
+      "video": [
+        "31",
+        0
+      ],
+      "filename_prefix": "COMFY_WORKFLOWS/MINIMAX_PERFECT_LOOP",
+      "format": "mp4"
+    },
+    "_meta": {
+      "title": "Save Final Loop"
+    }
+  },
+  "32": {
+    "class_type": "ImageBatch",
+    "inputs": {
+      "image1": [
+        "29",
+        0
+      ],
+      "image2": [
+        "29",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Loop x2 308f"
+    }
+  },
+  "33": {
+    "class_type": "AudioConcat",
+    "inputs": {
+      "audio1": [
+        "30",
+        0
+      ],
+      "audio2": [
+        "30",
+        0
+      ],
+      "direction": "after"
+    },
+    "_meta": {
+      "title": "Loop Audio x2"
+    }
+  },
+  "34": {
+    "class_type": "CreateVideo",
+    "inputs": {
+      "images": [
+        "32",
+        0
+      ],
+      "fps": 24.0,
+      "audio": [
+        "33",
+        0
+      ],
+      "bit_depth": 8,
+      "color_space": "sRGB",
+      "codec": "none"
+    },
+    "_meta": {
+      "title": "Encode Final Loop x2"
+    }
+  },
+  "38": {
+    "class_type": "SaveVideo",
+    "inputs": {
+      "video": [
+        "34",
+        0
+      ],
+      "filename_prefix": "COMFY_WORKFLOWS/MINIMAX_PERFECT_LOOP_X2",
+      "format": "mp4"
+    },
+    "_meta": {
+      "title": "Save Final Loop x2"
+    }
+  }
+}
