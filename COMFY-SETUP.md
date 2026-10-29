@@ -18,7 +18,7 @@ core `CreateVideo`/`SaveVideo` nodes.
 3. 18 required custom-node packs (plus 2 optional), including the MiniMax H3 compatibility/acceleration
 
    nodes.
-4. About 212 GB of model files, downloaded from Hugging Face into the right folders.
+4. About 210 GB of model files, downloaded from Hugging Face into the right folders.
 5. A TensorRT depth engine for the character-replacement workflows.
 6. Optionally, the `comfy-mcp` bridge from [`MCP-SETUP.md`](MCP-SETUP.md) so an agent can submit jobs.
 
@@ -224,7 +224,6 @@ Paths are relative to `ComfyUI/`. Sizes are approximate.
 | H3 2K | <https://huggingface.co/lightx2v/Minimax-h3-Turbo> | `minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors` | `models/loras/minimax/minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors` | 2.0 GB |
 | H3 2K | <https://huggingface.co/RunningHubAI/rh-minimax-h3-lms-v1.0-r64.safetensors-lora> | `minimax_h3_lms_v1.0_r64.safetensors` | `models/loras/minimax/minimax_h3_lms_v1.0_r64.safetensors` | 1.2 GB |
 | H3 loop | <https://huggingface.co/HAOOOOOOO51/Minimax_h3_fl2v_lightx2v_turbo_4to8step_v0.1-v1.0_768p_v4_step600_dareties_fro095_pruned> | `minimax_h3_fl2v_lightx2v_turbo_4to8step_v0.1-v1.0_768p_v4_step600_dareties_fro095_pruned.safetensors` | `models/loras/minimax/minimax_h3_fl2v_lightx2v_v0.1_dareties_v4_step600_comfy_fro_fulladaln.safetensors` | 0.9 GB |
-| H3 loop | <https://huggingface.co/rzgar/minimax-h3_fl2v_8Step_motion_enhancer> | `minimax-h3_fl2v_8Step_motion_enhancer.safetensors` | `models/loras/minimax/minimax-h3_fl2v_8Step_motion_enhancer.safetensors` | 2.0 GB |
 | SAM3 | <https://huggingface.co/Comfy-Org/sam3.1> | `checkpoints/sam3.1_multiplex_fp16.safetensors` | `models/checkpoints/sam3.1_multiplex_fp16.safetensors` | 1.7 GB |
 | Optional | <https://huggingface.co/akatz-ai/MiniMax-H3-Character-Swap-LoRA> | `h3_character_swap_v1.5.safetensors` | `models/loras/minimax/h3_character_swap_v1.5.safetensors` | 0.2 GB |
 
@@ -444,7 +443,6 @@ Check each model card before commercial use:
 | Fish Audio Drama 3 | Fish Audio Community License |
 | SAM3 | Meta SAM license |
 | LightX2V turbo LoRA | See LightX2V model card |
-| H3 8-step motion enhancer | See the model card |
 
 If a use case requires commercial rights, verify the current model card rather than relying on this
 table.

@@ -31,11 +31,11 @@ Files live in `../../workflows/minimaxh3/api/` and are API format for `run_workf
 The same graph also writes an `_X2` MP4 (308 f / 12.834 s) for checking the stitch; it is not a
 separate workflow file.
 
-**Public-release note.** The stack keeps only the two functional adapters: LightX2V Turbo at 0.8 and
-the 8-step motion enhancer at 0.5. The supplied preset's style/anatomy LoRAs are not shipped. The
-loop math, node graph, sampler settings, and save prefixes are unchanged. The original graph was
-verified end to end; the public graph has been re-validated with `--print-prompt` but not re-rendered
-after the LoRA reduction, so check the seam before production.
+**Public-release note.** The stack keeps a single functional adapter: LightX2V Turbo at 0.8. The
+supplied preset's style/anatomy LoRAs are not shipped. The loop math, node graph, sampler settings,
+and save prefixes are unchanged. The original graph was verified end to end; the public graph has
+been re-validated with `--print-prompt` but not re-rendered after the LoRA reduction, so check the
+seam before production.
 
 ## Loop math
 
@@ -84,7 +84,6 @@ middle follows the 40-frame core, and the bridge's generated tail leads back int
 - Video VAE: `minimax/minimax_h3_video_vae_fp16.safetensors`
 - Audio VAE: `minimax/minimax_h3_audio_vae_fp32.safetensors`
 - Turbo adapter: `minimax/minimax_h3_fl2v_lightx2v_v0.1_dareties_v4_step600_comfy_fro_fulladaln.safetensors`
-- Motion enhancer: `minimax/minimax-h3_fl2v_8Step_motion_enhancer.safetensors`
 - `H3AdaLNLoRAFix(mode=port)` after the LoRA stack
 - `H3SLAAttention` is present but **disabled** (dense pass)
 - 8 steps, `beta` schedule, `er_sde` sampler, cfg 1
@@ -162,7 +161,6 @@ Download paths and folder layout are in [`COMFY-SETUP.md`](../../COMFY-SETUP.md)
 | Text encoder, video/audio VAEs | <https://huggingface.co/Comfy-Org/MiniMax-H3> |
 | fastvideo UNET | <https://huggingface.co/Kijai/MiniMax-H3-experimental> |
 | LightX2V 4–8 step Turbo (public substitute) | <https://huggingface.co/HAOOOOOOO51/Minimax_h3_fl2v_lightx2v_turbo_4to8step_v0.1-v1.0_768p_v4_step600_dareties_fro095_pruned> |
-| 8-step motion enhancer | <https://huggingface.co/rzgar/minimax-h3_fl2v_8Step_motion_enhancer> |
 
 The verified run used a full-AdaLN conversion of the LightX2V v0.1 4–8 step adapter. The published
 file above is the author's pruned-backbone release of the same Turbo A conversion; it drops the 51

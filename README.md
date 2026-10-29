@@ -230,7 +230,7 @@ This repository is the sanitized public edition of a working production suite:
 
 - Non-functional LoRAs (character, style, anatomy, adult-oriented) were removed. The surviving LoRAs
   are functional: MiniMax H3 turbo adapters (v1.0/v1.2 and 4–8 step), the 2K refiner and LMS
-  sharpener, the 8-step motion enhancer, and the MOSS-Image DMD sampler.
+  sharpener, and the MOSS-Image DMD sampler.
 - Every baked-in prompt was replaced with a neutral demo prompt (fox-themed for t2v). Reference
   image, video, and audio names were genericized to `example.*`.
 - UI workflows were conversion-validated against a live ComfyUI target; the sanitized graphs have not
@@ -248,9 +248,9 @@ fork rather than editing the shipped template.
   Rebalance, PlagueKind, Context-Loop, Fill-Nodes, Spectrum, Impact Pack, SAM3, and
   Depth-Anything-TensorRT. Frame-Interpolation is optional (the H3 graphs use Fill-Nodes `FL_RIFE`).
 - Models: Krea 2 Turbo/Edit, Flux.2 Klein 9B + Qwen3-8B GGUF, MOSS-Image, YuE2 3B, MiniMax Music 3,
-  Fish Audio Drama 3, MiniMax H3 fastvideo stack + 2K refiner/upscaler and loop adapters. Exact
-  filenames live in the workflow sections of [`skills/SKILL.md`](skills/SKILL.md); verify each host
-  with `/models/<folder>` and `/object_info`.
+  Fish Audio Drama 3, MiniMax H3 fastvideo stack + 2K refiner/upscaler and the loop Turbo adapter.
+  Exact filenames live in the workflow sections of [`skills/SKILL.md`](skills/SKILL.md); verify each
+  host with `/models/<folder>` and `/object_info`.
   The full download list, Hugging Face locations, and folder layout are in
   [`COMFY-SETUP.md`](COMFY-SETUP.md).
 - GPU: 24 GB-class for video and Drama 3; 128 GB+ system RAM recommended for Drama 3.
