@@ -385,6 +385,7 @@ Repeat for one workflow per family:
 
 ```bash
 comfy run --workflow workflows/text2image-fluxklein.json    --print-prompt --host 127.0.0.1 --port 8188
+comfy run --workflow workflows/image2image-fluxklein-4ref.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/text2image-moss.json         --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/minimaxh3/ref2video-minimax-1p.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/minimaxh3/api/upscale-minimax-2k-v2v.api.json --print-prompt --host 127.0.0.1 --port 8188

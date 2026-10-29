@@ -56,7 +56,7 @@ Built for the [Comfy Org Open Source Higgsfield](https://comfy.org/open-source-h
 | Create | Models and capabilities |
 | --- | --- |
 | **Images from text** | Krea 2 Turbo, Flux.2 Klein 9B, MOSS-Image |
-| **Image edits** | Krea 2 Edit, Flux.2 Klein 9B reference edit |
+| **Image edits** | Krea 2 Edit, Flux.2 Klein 9B reference edit (1–4 references) |
 | **Speech** | Fish Audio Drama 3 — single/dual speaker, voice clone |
 | **Music** | YuE2 3B, MiniMax Music 3 |
 | **Video from text or references** | MiniMax H3 — Pika H3 Flex 6-step default, fastvideo variants, 1–2 pictures, video/audio references, forced lip-sync, character swap |
@@ -182,7 +182,7 @@ host:
 
 | Workflow | Expected input | How to supply it |
 | --- | --- | --- |
-| Krea / Flux edit | `example.png` | Stage in `work/uploads/<project>/`, upload with `upload_file`. |
+| Krea / Flux edit | `example.png` | Stage in `work/uploads/<project>/`, upload with `upload_file`. The Klein 2/3/4-ref graphs need every `LoadImage` slot set; all defaults are `example.png`. |
 | Drama 3 clone variants | `example.wav` | Upload clean single-speaker clips and replace the transcript placeholders to match. |
 | MiniMax H3 reference variants | `example.png`, `example.mp4`, `example.wav` | Upload the slots the variant uses; every image slot uses the same placeholder. |
 
@@ -196,7 +196,7 @@ host:
 | Photoreal text → image | Krea 2 Turbo | [Text to image](workflows/text2image-krea.json) | 1024×1280, 14 steps, no LoRA |
 | Identity-preserving edit | Krea 2 Edit | [Image edit](workflows/image2image-krea-edit.json) | reference image + instruction |
 | Stylized text → image | Flux.2 Klein 9B | [Text to image](workflows/text2image-fluxklein.json) | 4-step RES4LYF |
-| Reference edit | Flux.2 Klein 9B | [Reference edit](workflows/image2image-fluxklein.json) | source-size canvas |
+| Reference edit | Flux.2 Klein 9B | [1 ref](workflows/image2image-fluxklein.json), [2 ref](workflows/image2image-fluxklein-2ref.json), [3 ref](workflows/image2image-fluxklein-3ref.json), [4 ref](workflows/image2image-fluxklein-4ref.json) | ordered reference list; reference 1 sets the canvas |
 | Fast photoreal still / keyframe | MOSS-Image | [Text to image](workflows/text2image-moss.json) | 8-step DMD; 1776×1184; optional prompt upsampler |
 | Song from style + lyrics | YuE2 3B | [Style + lyrics](workflows/text2music-yue2.json) | 120 s, vocals |
 | Song from caption + lyrics | MiniMax Music 3 | [Caption + lyrics](workflows/text2music-minimaxmusic3.json) | tiled audio decode |
@@ -244,7 +244,7 @@ Music 3, and Drama 3; the index maps each to its workflow.
 │   ├── validate_workflow.py # check an API graph against a live target
 │   ├── wait_job.py          # poll /history when the MCP wait fails
 │   └── fetch_output.py      # download outputs when fetch_outputs fails
-├── workflows/               # 54 workflow templates
+├── workflows/               # 57 workflow templates
 │   ├── *.json
 │   ├── fishdrama3/          # TTS base + variants
 │   ├── sam3/                # native image/video matte graphs

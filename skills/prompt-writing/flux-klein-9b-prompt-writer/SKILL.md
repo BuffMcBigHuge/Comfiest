@@ -59,6 +59,8 @@ Do not redescribe the whole reference image. Do not add unrequested improvements
 
 References arrive in order: `<Picture 1>`, `<Picture 2>`, and so on. Never renumber them.
 
+**Comfiest multi-ref note:** the Comfy `ReferenceLatent` chain passes a flat ordered list; it does not bind `<Picture N>` tags to subjects. In the shipped 2/3/4-ref graphs, describe subjects by content (“the woman”, “the coat”, “the loft”), not “reference 2”. Use the tags only as human bookkeeping.
+
 Assign each reference a role: identity, clothing, environment, composition, pose, lighting, or style. Say which characteristics come from which picture, and name the content as well as the number so the instruction survives a reorder.
 
 > Use the person from <Picture 1>, preserving facial identity and hairstyle. Place them in the environment of <Picture 2>, seated in the pose from <Picture 3>. Match the lighting to the new environment.

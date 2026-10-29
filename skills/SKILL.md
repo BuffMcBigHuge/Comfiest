@@ -84,8 +84,8 @@ directory) and reuse that absolute prefix for the session.
   no line-ending, whitespace, or key-order normalization.
 - **Maintained additions:** the two `*-forced` UI files, their two API mirrors, the three
   `charreplace-*` API workflows, the three `upscale-*` API workflows, the three `sam3-*` API
-  workflows, the three `pika-h3-*` API workflows, and `perfect-loop-minimax-h3.api.json` are
-  maintained rather than one-off templates.
+  workflows, the three `pika-h3-*` API workflows, the three `image2image-fluxklein-{2,3,4}ref.json`
+  additions, and `perfect-loop-minimax-h3.api.json` are maintained rather than one-off templates.
   Edit them only on an explicit user request.
 - **Markdown documentation lives in `skills/`.** Inventory and usage notes belong in this file or in
   the family/recipe subskills (`skills/minimaxh3/`, `skills/minimaxh3-character-replace/`,
@@ -211,7 +211,7 @@ explicit approval.
 | Photoreal text → image | Krea 2 Turbo | `workflows/text2image-krea.json` | 14-step portrait model; no LoRA; 1024×1280 |
 | Identity-preserving image edit | Krea 2 Edit | `workflows/image2image-krea-edit.json` | reference image + instruction; edit conditioning |
 | Stylized or detailed text → image | Flux.2 Klein 9B | `workflows/text2image-fluxklein.json` | 4-step RES4LYF; no custom LoRAs after sanitization |
-| Reference-based Flux edit | Flux.2 Klein 9B | `workflows/image2image-fluxklein.json` | keeps source pose/size; reference latent |
+| Reference-based Flux edit | Flux.2 Klein 9B | `workflows/image2image-fluxklein.json` + `-2ref/-3ref/-4ref` | keeps source pose/size; 1–4 ordered references; ref 1 sets the canvas |
 | Fast photoreal still or keyframe | MOSS-Image | `workflows/text2image-moss.json` | 8-step DMD; 3:2 2 MP (1776×1184); optional prompt upsampler |
 | Song from style + lyrics | YuE2 3B | `workflows/text2music-yue2.json` | full-song model with vocals; 120 s |
 | Song from caption + lyrics | MiniMax Music 3 | `workflows/text2music-minimaxmusic3.json` | caption-driven; tiled audio decode |
@@ -382,18 +382,24 @@ production graph used four for realism, anatomy, and skin/detail control. The I2
 | File | Use | Key behavior |
 | - | - | - |
 | `workflows/text2image-fluxklein.json` | text → image | 1024×1280; 4 steps; cfg 1; SharkSampler |
-| `workflows/image2image-fluxklein.json` | image → image | source-size output; reference latent; same edit stack |
+| `workflows/image2image-fluxklein.json` | image → image | source-size output; 1 reference latent; same edit stack |
+| `workflows/image2image-fluxklein-2ref.json` | 2 images → image | two ordered references; 2 encodes, 4 ReferenceLatent; 34 nodes |
+| `workflows/image2image-fluxklein-3ref.json` | 3 images → image | three ordered references; 3 encodes, 6 ReferenceLatent; 39 nodes |
+| `workflows/image2image-fluxklein-4ref.json` | 4 images → image | four ordered references; 4 encodes, 8 ReferenceLatent; 44 nodes |
 
 **Stack:** `flux\flux-2-klein-9b-fp8.safetensors` UNET, `qwen_3_8b_fp8mixed.safetensors`
 via `CLIPLoader` (type `flux2`), `flux2-vae.safetensors` VAE. Custom packs: `RES4LYF`,
 `rgthree-comfy`, `was-node-suite-comfyui`, `comfyui-easy-use`, `comfyui-various`.
 
-**Use it when** you want a faster 4-step image with a different aesthetic, or a reference-driven edit
-whose canvas should match the source. **Don't use it for** video or audio.
+**Use it when** you want a faster 4-step image with a different aesthetic, a reference-driven edit
+whose canvas should match the source, or a 2–4 reference composite. **Don't use it for** video or
+audio.
 
-Both files use the subgraph **Image Edit (Flux.2 Klein 9B)**. In the T2I file the subgraph's
+All five files use the subgraph **Image Edit (Flux.2 Klein 9B)**. In the T2I file the subgraph's
 `reference_image1` input is unconnected, so it runs as text-to-image. In the I2I file,
-`LoadImage #710` feeds both the reference conditioning and `GetImageSize`.
+`LoadImage #710` feeds both the reference conditioning and `GetImageSize`. The multi-ref files add
+`LoadImage #711`–`#713`, one `ImageScaleToTotalPixels` + `VAEEncode` + `ReferenceLatent` chain each,
+and still read the canvas from `#710`; extra references never change output size.
 
 Inputs:
 
@@ -401,7 +407,11 @@ Inputs:
   `PrimitiveInt #2490` (height, default **1280**), `easy seed #601` (see the seed warning).
 - I2I: `LoadImage #710`, `Text Multiline #640`, `easy seed #601`. Output size comes from the source
   image, not from the width/height nodes.
-- Save: `COMFY_WORKFLOWS/KLEIN` (T2I) and `COMFY_WORKFLOWS/KLEIN_EDIT` (I2I).
+- Multi-ref (2/3/4): `LoadImage #710`–`#713`, `Text Multiline #640`, `easy seed #601`. **Every image
+  slot must be set** (all default to `example.png`), and the model receives a flat ordered list with
+  no per-reference tags — describe subjects by content (“the woman”, “the coat”), never “reference 2”.
+- Save: `COMFY_WORKFLOWS/KLEIN` (T2I), `COMFY_WORKFLOWS/KLEIN_EDIT` (I2I), and
+  `COMFY_WORKFLOWS/KLEIN_EDIT_{2,3,4}REF` (multi-ref).
 
 Active sampler path and traps:
 
@@ -426,6 +436,10 @@ Active sampler path and traps:
 - I2I: canvas follows the source dimensions (`GetImageSize` → subgraph width/height). The reference is
   resized to about 1 MP (`ImageScaleToTotalPixels`, nearest-exact) and injected through
   `ReferenceLatent` for positive and negative conditioning. Converted prompt has 29 nodes.
+- Multi-ref: 2/3/4 references convert to 34/39/44 nodes, with 2/3/4 encodes and 4/6/8
+  `ReferenceLatent`; the chains are pos→pos and neg→neg. The last chain feeds both the active
+  `SharkSampler_Beta` and the dead-branch `CFGGuider`. Models, sampler, sigmas, seed, and LoRAs are
+  unchanged from the 1-ref edit.
 - The reference latent dominates scene geometry: a prompt asking for a new surface may only relight
   the existing one. Do not treat this workflow as segmentation/compositing.
 - The subgraph is named “Image Edit” even in the T2I file; that is expected.
@@ -1104,6 +1118,7 @@ Before production:
 | H3 8 s clip is 7.979 s and the timeline drifts | 192-frame request becomes 383 frames after RIFE; the container adds an AAC tail | Probe the video stream, not `format=duration`; pad/trim or request 209 frames. |
 | Pika H3 output is mushy or broken | 8-step scheduler, sigma-shift node, or a stacked turbo adapter | Use `lcm`, the seven Pika sigmas, one adapter at 1.0, and no sigma-shift node. |
 | Pika Ref2VA loses reference identity | Wrong base/adapter pairing | Use `ref2va_pruned` + `pika_h3_flex_ref2va_v1_bf16`; fl2va is for T2V/FL2VA. |
+| Klein multi-ref ignores a reference or mixes subjects | A `LoadImage` slot is unset, or the prompt uses “reference 2” | Set every slot `#710`–`#713`; describe subjects by content (“the woman”, “the coat”). Reference 1 still sets the canvas. |
 | SAM3 returns a nearly-full matte | Absent target falls back to the salient object, or categories union | Use one specific category, raise `13.threshold`, and check mean luma; never stack speculative categories. |
 | SAM3 video frame count multiplies | `13.individual_masks=true` on video | Keep it `false` for video. |
 | SAM3 classes missing or resolve to an old custom pack | ComfyUI lacks core `comfy_extras.nodes_sam3` | Update to 0.43.0+; verify `/object_info/SAM3_Detect` reports `comfy_extras.nodes_sam3`. |
