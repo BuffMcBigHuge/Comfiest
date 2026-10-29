@@ -15,7 +15,7 @@ core `CreateVideo`/`SaveVideo` nodes.
 
 1. ComfyUI (latest stable) + a Python 3.12 environment.
 2. PyTorch built for CUDA 13.0 (required by the `int8_convrot` checkpoints).
-3. 17 required custom-node packs (plus 3 optional), including the MiniMax H3 compatibility/acceleration
+3. 16 required custom-node packs (plus 3 optional), including the MiniMax H3 compatibility/acceleration
 
    nodes.
 4. About 212 GB of model files, downloaded from Hugging Face into the right folders.
@@ -110,7 +110,7 @@ python scripts/install_nodes.py --comfyui "$COMFYUI"
 ```
 
 The script clones each pack into `ComfyUI/custom_nodes`, installs its `requirements.txt` with pip, and
-runs `install.py` where the pack needs it (currently SAM3). It is safe to re-run; existing packs are
+runs `install.py` where a pack provides one. It is safe to re-run; existing packs are
 updated with `git pull --ff-only`.
 
 Useful flags:
@@ -142,13 +142,17 @@ python scripts/install_nodes.py --comfyui "$COMFYUI" --include-optional  # optio
 | `ComfyUI_Fill-Nodes`                              | <https://github.com/filliptm/ComfyUI_Fill-Nodes>                   | `FL_RIFE`                                                                                                                                                | Frame interpolation to 48 fps.                                                                        |
 | `ComfyUI-Spectrum-MiniMax-H3`                     | <https://github.com/xmarre/ComfyUI-Spectrum-MiniMax-H3>            | `SpectrumApplyMiniMaxH3`                                                                                                                                 | H3 sampler acceleration.                                                                              |
 | `ComfyUI-Impact-Pack`                             | <https://github.com/ltdrdata/ComfyUI-Impact-Pack>                  | `ImpactSwitch`                                                                                                                                           | Switch used in the H3 graph.                                                                          |
-| `ComfyUI-SAM3`                                    | <https://github.com/PozzettiAndrea/ComfyUI-SAM3>                   | `F`                                                                                                                                                      | Character-replacement workflows.                                                                      |
 | `ComfyUI-Depth-Anything-Tensorrt`                 | <https://github.com/yuvraj108c/ComfyUI-Depth-Anything-Tensorrt>    | `DepthAnythingTensorrt`                                                                                                                                  | Character-replacement motion guide; needs TensorRT.                                                   |
 | `Comfyui_Minimax_h3_latent_Upscaler` *(optional)* | <https://github.com/LBH-123-AI/Comfyui_Minimax_h3_latent_Upscaler> | 2nd-pass latent upscaler                                                                                                                                 | Only for the bypassed 2nd-pass branch.                                                                |
 
 If a clone or pip install fails, install that pack from ComfyUI-Manager by searching its name, then
-restart ComfyUI. SAM3 in particular uses the experimental `comfy-env`/pixi installer; Manager is the
-more reliable route if `python install.py` fails.
+restart ComfyUI.
+
+Native SAM3 needs no custom pack: on 0.43.0+, `SAM3_Detect`, `SAM3_VideoTrack`, and `SAM3_TrackToMask`
+resolve to `comfy_extras.nodes_sam3`. The graphs load
+`models/checkpoints/sam3.1_multiplex_fp16.safetensors` with `CheckpointLoaderSimple`. If an old
+`ComfyUI-SAM3` clone is still present, remove it to avoid a duplicate/legacy class shadowing the core
+nodes.
 
 `ComfyUI-MiniMaxH3-Context-Loop` is distributed under two folder spellings. The installer clones the
 canonical `Context` repository; if a `ComfyUI-MiniMaxH3-Contex-Loop` clone already exists, update that
@@ -358,6 +362,9 @@ curl "http://127.0.0.1:8188/object_info/SaveVideo"
 curl "http://127.0.0.1:8188/object_info/SpectrumApplyMiniMaxH3"
 curl "http://127.0.0.1:8188/object_info/DepthAnythingTensorrt"
 curl "http://127.0.0.1:8188/object_info/SAM3_Detect"
+curl "http://127.0.0.1:8188/object_info/SAM3_VideoTrack"
+curl "http://127.0.0.1:8188/object_info/SAM3_TrackToMask"
+curl "http://127.0.0.1:8188/object_info/GrowMaskWithBlur"
 ```
 
 A 200 response with a node definition means the class loaded. A 404 means the pack is missing or
@@ -380,6 +387,7 @@ comfy run --workflow workflows/text2image-moss.json         --print-prompt --hos
 comfy run --workflow workflows/minimaxh3/ref2video-minimax-1p.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/minimaxh3/api/upscale-minimax-2k-v2v.api.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/minimaxh3/api/perfect-loop-minimax-h3.api.json --print-prompt --host 127.0.0.1 --port 8188
+comfy run --workflow workflows/sam3/api/sam3-mask-video.api.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/text2music-yue2.json         --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/text2music-minimaxmusic3.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/fishdrama3/tts-fishdrama3-base.json          --print-prompt --host 127.0.0.1 --port 8188
@@ -411,12 +419,11 @@ For agent submission, install `comfy-mcp` and register the target with
 | `int8_convrot` load error, `comfy_kitchen` error, or black output | PyTorch/CUDA mismatch | Install the cu130 PyTorch build; update `comfy-kitchen` via ComfyUI requirements. |
 | TensorRT import error | TensorRT not installed or wrong CUDA | Install `tensorrt` for your CUDA; rebuild the engine on the same GPU. |
 | `DepthAnythingTensorrt` 404 | Depth pack missing | Install `ComfyUI-Depth-Anything-Tensorrt`; restart. |
-| `SAM3_Detect` 404 or SAM3 install fails | SAM3 pack/comfy-env incomplete | Install from Manager, or `pip install -r requirements.txt && python install.py` in the pack. |
+| `SAM3_Detect` 404 or SAM3 classes missing | ComfyUI older than 0.43.0, or an old custom SAM3 pack shadows core | Update ComfyUI; verify `/object_info/SAM3_Detect` reports `python_module: comfy_extras.nodes_sam3`; remove any old `ComfyUI-SAM3` clone. |
 | Download 401/403 for FLUX | Gated repo | Accept the license on the model page, `hf auth login`, retry. |
 | `hf: command not found` | CLI not installed | `python -m pip install -U huggingface_hub`. |
 | CUDA out of memory | 24 GB card + 1.0 MP H3/Drama 3 | Lower H3 to 0.3 MP, run one job at a time, free memory in ComfyUI. |
 | Drama 3 stalls or is very slow | Experts loading from system RAM | Use a 128 GB+ RAM host; first run is slower; keep one job. |
-| `No module named 'comfy_env'` during SAM3 install | Experimental installer missing | `python -m pip install comfy-env` in the pack, or use Manager. |
 | Node works in UI but API run fails | Frontend-only nodes in graph | Use the shipped `api/*.api.json` mirror or strip `Fast Groups Bypasser`/`Label` in `work/scratch`. |
 
 ### If you cannot use CUDA 13 / `int8_convrot`

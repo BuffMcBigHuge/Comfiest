@@ -23,6 +23,7 @@ picture/video/audio references. Every variant uses the same fastvideo stack, a s
   guide.
 - `../minimaxh3-upscale/SKILL.md` — 2K t2v/v2v latent upscale and refine.
 - `../minimaxh3-perfect-loop/SKILL.md` — seamless 154-frame T2AV loop, seam math, and save path.
+- `../sam3/SKILL.md` — native SAM3 mattes when you only need segmentation, not a full replacement.
 
 ## Variant matrix
 

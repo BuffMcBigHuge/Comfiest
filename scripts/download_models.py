@@ -103,7 +103,7 @@ MODELS = [
      "models/loras/minimax/minimax_h3_fl2v_lightx2v_v0.1_dareties_v4_step600_comfy_fro_fulladaln.safetensors",
      0.9, False),
 
-    # SAM3 (character-replacement workflows)
+    # SAM3 (native image/video mattes + character replacement)
     ("sam3", "Comfy-Org/sam3.1", "checkpoints/sam3.1_multiplex_fp16.safetensors",
      "models/checkpoints/sam3.1_multiplex_fp16.safetensors", 1.7, False),
 

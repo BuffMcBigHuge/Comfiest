@@ -45,6 +45,7 @@ Built for the [Comfy Org Open Source Higgsfield](https://comfy.org/open-source-h
 | **Video from text or references** | MiniMax H3 — text-to-video, 1–2 pictures, video/audio references, forced lip-sync, character swap |
 | **2K upscale / refine** | MiniMax H3 refiner — latent-space t2v/v2v upscale to 2560×1440 |
 | **Seamless loops** | MiniMax H3 Perfect Loop — text-to-looping-video with synchronized audio |
+| **Mattes / segmentation** | SAM3 — text-prompted image/video luma mattes, native ComfyUI nodes |
 
 **No partner nodes. No API keys. No credits.** Everything runs on your own ComfyUI with open weights.
 
@@ -72,8 +73,9 @@ If your agent supports skills:
 
 - Copy `skills/SKILL.md` to `<client-skills>/comfiest/SKILL.md` for the umbrella rules and routing.
 - Copy `skills/minimaxh3/`, `skills/minimaxh3-character-replace/`, `skills/minimaxh3-upscale/`,
-  `skills/minimaxh3-perfect-loop/`, `skills/workflow-development/`, and `skills/fish-audio-drama3/`
-  as sibling skill directories if your client discovers each skill separately.
+  `skills/minimaxh3-perfect-loop/`, `skills/sam3/`, `skills/workflow-development/`, and
+  `skills/fish-audio-drama3/` as sibling skill directories if your client discovers each skill
+  separately.
 
 The umbrella carries the hard rules and routing; the subskills carry family and recipe detail.
 
@@ -87,6 +89,8 @@ The umbrella carries the hard rules and routing; the subskills carry family and 
 - **A development loop for new workflows.** Scratch copies, UI-to-API conversion, target preflight,
   submit/poll/collect, run-log entries, and a promotion checklist in
   [`skills/workflow-development/SKILL.md`](skills/workflow-development/SKILL.md).
+- **A native matte primitive.** SAM3 image/video segmentation with open-vocabulary prompts, coverage
+  checks, and alpha-WebM compositing — no character-replacement graph required.
 - **A submission loop that survives real life.** `wait: false` + `/history` polling, direct output
   URL fallback when local job state lags, one-job-per-target discipline.
 - **Provenance by default.** Every file lands under a `prompt_id` folder with a run-log entry; vision
@@ -179,6 +183,7 @@ host:
 | Video + audio | MiniMax H3 | [Video workflows](workflows/minimaxh3/) | 14 variants + 3 char-replace workflows |
 | 2K upscale / refine | MiniMax H3 + refiner | [Upscale workflows](workflows/minimaxh3/api/) | t2v/v2v; 2560×1440; 5 s and 8 s |
 | Seamless video loop | MiniMax H3 Perfect Loop | [Perfect loop workflow](workflows/minimaxh3/api/perfect-loop-minimax-h3.api.json) | 154 f / 6.42 s; audio; ×2 seam check |
+| Image or video matte | SAM3 | [SAM3 workflows](workflows/sam3/api/) | text-prompted luma matte; image + video + tracker |
 
 MiniMax H3 is the video workhorse: text-to-video, 1–2 picture references, video/audio references,
 forced-audio lip-sync, and character replacement. See
@@ -203,6 +208,7 @@ forced-audio lip-sync, and character replacement. See
 │   ├── minimaxh3-character-replace/SKILL.md
 │   ├── minimaxh3-upscale/SKILL.md
 │   ├── minimaxh3-perfect-loop/SKILL.md
+│   ├── sam3/SKILL.md                  # native masking family
 │   ├── workflow-development/SKILL.md   # edit -> validate -> run -> promote
 │   └── fish-audio-drama3/SKILL.md
 ├── scripts/
@@ -211,9 +217,10 @@ forced-audio lip-sync, and character replacement. See
 │   ├── validate_workflow.py # check an API graph against a live target
 │   ├── wait_job.py          # poll /history when the MCP wait fails
 │   └── fetch_output.py      # download outputs when fetch_outputs fails
-├── workflows/               # 48 workflow templates
+├── workflows/               # 51 workflow templates
 │   ├── *.json
 │   ├── fishdrama3/          # TTS base + variants
+│   ├── sam3/                # native image/video matte graphs
 │   └── minimaxh3/           # H3 base, UI variants, api/ mirrors
 └── work/                    # writable agent workspace (not required to run)
     ├── inbox/  scratch/  uploads/  outputs/
@@ -256,13 +263,13 @@ fork rather than editing the shipped template.
 - `comfy-cli` + `comfy-mcp` (Python 3.12 tested).
 - Node packs: the full set is installed by [`COMFY-SETUP.md`](COMFY-SETUP.md) — rgthree, RES4LYF,
   WAS, Easy-Use, various, KJNodes, VideoHelperSuite, Drama3, krea2edit, Conditioning Rebalance,
-  PlagueKind, Context-Loop, Fill-Nodes, Spectrum, Impact Pack, SAM3, and Depth-Anything-TensorRT.
+  PlagueKind, Context-Loop, Fill-Nodes, Spectrum, Impact Pack, and Depth-Anything-TensorRT.
   Optional: Frame-Interpolation (the H3 graphs use Fill-Nodes `FL_RIFE`), the latent upscaler, and
   ComfyUI-GGUF (legacy GGUF graphs only).
 - Models: Krea 2 Turbo/Edit, Flux.2 Klein 9B + Qwen3-8B fp8mixed, MOSS-Image, YuE2 3B, MiniMax Music 3,
-  Fish Audio Drama 3, MiniMax H3 fastvideo stack + 2K refiner/upscaler and the loop Turbo adapter.
-  Exact filenames live in the workflow sections of [`skills/SKILL.md`](skills/SKILL.md); verify each
-  host with `/models/<folder>` and `/object_info`.
+  Fish Audio Drama 3, MiniMax H3 fastvideo stack + 2K refiner/upscaler and the loop Turbo adapter,
+  SAM3 segmentation. Exact filenames live in the workflow sections of
+  [`skills/SKILL.md`](skills/SKILL.md); verify each host with `/models/<folder>` and `/object_info`.
   The full download list, Hugging Face locations, and folder layout are in
   [`COMFY-SETUP.md`](COMFY-SETUP.md).
 - GPU: 24 GB-class for video and Drama 3; 128 GB+ system RAM recommended for Drama 3.

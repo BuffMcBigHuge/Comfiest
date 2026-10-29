@@ -1,0 +1,142 @@
+{
+  "10": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "example.png"
+    },
+    "_meta": {
+      "title": "SOURCE IMAGE — slot: image"
+    }
+  },
+  "11": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "sam3.1_multiplex_fp16.safetensors"
+    },
+    "_meta": {
+      "title": "SAM3 model — native comfy_extras.nodes_sam3"
+    }
+  },
+  "12": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "person",
+      "clip": [
+        "11",
+        1
+      ]
+    },
+    "_meta": {
+      "title": "DETECT THIS — slot: text  e.g. person / man:2 / dog, bicycle"
+    }
+  },
+  "13": {
+    "class_type": "SAM3_Detect",
+    "inputs": {
+      "model": [
+        "11",
+        0
+      ],
+      "image": "example.png",
+      "conditioning": [
+        "12",
+        0
+      ],
+      "threshold": 0.5,
+      "refine_iterations": 2,
+      "individual_masks": false
+    },
+    "_meta": {
+      "title": "SAM3 Detect — native; individual_masks=true gives one mask per object"
+    }
+  },
+  "14": {
+    "class_type": "GrowMaskWithBlur",
+    "inputs": {
+      "mask": [
+        "13",
+        0
+      ],
+      "expand": 2,
+      "incremental_expandrate": 0.0,
+      "tapered_corners": true,
+      "flip_input": false,
+      "blur_radius": 4.0,
+      "lerp_alpha": 1.0,
+      "decay_factor": 0.99
+    },
+    "_meta": {
+      "title": "Feather matte — expand 2 / blur 4; set both 0 for a hard matte"
+    }
+  },
+  "15": {
+    "class_type": "MaskToImage",
+    "inputs": {
+      "mask": [
+        "14",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Matte to image (white subject on black)"
+    }
+  },
+  "20": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "15",
+        0
+      ],
+      "filename_prefix": "COMFY_WORKFLOWS/SAM3_MASK_IMG"
+    },
+    "_meta": {
+      "title": "SAVE matte PNG"
+    }
+  },
+  "16": {
+    "class_type": "ImageInvert",
+    "inputs": {
+      "image": "example.png"
+    },
+    "_meta": {
+      "title": "Preview: inverted source"
+    }
+  },
+  "17": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": [
+        "16",
+        0
+      ],
+      "source": [
+        "10",
+        0
+      ],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": [
+        "14",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Preview: subject normal, background inverted"
+    }
+  },
+  "21": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "17",
+        0
+      ],
+      "filename_prefix": "COMFY_WORKFLOWS/SAM3_PREVIEW_IMG"
+    },
+    "_meta": {
+      "title": "SAVE detection preview PNG"
+    }
+  }
+}

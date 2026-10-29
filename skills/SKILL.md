@@ -27,10 +27,11 @@ one target for its lifetime.
 | `work/` | Writable agent workspace (scratch, uploads, outputs, analysis, post, exports, logs). |
 | `LICENSE` | MIT license for this repository. |
 
-`workflows/minimaxh3/` and `workflows/fishdrama3/` are workflow-family subdirectories. Their usage
-notes live in `skills/minimaxh3/`, `skills/minimaxh3-character-replace/`,
-`skills/minimaxh3-upscale/`, `skills/minimaxh3-perfect-loop/`,
-`skills/workflow-development/`, and `skills/fish-audio-drama3/`.
+`workflows/minimaxh3/`, `workflows/sam3/`, and `workflows/fishdrama3/` are workflow-family
+subdirectories. Their usage notes live in `skills/minimaxh3/`,
+`skills/minimaxh3-character-replace/`, `skills/minimaxh3-upscale/`,
+`skills/minimaxh3-perfect-loop/`, `skills/sam3/`, `skills/workflow-development/`, and
+`skills/fish-audio-drama3/`.
 `work/` is the only writable area of the repository.
 
 ```text
@@ -48,11 +49,13 @@ notes live in `skills/minimaxh3/`, `skills/minimaxh3-character-replace/`,
 │   ├── minimaxh3-character-replace/SKILL.md
 │   ├── minimaxh3-upscale/SKILL.md
 │   ├── minimaxh3-perfect-loop/SKILL.md
+│   ├── sam3/SKILL.md
 │   ├── workflow-development/SKILL.md
 │   └── fish-audio-drama3/SKILL.md
 ├── workflows/
 │   ├── *.json                      # root workflows
 │   ├── fishdrama3/                 # TTS variants + base
+│   ├── sam3/                       # native image/video matte graphs
 │   └── minimaxh3/                  # H3 base, UI variants, api/ mirrors
 └── work/                           # writable workspace; see Working directory
 ```
@@ -78,13 +81,13 @@ directory) and reuse that absolute prefix for the session.
   `workflows/minimaxh3/`, `workflows/minimaxh3/api/`, and `workflows/fishdrama3/`. Preserve bytes exactly:
   no line-ending, whitespace, or key-order normalization.
 - **Maintained additions:** the two `*-forced` UI files, their two API mirrors, the three
-  `charreplace-*` API workflows, the three `upscale-*` API workflows, and
-  `perfect-loop-minimax-h3.api.json` are maintained rather than one-off templates. Edit them only on
-  an explicit user request.
+  `charreplace-*` API workflows, the three `upscale-*` API workflows, the three `sam3-*` API
+  workflows, and `perfect-loop-minimax-h3.api.json` are maintained rather than one-off templates.
+  Edit them only on an explicit user request.
 - **Markdown documentation lives in `skills/`.** Inventory and usage notes belong in this file or in
   the family/recipe subskills (`skills/minimaxh3/`, `skills/minimaxh3-character-replace/`,
-  `skills/minimaxh3-upscale/`, `skills/minimaxh3-perfect-loop/`, `skills/fish-audio-drama3/`). Do
-  not add Markdown to `workflows/`.
+  `skills/minimaxh3-upscale/`, `skills/minimaxh3-perfect-loop/`, `skills/sam3/`,
+  `skills/fish-audio-drama3/`). Do not add Markdown to `workflows/`.
 - **Runtime edits are allowed; saving is not.** Change widgets and links in the ComfyUI UI for a run,
   but do not save over a workflow file. For a modified graph, write a copy under `work/scratch/` and
   never copy it back into a workflow directory.
@@ -212,6 +215,7 @@ explicit approval.
 | Video from text or references | MiniMax H3 | `workflows/minimaxh3/*.json` + `api/*.api.json` | 8 s, audio, 14 P/V/A variants + 3 charreplace workflows |
 | 2K upscale / refine | MiniMax H3 + refiner | `workflows/minimaxh3/api/upscale-*.api.json` | t2v/v2v latent upscale; 2560×1440 output |
 | Seamless video loop | MiniMax H3 Perfect Loop | `workflows/minimaxh3/api/perfect-loop-minimax-h3.api.json` | 154 f / 6.42 s; audio included; ×2 seam check |
+| Image or video matte | SAM3 (native) | `workflows/sam3/api/*.api.json` | text-prompted luma matte; image, video, tracker |
 | Speech or voice clone | Fish Audio Drama 3 | `workflows/fishdrama3/*.json` | 1–2 speaker TTS; four canonical variants |
 
 How to use the table:
@@ -820,6 +824,20 @@ Run one job before production for any `generated` or `unverified` file.
 - **Input slots:** the family uses stable filenames for pictures, video, and audio; the Yue variant
   uses its own stable audio name. The variant table lists each variant's refs.
 
+### SAM3 — native detection and masking
+
+- `workflows/sam3/api/` has three API-first graphs: image matte, per-frame video matte, and the
+  `SAM3_VideoTrack` tracker. They are the right tool when you only need to cut something out; do not
+  rebuild a `charreplace-*` graph for a matte.
+- Native only: `SAM3_Detect`, `SAM3_VideoTrack`, and `SAM3_TrackToMask` resolve to
+  `comfy_extras.nodes_sam3`. No custom SAM3 pack is needed; the checkpoint is
+  `sam3.1_multiplex_fp16.safetensors`.
+- The whole surface is `10.image`/`10.video` plus `12.text`. The text is an open-vocabulary target
+  with a comma/`:N` grammar; an absent target falls back to the salient object, so a nearly-full matte
+  means the prompt is wrong. Check mean luma before using a matte.
+- `20.frame_rate` must match the source fps; the loader fps is not wired to the saver.
+- See `skills/sam3/SKILL.md` for prompt grammar, knobs, coverage check, alpha WebM, and gotchas.
+
 ## MCP behavior and findings
 
 The full edit/validate/run/promote loop is in
@@ -1016,6 +1034,11 @@ Before production:
 | 2K upscale fails with missing `MiniMaxH3LatentUpscaleWithModel` | ComfyUI is older than PR #17412 | Update ComfyUI; verify `/object_info/MiniMaxH3LatentUpscaleWithModel`. |
 | Perfect loop fails with missing `MiniMaxH3ContexMaskedAVBridge` | `ComfyUI-MiniMaxH3-Context-Loop` is missing or old | Install/update the pack, restart ComfyUI, then `--print-prompt` again. |
 | Perfect loop has an audible gap at the seam | `VHS_VideoCombine` cut audio at the last video DTS | Keep the shipped `CreateVideo` -> `SaveVideo` path; check stream durations with `ffprobe`. |
+| SAM3 matte drifts or plays at the wrong speed | `20.frame_rate` does not match the source fps | Set it to the source fps; the loader fps is not wired to the saver. |
+| SAM3 returns a nearly-full matte | Absent target falls back to the salient object, or categories union | Use one specific category, raise `13.threshold`, and check mean luma; never stack speculative categories. |
+| SAM3 video frame count multiplies | `13.individual_masks=true` on video | Keep it `false` for video. |
+| SAM3 classes missing or resolve to an old custom pack | ComfyUI lacks core `comfy_extras.nodes_sam3` | Update to 0.43.0+; verify `/object_info/SAM3_Detect` reports `comfy_extras.nodes_sam3`. |
+| `GrowMaskWithBlur` missing | `ComfyUI-KJNodes` not installed | Install KJNodes, or wire `SAM3_Detect`/`SAM3_TrackToMask` directly to `MaskToImage`. |
 | Job state stays `queued` after the server reports `completed` | Local job-state lag | Download the `outputs[0]` URL from the `job` result and size-check it. |
 | `fetch_outputs` errors connecting to a local address | Local state missing; tool fell back to a local ComfyUI URL | Build `http://<comfy-host>:<port>/view?filename=...&subfolder=...&type=output` from `outputs[0]`, or use `scripts/fetch_output.py`. |
 | `fetch_outputs` returns `download_job_not_found` | The `prompt_id` was submitted by another machine/agent, or local state was cleared | Download from the target's `/view` URL; only inspect files tied to your own `prompt_id`. |
@@ -1059,10 +1082,11 @@ This file is the repository's operating skill. Keep it portable and current.
   `comfyui-easy-use`, `comfyui-various`, `ComfyUI-KJNodes`, `ComfyUI-VideoHelperSuite`,
   `ComfyUI-Drama3`, `comfyui-krea2edit`, `ComfyUI-ConditioningKrea2Rebalance`,
   `comfyui-plaguekind-nodes`, `ComfyUI-MiniMaxH3-Context-Loop`, `ComfyUI_Fill-Nodes`,
-  `ComfyUI-Spectrum-MiniMax-H3`, `ComfyUI-Impact-Pack`, `ComfyUI-SAM3`,
+  `ComfyUI-Spectrum-MiniMax-H3`, `ComfyUI-Impact-Pack`,
   `ComfyUI-Depth-Anything-Tensorrt`.
   Optional: `ComfyUI-Frame-Interpolation` (the H3 graphs use Fill-Nodes `FL_RIFE`), the latent
   upscaler pack, and `ComfyUI-GGUF` (legacy GGUF graphs only; public Flux uses `CLIPLoader`).
+- Native SAM3 needs core `comfy_extras.nodes_sam3` (0.43.0+). No custom SAM3 pack is required.
 - Models: see the family sections. Verify each target with `/models/<folder>` and
   `/object_info/<Class>` rather than assuming the reference deployment's inventory.
 - Optional bypassed models that may be absent and are **not** on any effective path:
@@ -1079,6 +1103,7 @@ This file is the repository's operating skill. Keep it portable and current.
 - `skills/minimaxh3-character-replace/SKILL.md` — character-replacement setup and run examples.
 - `skills/minimaxh3-upscale/SKILL.md` — 2K t2v/v2v upscale and refine.
 - `skills/minimaxh3-perfect-loop/SKILL.md` — seamless 154-frame T2AV loop and seam checks.
+- `skills/sam3/SKILL.md` — native SAM3 image/video mattes, prompt grammar, and alpha compositing.
 - `skills/workflow-development/SKILL.md` — scratch edits, validation, MCP submission, and promotion.
 - `skills/fish-audio-drama3/SKILL.md` — TTS variant index and reference requirements.
 - `work/README.md` — workspace rules and the pointer to this file.

@@ -9,7 +9,7 @@ requirements are installed:
     python scripts/install_nodes.py --comfyui C:/ComfyUI --include-optional
 
 The script clones each pack into ComfyUI/custom_nodes, installs its
-requirements.txt with pip, and runs install.py where a pack needs it (SAM3).
+requirements.txt with pip, and runs install.py where a pack provides one.
 Restart ComfyUI after it finishes.
 """
 
@@ -42,7 +42,6 @@ NODES = [
     ("ComfyUI-Impact-Pack", "https://github.com/ltdrdata/ComfyUI-Impact-Pack.git", False, False),
     ("ComfyUI-Depth-Anything-Tensorrt",
      "https://github.com/yuvraj108c/ComfyUI-Depth-Anything-Tensorrt.git", False, False),
-    ("ComfyUI-SAM3", "https://github.com/PozzettiAndrea/ComfyUI-SAM3.git", True, False),
     ("ComfyUI-MiniMaxH3-Context-Loop",
      "https://github.com/ethanfel/ComfyUI-MiniMaxH3-Context-Loop.git", False, False),
     ("Comfyui_Minimax_h3_latent_Upscaler",

@@ -1,0 +1,125 @@
+{
+  "10": {
+    "class_type": "VHS_LoadVideo",
+    "inputs": {
+      "video": "example.mp4",
+      "force_rate": 0,
+      "custom_width": 0,
+      "custom_height": 0,
+      "frame_load_cap": 0,
+      "skip_first_frames": 0,
+      "select_every_nth": 1,
+      "format": "None"
+    },
+    "_meta": {
+      "title": "SOURCE VIDEO — slot: video"
+    }
+  },
+  "11": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "sam3.1_multiplex_fp16.safetensors"
+    },
+    "_meta": {
+      "title": "SAM3 model — native comfy_extras.nodes_sam3"
+    }
+  },
+  "12": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "person",
+      "clip": [
+        "11",
+        1
+      ]
+    },
+    "_meta": {
+      "title": "DETECT THIS — slot: text; seeds the track"
+    }
+  },
+  "13": {
+    "class_type": "SAM3_VideoTrack",
+    "inputs": {
+      "images": [
+        "10",
+        0
+      ],
+      "model": [
+        "11",
+        0
+      ],
+      "conditioning": [
+        "12",
+        0
+      ],
+      "detection_threshold": 0.5,
+      "max_objects": 4,
+      "detect_interval": 1
+    },
+    "_meta": {
+      "title": "SAM3 Video Track — native memory tracker"
+    }
+  },
+  "14": {
+    "class_type": "SAM3_TrackToMask",
+    "inputs": {
+      "track_data": [
+        "13",
+        0
+      ],
+      "object_indices": ""
+    },
+    "_meta": {
+      "title": "Pick tracked objects — object_indices '', '0', '0,2'"
+    }
+  },
+  "15": {
+    "class_type": "GrowMaskWithBlur",
+    "inputs": {
+      "mask": [
+        "14",
+        0
+      ],
+      "expand": 2,
+      "incremental_expandrate": 0.0,
+      "tapered_corners": true,
+      "flip_input": false,
+      "blur_radius": 4.0,
+      "lerp_alpha": 1.0,
+      "decay_factor": 0.99
+    },
+    "_meta": {
+      "title": "Feather matte — expand 2 / blur 4"
+    }
+  },
+  "16": {
+    "class_type": "MaskToImage",
+    "inputs": {
+      "mask": [
+        "15",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Matte to image (white subject on black)"
+    }
+  },
+  "20": {
+    "class_type": "VHS_VideoCombine",
+    "inputs": {
+      "images": [
+        "16",
+        0
+      ],
+      "frame_rate": 24.0,
+      "loop_count": 0,
+      "filename_prefix": "COMFY_WORKFLOWS/SAM3_TRACK_MASK",
+      "format": "video/h264-mp4",
+      "pingpong": false,
+      "save_output": true
+    },
+    "_meta": {
+      "title": "SAVE tracked luma matte — set frame_rate to the source fps"
+    }
+  }
+}

@@ -10,6 +10,9 @@ files live under `../../workflows/minimaxh3/api/`.
 
 Three API-first workflows that replace the performer in a source video with a different character while preserving the source motion, timing, and audio.
 
+**Only need a matte?** Use [`../sam3/SKILL.md`](../sam3/SKILL.md) and the API graphs in
+`../../workflows/sam3/api/`. Do not rebuild this graph for a simple cutout.
+
 ## Files
 
 | ID | API workflow | Inputs | Background source |
