@@ -29,6 +29,23 @@
 
 ---
 
+## New in Comfiest
+
+> **NEW — MiniMax H3 just leveled up.** Comfiest ships the latest H3 innovations as runnable graphs and
+> agent skills, not just links:
+>
+> - **Pika H3 Turbo LoRAs** — the official [Pika H3 Flex adapters](https://huggingface.co/Comfy-Org/MiniMax-H3/tree/main/loras)
+>   from [Pika-Labs/Pika-H3-Flex](https://huggingface.co/Pika-Labs/Pika-H3-Flex) at the 6-step LCM
+>   contract, 24 fps, with text, first/last-frame, and reference modes.
+>   [Pika T2V](workflows/minimaxh3/api/pika-h3-t2v.api.json)
+> - **Upscale refiner LoRA** — the [Regenerate-2K refiner LoRA](https://huggingface.co/Kijai/MiniMax-H3-experimental/blob/main/loras/minimax_h3_open_regenerate_2k_refiner_rank_16_bf16.safetensors)
+>   plus latent 2× upscale for 2560×1440 finals. [Upscale workflows](workflows/minimaxh3/api/)
+> - **Looping videos** — seamless 154-frame H3 loops with synchronized audio and a ×2 seam check,
+>   built on the [MiniMax H3 base](https://huggingface.co/Comfy-Org/MiniMax-H3).
+>   [Perfect loop](workflows/minimaxh3/api/perfect-loop-minimax-h3.api.json)
+>
+> These are brand-new innovations in the MiniMax H3 ecosystem, and Comfiest supports all three.
+
 Comfiest packages the parts of an AI production pipeline that normally live in someone's head:
 model routing, workflow templates, hardware limits, submission loops, output provenance, and the
 small traps that waste a render. Point a coding agent at this repository and it can set up the MCP
