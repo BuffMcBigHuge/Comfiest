@@ -5,10 +5,6 @@
 <h1 align="center">Comfiest</h1>
 
 <p align="center">
-  <a href="https://comfie.st"><strong>comfie.st</strong></a> · built by <a href="https://byMAR.CO">byMAR.CO</a>
-</p>
-
-<p align="center">
   <strong>com·fi·est</strong> <em>adjective</em><br>
   <em>informal</em> : the superlative form of <strong>comfy</strong> —<br>
   the most comfortable, cozy, or providing the greatest degree of physical ease and relaxation.<br>
@@ -17,6 +13,10 @@
 
 <p align="center">
   <strong>A local-first, open-weights video production suite for ComfyUI — driven by your agent.</strong>
+</p>
+
+<p align="center">
+  <a href="https://comfie.st"><strong>comfie.st</strong></a> · built by <a href="https://byMAR.CO">byMAR.CO</a>
 </p>
 
 <p align="center">
