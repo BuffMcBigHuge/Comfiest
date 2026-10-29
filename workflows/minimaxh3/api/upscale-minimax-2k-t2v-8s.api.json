@@ -1,0 +1,487 @@
+{
+  "1": {
+    "inputs": {
+      "unet_name": "minimax\\minimax_h3_fastvideo_vsa_datafree_1300step_4step_int8_convrot.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Draft model (fastvideo 4-step)"
+    }
+  },
+  "2": {
+    "inputs": {
+      "clip_name": "qwen3vl_32b_minimax_h3_int8_convrot.safetensors",
+      "type": "minimax",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "Load CLIP"
+    }
+  },
+  "3": {
+    "inputs": {
+      "vae_name": "minimax\\minimax_h3_video_vae_fp16.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load video VAE"
+    }
+  },
+  "4": {
+    "inputs": {
+      "vae_name": "minimax\\minimax_h3_audio_vae_fp32.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load audio VAE"
+    }
+  },
+  "10": {
+    "inputs": {
+      "value": "A single continuous handheld shot: a red fox trots through a snowy pine forest at dawn, breath visible in the cold air, natural gait, detailed fur, soft golden light, 8 seconds, no cuts."
+    },
+    "class_type": "PrimitiveStringMultiline",
+    "_meta": {
+      "title": "Prompt"
+    }
+  },
+  "11": {
+    "inputs": {
+      "clip": [
+        "2",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ],
+      "prompt": [
+        "10",
+        0
+      ],
+      "width": 1344,
+      "height": 768,
+      "length": 192
+    },
+    "class_type": "MiniMaxH3ImageToVideo",
+    "_meta": {
+      "title": "PROMPT + draft 1344x768 / 8 s"
+    }
+  },
+  "12": {
+    "inputs": {
+      "model": [
+        "1",
+        0
+      ],
+      "shift_video": 6,
+      "shift_audio": 3
+    },
+    "class_type": "MiniMaxH3SigmaShift",
+    "_meta": {
+      "title": "Draft sigma shift"
+    }
+  },
+  "13": {
+    "inputs": {
+      "model": [
+        "12",
+        0
+      ],
+      "PowerLoraLoaderHeaderWidget": {
+        "type": "PowerLoraLoaderHeaderWidget"
+      }
+    },
+    "class_type": "Power Lora Loader (rgthree)",
+    "_meta": {
+      "title": "Draft LoRAs"
+    }
+  },
+  "14": {
+    "inputs": {
+      "model": [
+        "13",
+        0
+      ],
+      "mode": "port"
+    },
+    "class_type": "H3AdaLNLoRAFix",
+    "_meta": {
+      "title": "AdaLN LoRA fix (draft)"
+    }
+  },
+  "15": {
+    "inputs": {
+      "model": [
+        "14",
+        0
+      ],
+      "sparsity_ratio": 0.9,
+      "block_size": "64",
+      "min_seq_len": 8192,
+      "dense_last_steps": 0,
+      "protect_audio": true,
+      "enabled": false,
+      "dense_steps": "1",
+      "dense_backend": "comfy_kitchen",
+      "disable_fp16_accum": true,
+      "stabilize_motion": false,
+      "reference_protection": "Off",
+      "tail_correction": false,
+      "use_int8_qk": true,
+      "engine": "comfy_kitchen"
+    },
+    "class_type": "H3SLAAttention",
+    "_meta": {
+      "title": "SLA attention (off)"
+    }
+  },
+  "16": {
+    "inputs": {
+      "model": [
+        "15",
+        0
+      ],
+      "conditioning": [
+        "11",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "Draft guider"
+    }
+  },
+  "17": {
+    "inputs": {
+      "noise_seed": 777001
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "Draft noise"
+    }
+  },
+  "18": {
+    "inputs": {
+      "sampler_name": "er_sde"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "Draft sampler"
+    }
+  },
+  "19": {
+    "inputs": {
+      "model": [
+        "15",
+        0
+      ],
+      "scheduler": "beta",
+      "steps": 8,
+      "denoise": 1
+    },
+    "class_type": "BasicScheduler",
+    "_meta": {
+      "title": "Draft 8 steps"
+    }
+  },
+  "20": {
+    "inputs": {
+      "noise": [
+        "17",
+        0
+      ],
+      "guider": [
+        "16",
+        0
+      ],
+      "sampler": [
+        "18",
+        0
+      ],
+      "sigmas": [
+        "19",
+        0
+      ],
+      "latent_image": [
+        "11",
+        1
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "Draft sampler"
+    }
+  },
+  "70": {
+    "inputs": {
+      "model_name": "minimax_h3_latent_upscaler_3d_bf16.safetensors"
+    },
+    "class_type": "LatentUpscaleModelLoader",
+    "_meta": {
+      "title": "Load H3 latent upscaler"
+    }
+  },
+  "71": {
+    "inputs": {
+      "model": [
+        "70",
+        0
+      ],
+      "samples": [
+        "20",
+        1
+      ],
+      "width": 2560,
+      "height": 1440
+    },
+    "class_type": "MiniMaxH3LatentUpscaleWithModel",
+    "_meta": {
+      "title": "Core latent upscale -> 2560x1440"
+    }
+  },
+  "30": {
+    "inputs": {
+      "unet_name": "minimax\\minimax_h3_fl2va_pruned_int8_convrot.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Refine model (fl2va pruned)"
+    }
+  },
+  "31": {
+    "inputs": {
+      "model": [
+        "30",
+        0
+      ],
+      "lora_name": "minimax\\minimax_h3_open_regenerate_2k_refiner_rank_16_bf16.safetensors",
+      "strength_model": 1.0
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "Regenerate-2K refiner rank-16 (1.0)"
+    }
+  },
+  "32": {
+    "inputs": {
+      "model": [
+        "31",
+        0
+      ],
+      "lora_name": "minimax\\minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors",
+      "strength_model": 1.0
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "LightX2V turbo v1.2 (1.0)"
+    }
+  },
+  "38": {
+    "inputs": {
+      "model": [
+        "32",
+        0
+      ],
+      "lora_name": "minimax\\minimax_h3_lms_v1.0_r64.safetensors",
+      "strength_model": 1.0
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "LMS Sharp v1.0 r64 (1.0)"
+    }
+  },
+  "33": {
+    "inputs": {
+      "model": [
+        "38",
+        0
+      ],
+      "mode": "port"
+    },
+    "class_type": "H3AdaLNLoRAFix",
+    "_meta": {
+      "title": "AdaLN LoRA fix (refine)"
+    }
+  },
+  "35": {
+    "inputs": {
+      "sigmas": "0.7, 0.494118, 0"
+    },
+    "class_type": "ManualSigmas",
+    "_meta": {
+      "title": "Refine sigmas (2 steps)"
+    }
+  },
+  "36": {
+    "inputs": {
+      "noise_seed": 777002
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "Refine noise"
+    }
+  },
+  "37": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "Refine sampler"
+    }
+  },
+  "41": {
+    "inputs": {
+      "chunk_length": 136,
+      "temporal_overlap": 17,
+      "anchor_strength": 0.999
+    },
+    "class_type": "MMH3TemporalSplitParams",
+    "_meta": {
+      "title": "Temporal chunks (136 f / 17 overlap)"
+    }
+  },
+  "42": {
+    "inputs": {
+      "upscale_width": 2560,
+      "upscale_height": 1440,
+      "tile_size_mode": "auto",
+      "tile_width": 512,
+      "tile_height": 512,
+      "grid_rows": 2,
+      "grid_cols": 2,
+      "spatial_w_overlap": 128,
+      "spatial_h_overlap": 128,
+      "fade_width": 32,
+      "fade_height": 32,
+      "min_tile_size": 256,
+      "overlap_mode": "earlier",
+      "overlap_blend": "linear",
+      "joint_steps": true,
+      "token_budget": 70000
+    },
+    "class_type": "MMH3SpatialSplitParams",
+    "_meta": {
+      "title": "Auto spatial tiles"
+    }
+  },
+  "43": {
+    "inputs": {
+      "model": [
+        "33",
+        0
+      ],
+      "conditioning": [
+        "11",
+        0
+      ],
+      "latent": [
+        "71",
+        0
+      ],
+      "noise": [
+        "36",
+        0
+      ],
+      "sampler": [
+        "37",
+        0
+      ],
+      "sigmas": [
+        "35",
+        0
+      ],
+      "cfg": 1.0,
+      "temporal_split_param": [
+        "41",
+        0
+      ],
+      "spatial_split_param": [
+        "42",
+        0
+      ]
+    },
+    "class_type": "MMH3UltimateUpscale",
+    "_meta": {
+      "title": "Tiled 2-step refine (audio pinned)"
+    }
+  },
+  "50": {
+    "inputs": {
+      "av_latent": [
+        "43",
+        0
+      ]
+    },
+    "class_type": "LTXVSeparateAVLatent",
+    "_meta": {
+      "title": "Split refined AV latent"
+    }
+  },
+  "51": {
+    "inputs": {
+      "samples": [
+        "50",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ],
+      "tile_size": 512,
+      "overlap": 64,
+      "temporal_size": 32,
+      "temporal_overlap": 8
+    },
+    "class_type": "VAEDecodeTiled",
+    "_meta": {
+      "title": "Decode video (tiled)"
+    }
+  },
+  "52": {
+    "inputs": {
+      "samples": [
+        "50",
+        1
+      ],
+      "vae": [
+        "4",
+        0
+      ]
+    },
+    "class_type": "VAEDecodeAudio",
+    "_meta": {
+      "title": "Decode audio"
+    }
+  },
+  "53": {
+    "inputs": {
+      "images": [
+        "51",
+        0
+      ],
+      "audio": [
+        "52",
+        0
+      ],
+      "frame_rate": 24,
+      "loop_count": 0,
+      "filename_prefix": "H3_2K/T2V_8S",
+      "format": "video/h264-mp4",
+      "pix_fmt": "yuv420p",
+      "crf": 12,
+      "save_metadata": true,
+      "trim_to_audio": false,
+      "pingpong": false,
+      "save_output": true
+    },
+    "class_type": "VHS_VideoCombine",
+    "_meta": {
+      "title": "@save 2560x1440"
+    }
+  }
+}

@@ -21,6 +21,7 @@ picture/video/audio references. Every variant uses the same fastvideo stack, a s
 - `../../workflows/minimaxh3/api/*.api.json` — pre-slimmed API workflows for `run_workflow`.
 - `../minimaxh3-character-replace/SKILL.md` — SAM3 + depth-guided motion guide + character-replacement
   guide.
+- `../minimaxh3-upscale/SKILL.md` — 2K t2v/v2v latent upscale and refine.
 
 ## Variant matrix
 

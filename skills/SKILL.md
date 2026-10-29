@@ -28,8 +28,8 @@ one target for its lifetime.
 | `LICENSE` | MIT license for this repository. |
 
 `workflows/minimaxh3/` and `workflows/fishdrama3/` are workflow-family subdirectories. Their usage
-notes live in `skills/minimaxh3/`, `skills/minimaxh3-character-replace/`, and
-`skills/fish-audio-drama3/`.
+notes live in `skills/minimaxh3/`, `skills/minimaxh3-character-replace/`,
+`skills/minimaxh3-upscale/`, and `skills/fish-audio-drama3/`.
 `work/` is the only writable area of the repository.
 
 ```text
@@ -45,6 +45,7 @@ notes live in `skills/minimaxh3/`, `skills/minimaxh3-character-replace/`, and
 │   ├── SKILL.md                    # this file
 │   ├── minimaxh3/SKILL.md
 │   ├── minimaxh3-character-replace/SKILL.md
+│   ├── minimaxh3-upscale/SKILL.md
 │   └── fish-audio-drama3/SKILL.md
 ├── workflows/
 │   ├── *.json                      # root workflows
@@ -201,6 +202,7 @@ explicit approval.
 | Song from style + lyrics | YuE2 3B | `workflows/text2music-yue2.json` | full-song model with vocals; 120 s |
 | Song from caption + lyrics | MiniMax Music 3 | `workflows/text2music-minimaxmusic3.json` | caption-driven; tiled audio decode |
 | Video from text or references | MiniMax H3 | `workflows/minimaxh3/*.json` + `api/*.api.json` | 8 s, audio, 14 P/V/A variants + 3 charreplace workflows |
+| 2K upscale / refine | MiniMax H3 + refiner | `workflows/minimaxh3/api/upscale-*.api.json` | t2v/v2v latent upscale; 2560×1440 output |
 | Speech or voice clone | Fish Audio Drama 3 | `workflows/fishdrama3/*.json` | 1–2 speaker TTS; four canonical variants |
 
 How to use the table:
@@ -215,8 +217,8 @@ How to use the table:
 
 Routing constraints:
 
-- One job at a time per target. Krea/Flux/MOSS are light; Music 3 and MiniMax H3 are heavy; Drama 3 is
-  heavy on system RAM.
+- One job at a time per target. Krea/Flux/MOSS are light; Music 3, MiniMax H3, and the 2K upscale path
+  are heavy; Drama 3 is heavy on system RAM.
 - The workflow JSON is the final authority on node IDs and model filenames. The family sections call
   out known traps: dead branches, decoy LoRA loaders, optional files that are not installed.
 
@@ -733,6 +735,9 @@ optional `h3_character_swap_v1.5` LoRA was removed for the public release; add i
 stronger identity transfer. See `skills/minimaxh3-character-replace/SKILL.md` and the three
 `api/ref2video-minimax-charreplace-*.api.json` files. They are not UI/API pairs.
 
+For 2K upscale/refine (t2v and v2v), see `skills/minimaxh3-upscale/SKILL.md` and the three
+`workflows/minimaxh3/api/upscale-*.api.json` graphs. They are API-first and have no UI twins.
+
 Reference placeholders: every image slot uses `example.png`, every video slot `example.mp4`, and every
 audio slot `example.wav`.
 
@@ -985,6 +990,7 @@ Before production:
 | `SaveImage` fails with `WinError 123` | `%date:...%` or another unresolved frontend token in the save prefix | Use a static save prefix. |
 | Outputs land in unexpected remote folders | An agent changed a workflow save prefix | Never change `filename_prefix`; collect the run by `prompt_id` into `work/outputs`. |
 | `text2image-moss.json` ignores edits to the inner KSampler, seed, size, or loaders | The subgraph instance overrides those widgets | Edit instance `#18` (steps/cfg/sampler/scheduler/negative/models), `ResolutionSelector #19` (size), and `SeedNode #3072` (seed). |
+| 2K upscale fails with missing `MiniMaxH3LatentUpscaleWithModel` | ComfyUI is older than PR #17412 | Update ComfyUI; verify `/object_info/MiniMaxH3LatentUpscaleWithModel`. |
 | Job state stays `queued` after the server reports `completed` | Local job-state lag | Download the `outputs[0]` URL from the `job` result and size-check it. |
 | `fetch_outputs` errors connecting to a local address | Local state missing; tool fell back to a local ComfyUI URL | Use the remote output URL from `job` directly. |
 | `fetch_outputs` returns `download_job_not_found` | The `prompt_id` was submitted by another machine/agent, or local state was cleared | Download the output URL directly; only inspect files tied to your own `prompt_id`. |
@@ -1021,6 +1027,7 @@ This file is the repository's operating skill. Keep it portable and current.
 > ComfyUI, PyTorch/CUDA, every custom-node pack, every model file, and the TensorRT depth engine.
 
 - ComfyUI 0.42.0 or newer.
+- 2K upscale/refine needs `MiniMaxH3LatentUpscaleWithModel` (ComfyUI PR #17412 or newer).
 - ComfyUI frontend 1.57.1 or newer.
 - `comfy-aimdo` >= 0.6.0, `comfy-kitchen` >= 0.2.40, `comfyui-workflow-templates` >= 0.11.96.
 - Node packs: `rgthree-comfy`, `ComfyUI-GGUF`, `RES4LYF`, `was-node-suite-comfyui`,
@@ -1044,5 +1051,6 @@ This file is the repository's operating skill. Keep it portable and current.
 - `README.md` — quick start, model list, contribution guide.
 - `skills/minimaxh3/SKILL.md` — variant matrix and lip-sync guidance.
 - `skills/minimaxh3-character-replace/SKILL.md` — character-replacement setup and run examples.
+- `skills/minimaxh3-upscale/SKILL.md` — 2K t2v/v2v upscale and refine.
 - `skills/fish-audio-drama3/SKILL.md` — TTS variant index and reference requirements.
 - `work/README.md` — workspace rules and the pointer to this file.

@@ -39,6 +39,7 @@ Built for the [Comfy Org Open Source Higgsfield](https://comfy.org/open-source-h
 | **Speech** | Fish Audio Drama 3 — single/dual speaker, voice clone |
 | **Music** | YuE2 3B, MiniMax Music 3 |
 | **Video from text or references** | MiniMax H3 — text-to-video, 1–2 pictures, video/audio references, forced lip-sync, character swap |
+| **2K upscale / refine** | MiniMax H3 refiner — latent-space t2v/v2v upscale to 2560×1440 |
 
 **No partner nodes. No API keys. No credits.** Everything runs on your own ComfyUI with open weights.
 
@@ -65,15 +66,17 @@ The agent should:
 If your agent supports skills:
 
 - Copy `skills/SKILL.md` to `<client-skills>/comfiest/SKILL.md` for the umbrella rules and routing.
-- Copy `skills/minimaxh3/`, `skills/minimaxh3-character-replace/`, and `skills/fish-audio-drama3/`
-  as sibling skill directories if your client discovers each skill separately.
+- Copy `skills/minimaxh3/`, `skills/minimaxh3-character-replace/`, `skills/minimaxh3-upscale/`, and
+  `skills/fish-audio-drama3/` as sibling skill directories if your client discovers each skill
+  separately.
 
 The umbrella carries the hard rules and routing; the subskills carry family and recipe detail.
 
 ## What your agent gets
 
-- **Routing that respects hardware.** Krea/Flux for images, YuE2/Music 3 for songs, Drama 3 for
-  speech, MiniMax H3 for video. Heavy models are called out before they blow up a 24 GB card.
+- **Routing that respects hardware.** Krea/Flux/MOSS for images, YuE2/Music 3 for songs, Drama 3 for
+  speech, MiniMax H3 for video and 2K refine. Heavy models are called out before they blow up a 24 GB
+  card.
 - **Workflow templates that actually run.** UI files for ComfyUI, pre-slimmed `api/*.api.json`
   mirrors for MCP execution, and conversion notes for the frontend-only nodes that break API runs.
 - **A submission loop that survives real life.** `wait: false` + `/history` polling, direct output
@@ -166,11 +169,13 @@ host:
 | Song from caption + lyrics | MiniMax Music 3 | [Caption + lyrics](workflows/text2music-minimaxmusic3.json) | tiled audio decode |
 | Speech / voice clone | Fish Audio Drama 3 | [Speech workflows](workflows/fishdrama3/) | 4 variants, 1–2 speakers |
 | Video + audio | MiniMax H3 | [Video workflows](workflows/minimaxh3/) | 14 variants + 3 char-replace workflows |
+| 2K upscale / refine | MiniMax H3 + refiner | [Upscale workflows](workflows/minimaxh3/api/) | t2v/v2v; 2560×1440; 5 s and 8 s |
 
 MiniMax H3 is the video workhorse: text-to-video, 1–2 picture references, video/audio references,
 forced-audio lip-sync, and character replacement. See
 [`skills/minimaxh3/SKILL.md`](skills/minimaxh3/SKILL.md) for the variant matrix and
-[`minimaxh3-character-replace`](skills/minimaxh3-character-replace/SKILL.md) for the swap pipeline.
+[`minimaxh3-character-replace`](skills/minimaxh3-character-replace/SKILL.md) for the swap pipeline and
+[`minimaxh3-upscale`](skills/minimaxh3-upscale/SKILL.md) for 2K t2v/v2v refine.
 
 ## Repository layout
 
@@ -186,11 +191,12 @@ forced-audio lip-sync, and character replacement. See
 │   ├── SKILL.md             # umbrella: rules, routing, operating loop
 │   ├── minimaxh3/SKILL.md   # H3 variant matrix and execution notes
 │   ├── minimaxh3-character-replace/SKILL.md
+│   ├── minimaxh3-upscale/SKILL.md
 │   └── fish-audio-drama3/SKILL.md
 ├── scripts/
 │   ├── install_nodes.py     # clone/update custom nodes, pip requirements
 │   └── download_models.py   # Hugging Face downloads into ComfyUI folders
-├── workflows/               # 44 workflow templates
+├── workflows/               # 47 workflow templates
 │   ├── *.json
 │   ├── fishdrama3/          # TTS base + variants
 │   └── minimaxh3/           # H3 base, UI variants, api/ mirrors
@@ -237,8 +243,9 @@ fork rather than editing the shipped template.
   Rebalance, PlagueKind, Fill-Nodes, Spectrum, Impact Pack, SAM3, and Depth-Anything-TensorRT.
   Frame-Interpolation is optional (the H3 graphs use Fill-Nodes `FL_RIFE`).
 - Models: Krea 2 Turbo/Edit, Flux.2 Klein 9B + Qwen3-8B GGUF, MOSS-Image, YuE2 3B, MiniMax Music 3,
-  Fish Audio Drama 3, MiniMax H3 fastvideo stack. Exact filenames live in the workflow sections of
-  [`skills/SKILL.md`](skills/SKILL.md); verify each host with `/models/<folder>` and `/object_info`.
+  Fish Audio Drama 3, MiniMax H3 fastvideo stack + 2K refiner/upscaler. Exact filenames live in the
+  workflow sections of [`skills/SKILL.md`](skills/SKILL.md); verify each host with `/models/<folder>`
+  and `/object_info`.
   The full download list, Hugging Face locations, and folder layout are in
   [`COMFY-SETUP.md`](COMFY-SETUP.md).
 - GPU: 24 GB-class for video and Drama 3; 128 GB+ system RAM recommended for Drama 3.
