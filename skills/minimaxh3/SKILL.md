@@ -77,6 +77,17 @@ individual slots with your own names.
 `1a-forced` uses `audio_1` only; `1p1a-forced` uses `picture_1` + `audio_1`. Both read the audio through
 the same `LoadAudio` #290 slot and force it into the sampler's audio latent.
 
+**References do not control cast count.** Two reference images can still produce a third performer;
+nothing in the graph enforces “two pictures means two people”. State the cast explicitly and bind each
+person to a tag, for example:
+
+```text
+Exactly two women in frame, nobody else anywhere in the shot:
+<Picture 1> the lead ..., <Picture 2> the dancer ...
+```
+
+This is the single largest cause of unusable multi-character shots.
+
 ## Running a variant
 
 Use the API file, not the UI file, for MCP execution (resolve `<repo>` to the repository root):
@@ -111,8 +122,15 @@ Leave every `SaveImage`/`VHS_VideoCombine` save prefix exactly as shipped. Ident
 - `0.3` MP (default) = **416×736** for 9:16.
 - `1.0` MP = **768×1376**. For a 768×1344 master, crop 16 px top and bottom. 1.0 MP is roughly three
   times heavier than 0.3 MP; a 24 GB card handles it with one job per target.
+- Default to `0.3` MP for b-roll, dance, and wide shots; use `1.0` MP for hero and close-up shots.
+  Do not mix the two in one cut without a reason; the difference reads as a quality jump.
 - `length` is a frame count at 24 fps, not seconds; it steps by 17 and the trained range is roughly
   124–362 frames. RIFE doubles the result to 48 fps.
+- **`length=192` is not 8.000 s.** RIFE emits 383 frames, not 384: 7.979 s of picture. The container
+  reports about 8.064 s because of the AAC tail. Do not build an edit on 8.000 s; read the video stream
+  (`ffprobe -select_streams v:0 -show_entries stream=duration,nb_frames,avg_frame_rate`) or pad/trim
+  explicitly. `tpad=stop_mode=clone:stop_duration=<shortfall>` pads by that amount; requesting 209
+  frames (8.708 s) and trimming also works.
 - All variants produce an audio stream, including `1p` b-roll. Discard it in post and use the master
   track.
 
@@ -174,6 +192,14 @@ Leave every `SaveImage`/`VHS_VideoCombine` save prefix exactly as shipped. Ident
   lip-sync variants by themselves; use `1a-forced` or `1p1a-forced` for the forced-audio chain. A
   lip-sync pass works best on frontal close/medium shots; wide and profile shots may not have enough
   face detail.
+- **Measure the force; do not assume it took.** Extract the clip audio and compare mel spectrograms
+  against the exact source segment; require correlation ≥ 0.96. A fresh forced shot measured 0.9687,
+  and a finished 60 s mix measured 0.9949 against the same segment. If the force did not take, the
+  output still looks plausible and the mouth is simply wrong.
+- **Non-sync shots should be prompted with mouths closed.** Dance, group, and wide shots often use
+  reference or t2v variants whose generated audio will not match the master. `lips closed, no singing`
+  turns a moving mouth into choreography and lets you use those variants for motion-heavy footage
+  without a sync constraint.
 
 ## Character replacement (API-first)
 
@@ -207,11 +233,14 @@ Active LoRA (same preset in every UI variant and API mirror):
 
 | LoRA | Strength |
 | - | - |
-| `minimax\minimax_h3_fl2v_turbo_4step_v1.0_768p_comfyui_bf16.safetensors` | 0.8 |
+| `minimax\minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors` | 0.8 |
 
 `Power Lora Loader #21` keeps one slot. The bypassed `LoraLoaderModelOnly` node holds the same turbo
-LoRA for reference. Verify the models and LoRA on each target with `/models/<folder>` and
-`/object_info` before a run.
+LoRA for reference. The public graphs use the **v1.2** adapter in place of the older v1.0 build; both
+are the same 4-step distilled family, and the substitution preserved forced-audio lip sync in testing
+(mel correlation 0.9687). Verify the models and LoRA on each target with the loader's
+`/object_info/<Class>` option list before a run; `/models/<folder>` can be empty even when the file is
+installed.
 
 ## Verification
 

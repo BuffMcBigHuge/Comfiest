@@ -4358,7 +4358,7 @@
         },
         {
           "on": true,
-          "lora": "minimax\\minimax_h3_fl2v_turbo_4step_v1.0_768p_comfyui_bf16.safetensors",
+          "lora": "minimax\\minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors",
           "strength": 0.8,
           "strengthTwo": null
         }
@@ -4369,7 +4369,7 @@
         },
         "lora_1": {
           "on": true,
-          "lora": "minimax\\minimax_h3_fl2v_turbo_4step_v1.0_768p_comfyui_bf16.safetensors",
+          "lora": "minimax\\minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors",
           "strength": 0.8,
           "strengthTwo": null
         }
@@ -4418,11 +4418,11 @@
         "Node name for S&R": "LoraLoaderModelOnly"
       },
       "widgets_values": [
-        "minimax\\minimax_h3_fl2v_turbo_4step_v1.0_768p_comfyui_bf16.safetensors",
+        "minimax\\minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors",
         0.8
       ],
       "widgets_values_named": {
-        "lora_name": "minimax\\minimax_h3_fl2v_turbo_4step_v1.0_768p_comfyui_bf16.safetensors",
+        "lora_name": "minimax\\minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors",
         "strength_model": 0.8
       },
       "color": "#332922",

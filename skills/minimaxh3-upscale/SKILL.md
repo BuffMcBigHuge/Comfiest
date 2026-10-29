@@ -40,7 +40,9 @@ Re-run the sanitized graphs before production.
 
 ## Models
 
-Verify with `/models/<folder>` and the loader combos. Download sources are in
+Verify with the loader's `/object_info/<Class>` option list (for example `LatentUpscaleModelLoader.model_name`
+and `LoraLoaderModelOnly.lora_name`); `/models/<folder>` can be empty even when the file is installed.
+Download sources are in
 [`COMFY-SETUP.md`](../../COMFY-SETUP.md).
 
 | Role | File |
@@ -98,6 +100,15 @@ Preprocessing matches Sana's `--input-video`: force 24 fps, cover-crop to the dr
 | t2v 8 s | ~12 min |
 | v2v 8 s | ~7 min |
 
+## v2v length and cadence
+
+- The 17k+5 length grid has a **floor of 124 frames**. A 3.6 s take at 24 fps is 89 frames, below the
+  trained range. The graph pads by repeating the last frame, so set
+  `LENGTH = max(124, grid(source_frames))` and trim the duplicated tail in the edit.
+- Output is **24 fps**. A 30 fps timeline gets cadence judder unless the edit decodes frames rather
+  than seeks the video.
+- Portrait 9:16 verified: `768×1376` draft → `1536×2752` target; both sides are multiples of 32.
+
 ## Source resolution — where the refiner stops
 
 The refiner can sharpen and add plausible micro-texture, but it cannot recover high-frequency detail
@@ -127,5 +138,14 @@ Do not attempt a 4K DiT pass on 24 GB with this pipeline:
 - 2-step σ₀ 0.7 preserves source composition; 3-step σ₀ 0.909 re-composes more and can invent props.
   Use 3-step only when re-composition is acceptable.
 - Turbo + sharp are polish; refiner + turbo are what make 2-step work.
+- **Identity and detail:** the refiner holds faces, hair, wardrobe, and background across a batch and
+  adds real micro-detail. Laplacian variance on a fixed 1080-wide output went 17.6 → 44.5 on the same
+  clip. It also raises micro-contrast and saturation, so grade a refined batch against its unrefined
+  neighbours, not against the source.
+- **It is not a faithful enlargement.** Pores and knit texture can be invented. Refining speakers while
+  leaving b-roll unrefined makes the b-roll look soft; run the refiner on every clip in a cut.
+- **Wrong source tree = silent re-cast.** A refiner handed the wrong clip can re-cast the scene while
+  size, decode, and duration checks still pass. Confirm the source path and spot-check identity before
+  a batch.
 - The sharp LoRA is applied as a normal LoRA, not through the author's aligned
   `MiniMaxH3AddGuide` second pass, so treat it as a generic sharpener.

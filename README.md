@@ -73,9 +73,10 @@ If your agent supports skills:
 
 - Copy `skills/SKILL.md` to `<client-skills>/comfiest/SKILL.md` for the umbrella rules and routing.
 - Copy `skills/minimaxh3/`, `skills/minimaxh3-character-replace/`, `skills/minimaxh3-upscale/`,
-  `skills/minimaxh3-perfect-loop/`, `skills/sam3/`, `skills/workflow-development/`, and
-  `skills/fish-audio-drama3/` as sibling skill directories if your client discovers each skill
-  separately.
+  `skills/minimaxh3-perfect-loop/`, `skills/sam3/`, `skills/prompt-writing/`,
+  `skills/workflow-development/`, and `skills/fish-audio-drama3/` as sibling skill directories if
+  your client discovers each skill separately. `skills/prompt-writing/` contains six family skills;
+  copy its child directories individually if your client requires a flat layout.
 
 The umbrella carries the hard rules and routing; the subskills carry family and recipe detail.
 
@@ -91,6 +92,8 @@ The umbrella carries the hard rules and routing; the subskills carry family and 
   [`skills/workflow-development/SKILL.md`](skills/workflow-development/SKILL.md).
 - **A native matte primitive.** SAM3 image/video segmentation with open-vocabulary prompts, coverage
   checks, and alpha-WebM compositing — no character-replacement graph required.
+- **Prompt-writing skills for every family.** Krea, Flux, MOSS, YuE2, Music 3, and Drama 3 prompts get
+  the model-specific structure instead of a one-line caption.
 - **A submission loop that survives real life.** `wait: false` + `/history` polling, direct output
   URL fallback when local job state lags, one-job-per-target discipline.
 - **Provenance by default.** Every file lands under a `prompt_id` folder with a run-log entry; vision
@@ -192,6 +195,10 @@ forced-audio lip-sync, and character replacement. See
 [`minimaxh3-upscale`](skills/minimaxh3-upscale/SKILL.md) for 2K t2v/v2v refine, and
 [`minimaxh3-perfect-loop`](skills/minimaxh3-perfect-loop/SKILL.md) for seamless 154-frame loops.
 
+Before filling any prompt field, use the matching prompt writer from
+[`skills/prompt-writing/`](skills/prompt-writing/README.md). They cover Krea, Flux, MOSS, YuE2,
+Music 3, and Drama 3; the index maps each to its workflow.
+
 ## Repository layout
 
 ```text
@@ -209,6 +216,7 @@ forced-audio lip-sync, and character replacement. See
 │   ├── minimaxh3-upscale/SKILL.md
 │   ├── minimaxh3-perfect-loop/SKILL.md
 │   ├── sam3/SKILL.md                  # native masking family
+│   ├── prompt-writing/                # six family prompt writers + README index
 │   ├── workflow-development/SKILL.md   # edit -> validate -> run -> promote
 │   └── fish-audio-drama3/SKILL.md
 ├── scripts/
@@ -269,7 +277,8 @@ fork rather than editing the shipped template.
 - Models: Krea 2 Turbo/Edit, Flux.2 Klein 9B + Qwen3-8B fp8mixed, MOSS-Image, YuE2 3B, MiniMax Music 3,
   Fish Audio Drama 3, MiniMax H3 fastvideo stack + 2K refiner/upscaler and the loop Turbo adapter,
   SAM3 segmentation. Exact filenames live in the workflow sections of
-  [`skills/SKILL.md`](skills/SKILL.md); verify each host with `/models/<folder>` and `/object_info`.
+  [`skills/SKILL.md`](skills/SKILL.md); verify each host with `/object_info/<LoaderClass>` option
+  lists. `/models/<folder>` can return an empty body even when the model is installed.
   The full download list, Hugging Face locations, and folder layout are in
   [`COMFY-SETUP.md`](COMFY-SETUP.md).
 - GPU: 24 GB-class for video and Drama 3; 128 GB+ system RAM recommended for Drama 3.

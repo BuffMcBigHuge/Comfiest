@@ -134,7 +134,7 @@ workspace" confusion comes from forgetting that.
 | `system_stats`, `free_memory` | **Local only** | Not redirected by `COMFYUI_URL`. Use `GET http://<target>/system_stats` for a remote. |
 | `launch_comfyui`, `stop_comfyui`, `restart_comfyui` | **Local only** | Never "fix" a remote with these. |
 | `update_comfyui`, `switch_comfyui_version`, `install_node`, `get_logs` | **Local only** | They act on this workstation's comfy-cli workspace. |
-| `download_model`, `search_models`, `nodes`, `validate_workflow`, template `local_check` | **Local only** | They inspect the local install, not the remote. |
+| `download_model`, `search_models`, `nodes`, `validate_workflow`, `list_workflow_slots`, template `local_check` | **Local only** | They inspect the local install, not the remote. `list_workflow_slots` is also unreliable on comfy-mcp 0.10.0; do not use it as a remote preflight. |
 | `search_templates` | Gallery catalog | `fetch_template` writes the JSON to this machine. |
 | `auth_status`, `auth_login` | Local comfy-cli credentials | Only relevant to partner-API nodes. |
 
@@ -149,6 +149,8 @@ Consequences:
 - **Route on `comfy_target`, not `hardware`.** The `hardware` block is this workstation's RTX 4090.
   The render box is whichever `comfy_target` names.
 - **`validate_workflow` and `local_check` are not remote verdicts.** They describe the local install.
+  The same applies to `list_workflow_slots`, which is unreliable on comfy-mcp 0.10.0. Use
+  `scripts/validate_workflow.py --url <target>`; it queries the target's `/object_info`.
   Check remote nodes/models over HTTP (see [Verify a registration](#8-verify-a-registration)).
 - **The local workspace has no ComfyUI-Manager** (`manager_mode: not-installed`), so local node/model
   discovery cannot answer questions about a remote. Use the remote `/object_info` and `/models`
@@ -207,7 +209,7 @@ appear to hang and then exit. `--version` and `--help` are the only terminal-saf
 | `COMFY_MCP_ASSUME_CONSENT` | Optional | Pre-authorizes lifecycle confirmations (`install_node,update_all,version_switch,kill_untracked,network_exposure` or `all`). It does **not** authorize spending. Leave unset for this repository. |
 | `COMFY_MCP_DEBUG_LOG` | Optional | Path to the opt-in failure log. |
 | `COMFY_MCP_REMOTE_SHARED_MODELS` | Optional | Only set when this machine's models directory really is the remote's (shared NFS/tailnet mount). Never set it here. |
-| `COMFY_LOCAL_URL`, `COMFYUI_HOST` | Optional | Alternative ways to point comfy-cli at a server. Prefer `COMFYUI_URL`; `COMFY_LOCAL_URL` does not produce a `comfy_target` block. |
+| `COMFY_LOCAL_URL`, `COMFYUI_HOST` | Optional | Alternative ways to point comfy-cli at a server. Prefer `COMFYUI_URL`; `COMFY_LOCAL_URL` does not produce a `comfy_target` block. If you set `COMFY_LOCAL_URL`, it must equal `COMFYUI_URL`, or `fetch_outputs` may resolve against a local default and fail with `RemoteDisconnected`. Restart the MCP process after changing either value. |
 | `COMFY_T2I_TEMPLATE` | Optional | Retargets `generate_image`. Leave the default. |
 
 Minimal environment for one registration:
@@ -544,7 +546,8 @@ tools["comfy-render-8195"].job({ action: "queue" })
    `Invoke-RestMethod http://192.0.2.10:8195/system_stats`
    This is the remote's version, VRAM, and package payload. The MCP `system_stats` tool would report
    the local install instead. For a specific node or model, use the remote's read-only HTTP endpoints:
-   `GET /object_info/<NodeClass>` and `GET /models/<folder>`.
+   `GET /object_info/<NodeClass>`; read the loader's `unet_name`/`lora_name`/`clip_name`/`vae_name`
+   option list. `GET /models/<folder>` is unreliable and can return an empty body.
 4. **Small run** — submit a known API-format workflow with `wait: false`, then wait, then collect:
 
    ```js

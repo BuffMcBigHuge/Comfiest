@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Validate an API-format ComfyUI workflow against a live target.
 
-Checks node classes, required inputs, combo values, links, model files, and save
-prefixes. It does not submit a job and does not modify the workflow.
+Checks node classes, required inputs, combo values, links, loader option lists
+(model files), and save prefixes. It does not submit a job and does not modify
+the workflow.
 
     python scripts/validate_workflow.py <workflow.api.json> --url http://127.0.0.1:8188
 
@@ -17,27 +18,8 @@ import argparse
 import json
 import sys
 import urllib.error
-import urllib.parse
 import urllib.request
 from pathlib import Path
-
-MODEL_FOLDERS = {
-    "lora_name": "loras",
-    "unet_name": "diffusion_models",
-    "vae_name": "vae",
-    "clip_name": "text_encoders",
-    "clip_name1": "text_encoders",
-    "clip_name2": "text_encoders",
-    "ckpt_name": "checkpoints",
-    "control_net_name": "controlnet",
-    "style_model_name": "style_models",
-}
-
-# model_name is overloaded; a few classes own the folder.
-MODEL_NAME_FOLDERS = {
-    "LatentUpscaleModelLoader": "latent_upscale_models",
-    "UpscaleModelLoader": "upscale_models",
-}
 
 
 def get_json(base: str, path: str, timeout: int) -> dict | list:
@@ -85,15 +67,10 @@ def format_option_names(spec, selected) -> set[str]:
     return names
 
 
-def model_folder(class_type: str, input_name: str) -> str | None:
-    if class_type == "FL_RIFE" and input_name == "ckpt_name":
-        # RIFE checkpoints live in the node pack, not models/checkpoints.
-        return None
-    if input_name in MODEL_FOLDERS:
-        return MODEL_FOLDERS[input_name]
-    if input_name == "model_name":
-        return MODEL_NAME_FOLDERS.get(class_type)
-    return None
+def loader_options(object_info: dict, class_name: str, input_name: str) -> list | None:
+    schema = object_info.get(class_name) or {}
+    spec = ((schema.get("input") or {}).get("required") or {}).get(input_name)
+    return combo_options(spec)
 
 
 def main() -> int:
@@ -121,17 +98,6 @@ def main() -> int:
     except Exception as exc:
         print(f"ERROR: cannot read {base}/object_info: {exc}")
         return 2
-
-    model_cache: dict[str, set[str] | None] = {}
-
-    def target_models(folder: str) -> set[str] | None:
-        if folder not in model_cache:
-            try:
-                files = get_json(base, f"/models/{urllib.parse.quote(folder)}", args.timeout)
-                model_cache[folder] = {str(x) for x in files}
-            except Exception:
-                model_cache[folder] = None
-        return model_cache[folder]
 
     errors: list[str] = []
     warnings: list[str] = []
@@ -229,30 +195,27 @@ def main() -> int:
             if options is not None and value not in options:
                 if isinstance(value, str) and value.startswith("example."):
                     warnings.append(
-                        f"[{node_id}] {class_type}.{key}: placeholder '{value}' is not on the target yet"
+                        f"[{node_id}] {class_type}.{key}: placeholder '{value}' is not in the loader options yet"
                     )
                 else:
-                    errors.append(f"[{node_id}] {class_type}.{key}: '{value}' not in combo ({len(options)} options)")
+                    errors.append(f"[{node_id}] {class_type}.{key}: '{value}' not in loader options ({len(options)})")
 
-            folder = model_folder(class_type, key)
-            if folder and isinstance(value, str) and value not in ("None", ""):
-                files = target_models(folder)
-                if files is None:
-                    warnings.append(f"[{node_id}] {class_type}.{key}: /models/{folder} unavailable; skipped")
-                elif value not in files:
-                    errors.append(f"[{node_id}] {class_type}.{key}: file not on target: {value}")
-
-        # rgthree's loader stores slots as objects instead of links.
+        # rgthree's loader stores slots as objects instead of links. Its slot
+        # names are not in the node schema, so compare against the core LoRA
+        # loader's option list.
         if class_type == "Power Lora Loader (rgthree)":
-            loras = target_models("loras")
+            lora_list = loader_options(object_info, "LoraLoaderModelOnly", "lora_name")
+            if lora_list is None:
+                lora_list = loader_options(object_info, "LoraLoader", "lora_name")
+            loras = set(lora_list or [])
             for key, value in inputs.items():
                 if not key.startswith("lora_") or not isinstance(value, dict):
                     continue
                 name = value.get("lora")
                 if not name or name == "None" or not value.get("on", True):
                     continue
-                if loras is not None and name not in loras:
-                    errors.append(f"[{node_id}] {class_type}.{key}: LoRA not on target: {name}")
+                if loras and name not in loras:
+                    errors.append(f"[{node_id}] {class_type}.{key}: LoRA not in loader options: {name}")
 
         if class_type in ("SaveImage", "SaveVideo", "VHS_VideoCombine"):
             prefix = inputs.get("filename_prefix")

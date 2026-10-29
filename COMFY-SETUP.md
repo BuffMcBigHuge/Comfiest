@@ -18,7 +18,7 @@ core `CreateVideo`/`SaveVideo` nodes.
 3. 16 required custom-node packs (plus 3 optional), including the MiniMax H3 compatibility/acceleration
 
    nodes.
-4. About 212 GB of model files, downloaded from Hugging Face into the right folders.
+4. About 210 GB of model files, downloaded from Hugging Face into the right folders.
 5. A TensorRT depth engine for the character-replacement workflows.
 6. Optionally, the `comfy-mcp` bridge from [`MCP-SETUP.md`](MCP-SETUP.md) so an agent can submit jobs.
 
@@ -221,11 +221,10 @@ Paths are relative to `ComfyUI/`. Sizes are approximate.
 | H3 | <https://huggingface.co/Comfy-Org/MiniMax-H3> | `text_encoders/qwen3vl_32b_minimax_h3_int8_convrot.safetensors` | `models/text_encoders/qwen3vl_32b_minimax_h3_int8_convrot.safetensors` | 27.1 GB |
 | H3 | <https://huggingface.co/Comfy-Org/MiniMax-H3> | `vae/minimax_h3_video_vae_fp16.safetensors` | `models/vae/minimax/minimax_h3_video_vae_fp16.safetensors` | 5.2 GB |
 | H3 | <https://huggingface.co/Comfy-Org/MiniMax-H3> | `vae/minimax_h3_audio_vae_fp32.safetensors` | `models/vae/minimax/minimax_h3_audio_vae_fp32.safetensors` | 0.6 GB |
-| H3 | <https://huggingface.co/Comfy-Org/MiniMax-H3> | `loras/minimax_h3_fl2v_turbo_4step_v1.0_768p_comfyui_bf16.safetensors` | `models/loras/minimax/minimax_h3_fl2v_turbo_4step_v1.0_768p_comfyui_bf16.safetensors` | 2.0 GB |
 | H3 2K | <https://huggingface.co/Comfy-Org/MiniMax-H3> | `diffusion_models/minimax_h3_fl2va_pruned_int8_convrot.safetensors` | `models/diffusion_models/minimax/minimax_h3_fl2va_pruned_int8_convrot.safetensors` | 21.0 GB |
 | H3 2K | <https://huggingface.co/LBH-123-AI/Minimax_h3_latent_Upscaler> | `minimax_h3_latent_upscaler_3d_conv_v1/minimax_h3_latent_upscaler_3d_conv_v1_bf16.safetensors` | `models/latent_upscale_models/minimax_h3_latent_upscaler_3d_bf16.safetensors` | 0.7 GB |
 | H3 2K | <https://huggingface.co/Kijai/MiniMax-H3-experimental> | `loras/minimax_h3_open_regenerate_2k_refiner_rank_16_bf16.safetensors` | `models/loras/minimax/minimax_h3_open_regenerate_2k_refiner_rank_16_bf16.safetensors` | 0.2 GB |
-| H3 2K | <https://huggingface.co/lightx2v/Minimax-h3-Turbo> | `minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors` | `models/loras/minimax/minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors` | 2.0 GB |
+| H3 / 2K | <https://huggingface.co/lightx2v/Minimax-h3-Turbo> | `minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors` | `models/loras/minimax/minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors` | 2.0 GB |
 | H3 2K | <https://huggingface.co/RunningHubAI/rh-minimax-h3-lms-v1.0-r64.safetensors-lora> | `minimax_h3_lms_v1.0_r64.safetensors` | `models/loras/minimax/minimax_h3_lms_v1.0_r64.safetensors` | 1.2 GB |
 | H3 loop | <https://huggingface.co/HAOOOOOOO51/Minimax_h3_fl2v_lightx2v_turbo_4to8step_v0.1-v1.0_768p_v4_step600_dareties_fro095_pruned> | `minimax_h3_fl2v_lightx2v_turbo_4to8step_v0.1-v1.0_768p_v4_step600_dareties_fro095_pruned.safetensors` | `models/loras/minimax/minimax_h3_fl2v_lightx2v_v0.1_dareties_v4_step600_comfy_fro_fulladaln.safetensors` | 0.9 GB |
 | SAM3 | <https://huggingface.co/Comfy-Org/sam3.1> | `checkpoints/sam3.1_multiplex_fp16.safetensors` | `models/checkpoints/sam3.1_multiplex_fp16.safetensors` | 1.7 GB |

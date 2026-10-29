@@ -23,9 +23,10 @@ moves back into `workflows/` only through the promotion checklist at the end of 
    `hardware` block describes the MCP host and may be a different machine.
 2. Query the target directly:
    - `GET /system_stats` — ComfyUI version, VRAM, uptime.
-   - `GET /object_info` — every installed class and its input schema.
-   - `GET /models/<folder>` — files in `loras`, `diffusion_models`, `vae`, `text_encoders`,
-     `checkpoints`, `latent_upscale_models`, …
+   - `GET /object_info` — every installed class and its input schema, including the loader option
+     lists that name model files.
+   - `GET /models/<folder>` — secondary only; it can return an empty body even when models are
+     installed, and it omits some files (GGUF).
 3. `job({ action: "queue" })` — the target must be idle before a heavy run. One active job per target.
 4. Check version gates: `MiniMaxH3LatentUpscaleWithModel` needs ComfyUI PR #17412+, the perfect loop
    needs core `SaveVideo` (0.43.0+), charreplace needs the TensorRT depth engine, and so on.
@@ -155,9 +156,12 @@ python scripts/validate_workflow.py work/scratch/<project>/<graph>.api.json \
   --url http://<host>:<port>
 ```
 
-It checks node classes, required inputs, dynamic combos, link targets, combo values, model files, LoRA
-slots, and save prefixes. It does not submit a job. Fix every error; read the warnings (placeholders
-that are not uploaded yet are expected on public graphs).
+It checks node classes, required inputs, dynamic combos, link targets, combo values, loader option
+lists for model/LoRA files, and save prefixes. It does not submit a job. Fix every error; read the
+warnings (placeholders that are not uploaded yet are expected on public graphs).
+
+It reads model availability from `/object_info`, not `/models/<folder>`: `/models` can return an empty
+body even when the target has the files, and it omits some formats.
 
 Then preview the exact prompt:
 
@@ -313,7 +317,7 @@ means someone edited the shipped tree.
 | `system_stats` describes the wrong GPU | It is a local-only tool | Read the target's `/system_stats` over HTTP. |
 | A graph works in the UI but not through MCP | UI-only nodes or instance-only widgets | Convert and inspect `prompt_preview`; use an API graph. |
 | Audio is shorter than video | `VHS_VideoCombine` `-shortest` / DTS cut | Use `CreateVideo -> SaveVideo` or verify and mux explicitly. |
-| A model "exists" but the loader does not list it | Wrong folder or filename | Check `/object_info/<Class>` options and `/models/<folder>`. |
+| A model "exists" but the loader does not list it | Wrong folder or filename | Check the loader's `/object_info/<Class>` option list, not `/models/<folder>` (which can be empty). |
 | `--print-prompt` "ran" but nothing appeared | It only previews; it does not queue | Submit with `run_workflow`; then poll. |
 | Dates or `%...%` appear in the save path | A frontend token leaked into `filename_prefix` | Use a static prefix; never invent a new folder. |
 

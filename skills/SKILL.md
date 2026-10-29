@@ -30,8 +30,8 @@ one target for its lifetime.
 `workflows/minimaxh3/`, `workflows/sam3/`, and `workflows/fishdrama3/` are workflow-family
 subdirectories. Their usage notes live in `skills/minimaxh3/`,
 `skills/minimaxh3-character-replace/`, `skills/minimaxh3-upscale/`,
-`skills/minimaxh3-perfect-loop/`, `skills/sam3/`, `skills/workflow-development/`, and
-`skills/fish-audio-drama3/`.
+`skills/minimaxh3-perfect-loop/`, `skills/sam3/`, `skills/workflow-development/`,
+`skills/prompt-writing/`, and `skills/fish-audio-drama3/`.
 `work/` is the only writable area of the repository.
 
 ```text
@@ -51,6 +51,7 @@ subdirectories. Their usage notes live in `skills/minimaxh3/`,
 │   ├── minimaxh3-perfect-loop/SKILL.md
 │   ├── sam3/SKILL.md
 │   ├── workflow-development/SKILL.md
+│   ├── prompt-writing/             # six family prompt writers + README index
 │   └── fish-audio-drama3/SKILL.md
 ├── workflows/
 │   ├── *.json                      # root workflows
@@ -218,6 +219,24 @@ explicit approval.
 | Image or video matte | SAM3 (native) | `workflows/sam3/api/*.api.json` | text-prompted luma matte; image, video, tracker |
 | Speech or voice clone | Fish Audio Drama 3 | `workflows/fishdrama3/*.json` | 1–2 speaker TTS; four canonical variants |
 
+### Prompt writing
+
+Before filling a prompt, caption, lyrics, or script field, read the matching prompt-writer skill. A
+short caption is not equivalent to a production prompt; Music 3 in particular needs the structured
+caption/lyrics form to produce arrangement rather than a static groove.
+
+| Family | Prompt-writing skill |
+| - | - |
+| Krea 2 | `prompt-writing/krea2-prompt-writer/SKILL.md` |
+| Flux.2 Klein 9B | `prompt-writing/flux-klein-9b-prompt-writer/SKILL.md` |
+| MOSS-Image | `prompt-writing/moss-image-prompt-writer/SKILL.md` |
+| YuE2 3B | `prompt-writing/yue2-prompt-writer/SKILL.md` |
+| MiniMax Music 3 | `prompt-writing/minimax-music3-prompt-writer/SKILL.md` |
+| Fish Audio Drama 3 | `prompt-writing/fish-audio-drama3-prompt-writer/SKILL.md` |
+
+The index is [`prompt-writing/README.md`](prompt-writing/README.md). The prompt writer chooses
+words and structure only; the workflow JSON remains the authority on model, steps, and save prefix.
+
 How to use the table:
 
 1. Resolve the listed repository-relative path against the repository root and pass the resulting absolute path
@@ -310,6 +329,8 @@ cost runs. Node IDs refer to the shipped graphs.
 Krea 2 is the photoreal/character image family. Turbo produces a still from a prompt; Edit re-renders
 a supplied subject into a new scene, pose, or camera angle while preserving identity.
 
+**Prompt writing:** use [`prompt-writing/krea2-prompt-writer/SKILL.md`](prompt-writing/krea2-prompt-writer/SKILL.md).
+
 | File | Use | Key behavior |
 | - | - | - |
 | `workflows/text2image-krea.json` | text → image | 1024×1280; 14 steps; cfg 1; euler/simple; no LoRA |
@@ -353,6 +374,8 @@ Effective settings and gotchas:
 A distilled Flux.2 Klein model run through the RES4LYF 4-step sampler. It offers a more stylized,
 detail-oriented alternative to Krea. The public template ships with no custom LoRAs; the original
 production graph used four for realism, anatomy, and skin/detail control. The I2I graph injects a reference latent and follows the source image's dimensions.
+
+**Prompt writing:** use [`prompt-writing/flux-klein-9b-prompt-writer/SKILL.md`](prompt-writing/flux-klein-9b-prompt-writer/SKILL.md).
 
 | File | Use | Key behavior |
 | - | - | - |
@@ -412,6 +435,8 @@ MOSS-Image is an 8-step photoreal model paired with a Qwen3.5 text encoder. The 
 subgraph instance: prompt, resolution, and seed come from top-level nodes, while the sampler, models,
 and optional branches are set on the instance. A built-in prompt upsampler can turn a short idea into a
 detailed caption.
+
+**Prompt writing:** use [`prompt-writing/moss-image-prompt-writer/SKILL.md`](prompt-writing/moss-image-prompt-writer/SKILL.md).
 
 **File:** `workflows/text2image-moss.json`. **Output:** PNG, prefix `COMFY_WORKFLOWS/MOSS`.
 
@@ -474,6 +499,8 @@ Generates a complete song (vocals plus backing) from a style description and lyr
 `comfy_extras.nodes_yue2` nodes in a subgraph; ABC structural planning is off in the shipped file, so
 it generates directly from style + lyrics.
 
+**Prompt writing:** use [`prompt-writing/yue2-prompt-writer/SKILL.md`](prompt-writing/yue2-prompt-writer/SKILL.md).
+
 **File:** `workflows/text2music-yue2.json`. **Model:** `yue2_3b_int8_convrot.safetensors`
 (checkpoints). **Output:** FLAC, prefix `COMFY_WORKFLOWS/YUE2_T2M`.
 
@@ -520,6 +547,8 @@ Findings:
 integration; it runs the local MiniMax Music 3 model with core `comfy_extras.nodes_minimax_music`
 nodes.
 
+**Prompt writing:** use [`prompt-writing/minimax-music3-prompt-writer/SKILL.md`](prompt-writing/minimax-music3-prompt-writer/SKILL.md). A short caption produces a static groove; the prompt writer's structured caption/lyrics form is what gives the track arrangement and lift.
+
 Subgraph **Text to Music (MiniMax Music 3)** inputs: `caption`, `lyrics`, `max_duration`, `seed`,
 `unet_name`, `clip_name`, `vae_name`, `tiled_decode`.
 
@@ -558,6 +587,8 @@ Findings:
 Local TTS with two speaker slots (autogrow to 16 in the UI). The base workflow is
 `workflows/fishdrama3/tts-fishdrama3-base.json`; four canonical variants live in `workflows/fishdrama3/` and should be
 preferred for normal runs. The base file is for custom rewiring.
+
+**Prompt writing:** use [`prompt-writing/fish-audio-drama3-prompt-writer/SKILL.md`](prompt-writing/fish-audio-drama3-prompt-writer/SKILL.md).
 
 **Stack:** `drama3_fp8experts_bf16.safetensors` (38.6 GB of experts in system RAM) plus
 `drama3_codec.safetensors`. Node pack: `ComfyUI-Drama3` (`PedroMarinhoDev/ComfyUI-Drama3`, pinned
@@ -709,13 +740,13 @@ Active LoRA (identical in every UI variant and API mirror):
 
 | LoRA | Strength |
 | - | - |
-| `minimax\minimax_h3_fl2v_turbo_4step_v1.0_768p_comfyui_bf16.safetensors` | 0.8 |
+| `minimax\minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors` | 0.8 |
 
 The stack is intentionally reduced to the speed/turbo LoRA: no character or style LoRAs ship
 with this suite. The `Power Lora Loader #21` keeps one slot; a bypassed `LoraLoaderModelOnly` node
 holds the same turbo LoRA for reference. Add your own LoRAs in a scratch copy, never in the shipped
-templates. Verify the model and LoRA on each target with `/models/<folder>` and
-`/object_info/LoraLoaderModelOnly` before a run.
+templates. Verify the model and LoRA on each target with the loader's `/object_info/<Class>` option
+list before a run; `/models/<folder>` can be empty even when the file is installed.
 
 #### Variants and UI/API differences
 
@@ -903,15 +934,16 @@ that most often decide whether a run succeeds.
 
 ### Discovery
 
-- `search_models`, `nodes`, `validate_workflow`, and template `local_check` describe the local
-  comfy-cli workspace, not the targets.
+- `search_models`, `nodes`, `validate_workflow`, `list_workflow_slots`, and template `local_check`
+  describe the local comfy-cli workspace, not the targets. `list_workflow_slots` is unreliable on
+  comfy-mcp 0.10.0; use `scripts/validate_workflow.py --url <target>` instead.
 - Use the target's HTTP endpoints for live checks:
-  - `/object_info/<Class>` for node availability and input options.
-  - `/models/<folder>` for model files.
+  - `/object_info/<Class>` for node availability and the **loader option lists** that name model files
+    (`unet_name`, `lora_name`, `clip_name`, `vae_name`, `ckpt_name`).
   - `/system_stats` for version, package versions, VRAM, and uptime.
-- `/object_info` option lists are authoritative; they can reveal files in model paths that `/models`
-  does not list. GGUF encoders appear in `CLIPLoaderGGUF` options but not under
-  `/models/text_encoders`.
+- Loader option lists are authoritative. `/models/<folder>` can return an empty body even when the
+  target has the models, and it omits GGUF files that appear in `CLIPLoaderGGUF` options. Do not
+  conclude "nothing is installed" from `/models`.
 - `/object_info/Drama3Generate` shows the autogrow voice slots (max 16) and speaker-mode options.
   `/object_info/LoadAudio` lists the input clips; sample clips differ between targets, so upload your
   own.
@@ -938,7 +970,7 @@ for the same OS user. Separate MCP processes do not isolate them.
 
 | Remote-aware tools (follow `COMFYUI_URL`) | Local-only tools |
 | - | - |
-| `run_workflow`, `run_template`, `generate_image`, `job`, `upload_file`, `fetch_outputs` | `system_stats`, `free_memory`, `launch_comfyui`/`stop_comfyui`/`install_node`, `download_model`, `search_models`, `nodes`, `validate_workflow`, template `local_check` |
+| `run_workflow`, `run_template`, `generate_image`, `job`, `upload_file`, `fetch_outputs` | `system_stats`, `free_memory`, `launch_comfyui`/`stop_comfyui`/`install_node`, `download_model`, `search_models`, `nodes`, `validate_workflow`, `list_workflow_slots`, template `local_check` |
 
 ## Local tooling and post-production
 
@@ -979,6 +1011,34 @@ Post-production:
   `fade=alpha=1`; this avoids drawtext escaping and gives predictable typography.
 - Verify the final by metadata and decode check. The agent may inspect its own outputs for QA, but the
   user watches/listens and judges.
+
+### Batch production
+
+- **Preflight every loader value** on each target before the first submit. Fail in two seconds, not
+  four minutes. Use `/object_info/<LoaderClass>`; `/models` is not reliable.
+- **`COMFY_LOCAL_URL`, if set, must equal `COMFYUI_URL`.** A mismatch makes `fetch_outputs` resolve
+  against a local default and fail with `RemoteDisconnected`. Restart the MCP process after changing
+  either value.
+- **Plan from a cost model.** Reference points on a 24 GB card: H3 hero 1.0 MP ≈4 min, dance 0.7 MP
+  ≈3 min, b-roll 0.5 MP ≈2 min, Music 3 song ≈4 min, still ≈1 min. Split the manifest by cost so no
+  target is the straggler.
+- **Check `/queue` before committing a batch.** A foreign job parks yours and `job(wait)` looks like a
+  hang. Cancel only your own `prompt_id`s; resubmit to a free target if needed.
+- **Persist each shot the moment it lands** under `work/outputs/<project>/<date>/<prompt_id>/`. A driver
+  that writes results only at exit loses the map if it is killed; save prefixes are fixed and
+  `prompt_id` is the durable identifier.
+- **Lip sync is a placement contract.** A forced-audio piece must sit at its own offset inside its
+  block, with b-roll cut across it. Sliding it makes the mouth late.
+- **Quantize edit boundaries to frames:** `frames = round(t1*FPS) - round(t0*FPS)`. Accumulating
+  per-piece durations compounds rounding into visible drift.
+- **Measure the track, then build the grid.** A brief may ask for 120 BPM and deliver 136. Use
+  `librosa` beat tracking plus a small ASR pass for BPM, first vocal, and verse/chorus boundaries
+  before choosing cut lengths.
+- **Cast budget: two faces, one silhouette.** Identity drift is invisible at four cuts per bar and
+  glaring at a four-beat hold.
+- **Vision-check one frame per new prompt**, on your own output only: body count, hands, and identity.
+- **Delivery ladder.** A 1080×1920 CRF 18 master runs 60–80 MB/minute; a 720p CRF 26 build with
+  `maxrate 1700k` lands near 13 MB for 60 s and always sends. Budget ~230 KB per second of runtime.
 
 ## Verification and provenance
 
@@ -1035,6 +1095,7 @@ Before production:
 | Perfect loop fails with missing `MiniMaxH3ContexMaskedAVBridge` | `ComfyUI-MiniMaxH3-Context-Loop` is missing or old | Install/update the pack, restart ComfyUI, then `--print-prompt` again. |
 | Perfect loop has an audible gap at the seam | `VHS_VideoCombine` cut audio at the last video DTS | Keep the shipped `CreateVideo` -> `SaveVideo` path; check stream durations with `ffprobe`. |
 | SAM3 matte drifts or plays at the wrong speed | `20.frame_rate` does not match the source fps | Set it to the source fps; the loader fps is not wired to the saver. |
+| H3 8 s clip is 7.979 s and the timeline drifts | 192-frame request becomes 383 frames after RIFE; the container adds an AAC tail | Probe the video stream, not `format=duration`; pad/trim or request 209 frames. |
 | SAM3 returns a nearly-full matte | Absent target falls back to the salient object, or categories union | Use one specific category, raise `13.threshold`, and check mean luma; never stack speculative categories. |
 | SAM3 video frame count multiplies | `13.individual_masks=true` on video | Keep it `false` for video. |
 | SAM3 classes missing or resolve to an old custom pack | ComfyUI lacks core `comfy_extras.nodes_sam3` | Update to 0.43.0+; verify `/object_info/SAM3_Detect` reports `comfy_extras.nodes_sam3`. |
@@ -1044,6 +1105,8 @@ Before production:
 | `fetch_outputs` returns `download_job_not_found` | The `prompt_id` was submitted by another machine/agent, or local state was cleared | Download from the target's `/view` URL; only inspect files tied to your own `prompt_id`. |
 | A file in `work/outputs` or the target's `output/` looks interesting, but you did not submit its job | It belongs to another agent or an older run | Do not use vision. Only inspect files traceable to your own `prompt_id` + run-log entry. |
 | A legacy GGUF text encoder looks missing from `/models/text_encoders` | GGUF files are not listed in that folder | Install the optional `ComfyUI-GGUF` pack; public Flux uses `CLIPLoader` with `qwen_3_8b_fp8mixed.safetensors`. |
+| `/models/<folder>` is empty or omits a model the target obviously has | `/models` is not a reliable inventory | Check `/object_info/<LoaderClass>` and read the `unet_name`/`lora_name`/`clip_name`/`vae_name` option list. |
+| `list_workflow_slots` raises or returns nothing | comfy-mcp 0.10.0 bug; it is local-only anyway | Use `comfy run --print-prompt` and `scripts/validate_workflow.py --url <target>` for a remote preflight. |
 | `server_info` shows a local GPU that is not the target host | `hardware` describes the MCP host; `comfy_target` describes the target | Route on `comfy_target`; use the target's `/system_stats` for the actual host. |
 | `system_stats`/`free_memory` reports the wrong GPU | Those tools are not redirected by `COMFYUI_URL`; they describe the local comfy-cli install | Query `http://<target>/system_stats` for the target host. `free_memory` cannot free a remote or another process. |
 | `download_model` refuses | `COMFYUI_URL` is set | Install the model on the target host; do not bypass with `COMFY_MCP_REMOTE_SHARED_MODELS` unless storage really is shared. |
@@ -1060,7 +1123,7 @@ This file is the repository's operating skill. Keep it portable and current.
 - **Update after every run or failure:** status cells, findings, and the common-issues table. Prefer a
   bullet or table row over prose.
 - **Document new workflows with maintainer approval.** Read the JSON, inspect the live target
-  (`/object_info`, `/models`, `/system_stats`), then document file name, task, model behavior, node
+  (`/object_info`, `/system_stats`), then document file name, task, model behavior, node
   packs, effective settings, inputs, save prefix, status, and gotchas.
 - **Test variants safely.** Change widgets/links in ComfyUI or write a copy under `work/scratch`, run
   it, and record the result. Never create API variants in the workflow directories.
@@ -1087,8 +1150,9 @@ This file is the repository's operating skill. Keep it portable and current.
   Optional: `ComfyUI-Frame-Interpolation` (the H3 graphs use Fill-Nodes `FL_RIFE`), the latent
   upscaler pack, and `ComfyUI-GGUF` (legacy GGUF graphs only; public Flux uses `CLIPLoader`).
 - Native SAM3 needs core `comfy_extras.nodes_sam3` (0.43.0+). No custom SAM3 pack is required.
-- Models: see the family sections. Verify each target with `/models/<folder>` and
-  `/object_info/<Class>` rather than assuming the reference deployment's inventory.
+- Models: see the family sections. Verify each target's loader option lists
+  (`/object_info/<Class>`) rather than assuming the reference deployment's inventory or trusting
+  `/models/<folder>`, which can be empty.
 - Optional bypassed models that may be absent and are **not** on any effective path:
   `minimax_h3_latent_upscaler_3d_bf16`, `minimax_h3_video_vae_int8_convrot`,
   `qwen3vl_32b_minimax_h3_nvfp4_awq`, and
@@ -1105,5 +1169,6 @@ This file is the repository's operating skill. Keep it portable and current.
 - `skills/minimaxh3-perfect-loop/SKILL.md` — seamless 154-frame T2AV loop and seam checks.
 - `skills/sam3/SKILL.md` — native SAM3 image/video mattes, prompt grammar, and alpha compositing.
 - `skills/workflow-development/SKILL.md` — scratch edits, validation, MCP submission, and promotion.
+- `skills/prompt-writing/README.md` — index of the six family prompt-writing skills.
 - `skills/fish-audio-drama3/SKILL.md` — TTS variant index and reference requirements.
 - `work/README.md` — workspace rules and the pointer to this file.
