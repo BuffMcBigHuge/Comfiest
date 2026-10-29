@@ -45,6 +45,9 @@ The workflow JSON is the authority, not the guide or the filename.
   output_slot]`. It is what the MCP executes most reliably.
 - Check `mode` on UI nodes: bypassed/muted branches can still contain decoy loaders and dead model
   names. The effective graph is only what the converted prompt contains.
+- Treat a model filename in a UI export as a dependency only if it survives into the effective prompt.
+  Inner subgraph loaders, bypassed branches, and `properties.models` metadata can name files the
+  target never loads.
 - Frontend-only nodes (`Fast Groups Bypasser (rgthree)`, `Label (rgthree)`, `Note`, `MarkdownNote`) do
   not exist on the target. Strip them in the scratch copy if conversion leaves them behind.
 

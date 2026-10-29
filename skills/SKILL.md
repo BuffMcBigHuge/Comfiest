@@ -1020,7 +1020,7 @@ Before production:
 | `fetch_outputs` errors connecting to a local address | Local state missing; tool fell back to a local ComfyUI URL | Build `http://<comfy-host>:<port>/view?filename=...&subfolder=...&type=output` from `outputs[0]`, or use `scripts/fetch_output.py`. |
 | `fetch_outputs` returns `download_job_not_found` | The `prompt_id` was submitted by another machine/agent, or local state was cleared | Download from the target's `/view` URL; only inspect files tied to your own `prompt_id`. |
 | A file in `work/outputs` or the target's `output/` looks interesting, but you did not submit its job | It belongs to another agent or an older run | Do not use vision. Only inspect files traceable to your own `prompt_id` + run-log entry. |
-| A GGUF text encoder looks missing from `/models/text_encoders` | GGUF files are not listed in that folder | Check `/object_info/CLIPLoaderGGUF`; use `CLIPLoaderGGUF`, not `CLIPLoader`. |
+| A legacy GGUF text encoder looks missing from `/models/text_encoders` | GGUF files are not listed in that folder | Install the optional `ComfyUI-GGUF` pack; public Flux uses `CLIPLoader` with `qwen_3_8b_fp8mixed.safetensors`. |
 | `server_info` shows a local GPU that is not the target host | `hardware` describes the MCP host; `comfy_target` describes the target | Route on `comfy_target`; use the target's `/system_stats` for the actual host. |
 | `system_stats`/`free_memory` reports the wrong GPU | Those tools are not redirected by `COMFYUI_URL`; they describe the local comfy-cli install | Query `http://<target>/system_stats` for the target host. `free_memory` cannot free a remote or another process. |
 | `download_model` refuses | `COMFYUI_URL` is set | Install the model on the target host; do not bypass with `COMFY_MCP_REMOTE_SHARED_MODELS` unless storage really is shared. |
@@ -1055,14 +1055,14 @@ This file is the repository's operating skill. Keep it portable and current.
 - 2K upscale/refine needs `MiniMaxH3LatentUpscaleWithModel` (ComfyUI PR #17412 or newer).
 - ComfyUI frontend 1.57.1 or newer.
 - `comfy-aimdo` >= 0.6.0, `comfy-kitchen` >= 0.2.40, `comfyui-workflow-templates` >= 0.11.96.
-- Node packs: `rgthree-comfy`, `ComfyUI-GGUF`, `RES4LYF`, `was-node-suite-comfyui`,
+- Node packs: `rgthree-comfy`, `RES4LYF`, `was-node-suite-comfyui`,
   `comfyui-easy-use`, `comfyui-various`, `ComfyUI-KJNodes`, `ComfyUI-VideoHelperSuite`,
   `ComfyUI-Drama3`, `comfyui-krea2edit`, `ComfyUI-ConditioningKrea2Rebalance`,
   `comfyui-plaguekind-nodes`, `ComfyUI-MiniMaxH3-Context-Loop`, `ComfyUI_Fill-Nodes`,
   `ComfyUI-Spectrum-MiniMax-H3`, `ComfyUI-Impact-Pack`, `ComfyUI-SAM3`,
   `ComfyUI-Depth-Anything-Tensorrt`.
-  Optional: `ComfyUI-Frame-Interpolation` (the H3 graphs use Fill-Nodes `FL_RIFE`) and the latent
-  upscaler pack.
+  Optional: `ComfyUI-Frame-Interpolation` (the H3 graphs use Fill-Nodes `FL_RIFE`), the latent
+  upscaler pack, and `ComfyUI-GGUF` (legacy GGUF graphs only; public Flux uses `CLIPLoader`).
 - Models: see the family sections. Verify each target with `/models/<folder>` and
   `/object_info/<Class>` rather than assuming the reference deployment's inventory.
 - Optional bypassed models that may be absent and are **not** on any effective path:

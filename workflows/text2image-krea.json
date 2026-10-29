@@ -980,9 +980,9 @@
               "Node name for S&R": "VAELoader",
               "models": [
                 {
-                  "name": "qwen_image_vae.safetensors",
-                  "url": "https://huggingface.co/Comfy-Org/Krea-2/resolve/main/vae/qwen_image_vae.safetensors",
-                  "directory": "vae"
+                  "name": "Wan2_1_VAE_bf16.safetensors",
+                  "url": "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/vae/wan_2.1_vae.safetensors",
+                  "directory": "vae/wan"
                 }
               ]
             },

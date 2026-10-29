@@ -254,10 +254,11 @@ fork rather than editing the shipped template.
 
 - ComfyUI 0.43+ and frontend 1.57.1+.
 - `comfy-cli` + `comfy-mcp` (Python 3.12 tested).
-- Node packs: the full set is installed by [`COMFY-SETUP.md`](COMFY-SETUP.md) — rgthree, GGUF,
-  RES4LYF, WAS, Easy-Use, various, KJNodes, VideoHelperSuite, Drama3, krea2edit, Conditioning
-  Rebalance, PlagueKind, Context-Loop, Fill-Nodes, Spectrum, Impact Pack, SAM3, and
-  Depth-Anything-TensorRT. Frame-Interpolation is optional (the H3 graphs use Fill-Nodes `FL_RIFE`).
+- Node packs: the full set is installed by [`COMFY-SETUP.md`](COMFY-SETUP.md) — rgthree, RES4LYF,
+  WAS, Easy-Use, various, KJNodes, VideoHelperSuite, Drama3, krea2edit, Conditioning Rebalance,
+  PlagueKind, Context-Loop, Fill-Nodes, Spectrum, Impact Pack, SAM3, and Depth-Anything-TensorRT.
+  Optional: Frame-Interpolation (the H3 graphs use Fill-Nodes `FL_RIFE`), the latent upscaler, and
+  ComfyUI-GGUF (legacy GGUF graphs only).
 - Models: Krea 2 Turbo/Edit, Flux.2 Klein 9B + Qwen3-8B fp8mixed, MOSS-Image, YuE2 3B, MiniMax Music 3,
   Fish Audio Drama 3, MiniMax H3 fastvideo stack + 2K refiner/upscaler and the loop Turbo adapter.
   Exact filenames live in the workflow sections of [`skills/SKILL.md`](skills/SKILL.md); verify each

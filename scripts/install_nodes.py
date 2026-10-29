@@ -23,7 +23,7 @@ from pathlib import Path
 # name, repo URL, needs install.py, optional
 NODES = [
     ("rgthree-comfy", "https://github.com/rgthree/rgthree-comfy.git", False, False),
-    ("ComfyUI-GGUF", "https://github.com/city96/ComfyUI-GGUF.git", False, False),
+    ("ComfyUI-GGUF", "https://github.com/city96/ComfyUI-GGUF.git", False, True),
     ("RES4LYF", "https://github.com/ClownsharkBatwing/RES4LYF.git", False, False),
     ("was-node-suite-comfyui", "https://github.com/WASasquatch/was-node-suite-comfyui.git", False, False),
     ("ComfyUI-Easy-Use", "https://github.com/yolain/ComfyUI-Easy-Use.git", False, False),

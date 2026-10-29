@@ -15,7 +15,7 @@ core `CreateVideo`/`SaveVideo` nodes.
 
 1. ComfyUI (latest stable) + a Python 3.12 environment.
 2. PyTorch built for CUDA 13.0 (required by the `int8_convrot` checkpoints).
-3. 18 required custom-node packs (plus 2 optional), including the MiniMax H3 compatibility/acceleration
+3. 17 required custom-node packs (plus 3 optional), including the MiniMax H3 compatibility/acceleration
 
    nodes.
 4. About 212 GB of model files, downloaded from Hugging Face into the right folders.
@@ -118,7 +118,7 @@ Useful flags:
 ```bash
 python scripts/install_nodes.py --comfyui "$COMFYUI" --skip-pip          # clone/update only
 python scripts/install_nodes.py --comfyui "$COMFYUI" --skip-installers   # skip install.py
-python scripts/install_nodes.py --comfyui "$COMFYUI" --include-optional  # latent upscaler
+python scripts/install_nodes.py --comfyui "$COMFYUI" --include-optional  # optional packs
 ```
 
 ### Packs and what they provide
@@ -126,7 +126,7 @@ python scripts/install_nodes.py --comfyui "$COMFYUI" --include-optional  # laten
 | Pack                                              | Source                                                             | Comfiest nodes                                                                                                                                           | Notes                                                                                                 |
 | ------------------------------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | `rgthree-comfy`                                   | <https://github.com/rgthree/rgthree-comfy>                         | `Power Lora Loader (rgthree)`, `Any Switch`                                                                                                              | Core to every H3/TTS graph.                                                                           |
-| `ComfyUI-GGUF`                                    | <https://github.com/city96/ComfyUI-GGUF>                           | `CLIPLoaderGGUF`                                                                                                                                         | Optional legacy loader; the public Flux graphs use the Comfy safetensors encoder.                     |
+| `ComfyUI-GGUF` *(optional)*                     | <https://github.com/city96/ComfyUI-GGUF>                           | `CLIPLoaderGGUF`                                                                                                                                         | Legacy loader only; the public Flux graphs use the Comfy safetensors encoder.                          |
 | `RES4LYF`                                         | <https://github.com/ClownsharkBatwing/RES4LYF>                     | `ClownSampler_Beta`, `SharkSampler_Beta`, `SharkOptions_Beta`                                                                                            | Flux.2 Klein 4-step branch.                                                                           |
 | `was-node-suite-comfyui`                          | <https://github.com/WASasquatch/was-node-suite-comfyui>            | `Text Multiline`, `Seed`                                                                                                                                 | Text and seed widgets used by Krea/Flux/H3.                                                           |
 | `ComfyUI-Easy-Use`                                | <https://github.com/yolain/ComfyUI-Easy-Use>                       | `easy seed`                                                                                                                                              | H3 seed control.                                                                                      |
@@ -229,6 +229,13 @@ Paths are relative to `ComfyUI/`. Sizes are approximate.
 
 The optional character-swap LoRA is **not** in the shipped char-replace graphs; add it to a scratch
 copy if you want stronger identity transfer.
+
+`sheetsage2_bf16.safetensors` is YuE2's audio encoder companion. The YuE2 node loads it internally, so
+it does not appear as a workflow widget; keep it even though a JSON search will not find the filename.
+
+Not every model filename in a UI export is a dependency. Inner subgraph loaders, bypassed branches,
+and `properties.models` metadata can name files the target never loads. The downloader installs the
+effective models only; confirm the converted prompt before adding another download.
 
 MOSS-Image uses the same `flux2-vae.safetensors` as Flux. The downloader includes it in the `moss`
 family too, so `--only moss` works without a separate Flux download.
