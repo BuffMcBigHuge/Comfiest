@@ -1,5 +1,7 @@
 <p align="center">
-  <img src="assets/logo.png" alt="Comfiest — a sleeping cat on a cozy purple armchair" width="480">
+  <a href="https://comfie.st">
+    <img src="assets/logo.png" alt="Comfiest — a sleeping cat on a cozy purple armchair" width="480">
+  </a>
 </p>
 
 <h1 align="center">Comfiest</h1>
@@ -16,10 +18,11 @@
 </p>
 
 <p align="center">
-  <a href="https://comfie.st"><strong>comfie.st</strong></a> · built by <a href="https://byMAR.CO">byMAR.CO</a>
+  <a href="https://comfie.st"><img src="assets/icon.png" alt="" width="20" height="20" align="absmiddle"> <strong>Comfie.st</strong></a> · built by <a href="https://byMAR.CO">byMAR.CO</a>
 </p>
 
 <p align="center">
+  <a href="https://comfie.st">Website</a> ·
   <a href="#start-here-point-your-agent-at-the-repo">Start here</a> ·
   <a href="#quick-start">Quick start</a> ·
   <a href="#workflow-catalog">Workflows</a> ·
@@ -226,6 +229,7 @@ Music 3, and Drama 3; the index maps each to its workflow.
 ├── COMFY-SETUP.md           # install ComfyUI, nodes, models, TensorRT engine
 ├── MCP-SETUP.md             # install, register, verify comfy-mcp
 ├── assets/
+│   ├── icon.png             # site icon (cat mark, used in the header link)
 │   └── logo.png             # project logo
 ├── skills/
 │   ├── SKILL.md             # umbrella: rules, routing, operating loop

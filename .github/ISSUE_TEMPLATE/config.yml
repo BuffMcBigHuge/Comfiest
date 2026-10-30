@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Comfie.st — website, gallery, and install guide
+    url: https://comfie.st
+    about: See what Comfiest can make, then follow the install path for your machine.
+  - name: Setup questions
+    url: https://github.com/BuffMcBigHuge/Comfiest/blob/main/COMFY-SETUP.md
+    about: ComfyUI, node-pack, and model install instructions, including the model download scripts.
