@@ -286,7 +286,7 @@ This repository is the sanitized public edition of a working production suite:
 
 - Non-functional LoRAs (character, style, anatomy, adult-oriented) were removed. The surviving LoRAs
   are functional: MiniMax H3 turbo adapters (v1.2 and 4–8 step), Pika H3 Flex fl2va/ref2va, the 2K
-  refiner and LMS sharpener, and the MOSS-Image DMD sampler.
+  refiner and LMS sharpener, the LTX Best-FaceID identity LoRA, and the MOSS-Image DMD sampler.
 - Every baked-in prompt was replaced with a neutral demo prompt (fox-themed for t2v). Reference
   image, video, and audio names were genericized to `example.*`.
 - UI workflows were conversion-validated against a live ComfyUI target; the sanitized graphs have not
@@ -306,10 +306,10 @@ fork rather than editing the shipped template.
   ComfyUI-GGUF (legacy GGUF graphs only).
 - Models: Krea 2 Turbo/Edit, Flux.2 Klein 9B + Qwen3-8B fp8mixed, MOSS-Image, YuE2 3B, MiniMax Music 3,
   Fish Audio Drama 3, MiniMax H3 fastvideo stack + Pika H3 Flex adapters + 2K refiner/upscaler and the
-  loop Turbo adapter, LTX-2.5 22B distilled + Gemma 4 12B, SAM3 segmentation. Exact filenames live in
-  the workflow sections of [`skills/SKILL.md`](skills/SKILL.md); verify each host with
-  `/object_info/<LoaderClass>` option lists. `/models/<folder>` can return an empty body even when the
-  model is installed.
+  loop Turbo adapter, LTX-2.5 22B distilled + Gemma 4 12B + Best-FaceID identity LoRA, SAM3
+  segmentation. Exact filenames live in the workflow sections of [`skills/SKILL.md`](skills/SKILL.md);
+  verify each host with `/object_info/<LoaderClass>` option lists. `/models/<folder>` can return an
+  empty body even when the model is installed.
   The full download list, Hugging Face locations, and folder layout are in
   [`COMFY-SETUP.md`](COMFY-SETUP.md).
 - GPU: 24 GB-class for video and Drama 3; 128 GB+ system RAM recommended for Drama 3.

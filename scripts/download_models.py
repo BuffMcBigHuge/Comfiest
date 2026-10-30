@@ -123,6 +123,8 @@ MODELS = [
      "latent_upscale_models/ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors",
      "models/latent_upscale_models/ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors",
      1.0, False),
+    ("ltx", "Alissonerdx/LTX-Best-Face-ID", "Best_FaceID_v1.0_LoRA.safetensors",
+     "models/loras/ltx/Best_FaceID_v1.0_LoRA.safetensors", 2.5, False),
 
     # SAM3 (native image/video mattes + character replacement)
     ("sam3", "Comfy-Org/sam3.1", "checkpoints/sam3.1_multiplex_fp16.safetensors",

@@ -524,7 +524,7 @@
       "reference_guidance_scale": 1,
       "reference_temporal_offset_latents": 0,
       "model": [
-        "7",
+        "34",
         0
       ],
       "positive": [
@@ -682,6 +682,20 @@
     "class_type": "LoadImage",
     "_meta": {
       "title": "reference image"
+    }
+  },
+  "34": {
+    "inputs": {
+      "lora_name": "ltx\\Best_FaceID_v1.0_LoRA.safetensors",
+      "strength_model": 1,
+      "model": [
+        "7",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "Best_FaceID identity LoRA"
     }
   }
 }

@@ -18,7 +18,7 @@ core `CreateVideo`/`SaveVideo` nodes.
 3. 17 required custom-node packs (plus 3 optional), including the MiniMax H3 compatibility/acceleration
 
    nodes.
-4. About 275 GB of model files, downloaded from Hugging Face into the right folders.
+4. About 277 GB of model files, downloaded from Hugging Face into the right folders.
 5. A TensorRT depth engine for the character-replacement workflows.
 6. Optionally, the `comfy-mcp` bridge from [`MCP-SETUP.md`](MCP-SETUP.md) so an agent can submit jobs.
 
@@ -231,6 +231,7 @@ Paths are relative to `ComfyUI/`. Sizes are approximate.
 | LTX-2.5 | <https://huggingface.co/Lightricks/LTX-2.5> | `vae/ltx-2.5-video-vae-conv-bf16.safetensors` | `models/vae/ltx/ltx-2.5-video-vae-conv-bf16.safetensors` | 1.5 GB |
 | LTX-2.5 | <https://huggingface.co/Lightricks/LTX-2.5> | `vae/ltx-2.5-audio-vae-bf16.safetensors` | `models/vae/ltx/ltx-2.5-audio-vae-bf16.safetensors` | 0.4 GB |
 | LTX-2.5 | <https://huggingface.co/Lightricks/LTX-2.5> | `latent_upscale_models/ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors` | `models/latent_upscale_models/ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors` | 1.0 GB |
+| LTX-2.5 | <https://huggingface.co/Alissonerdx/LTX-Best-Face-ID> | `Best_FaceID_v1.0_LoRA.safetensors` | `models/loras/ltx/Best_FaceID_v1.0_LoRA.safetensors` | 2.5 GB |
 | H3 2K | <https://huggingface.co/LBH-123-AI/Minimax_h3_latent_Upscaler> | `minimax_h3_latent_upscaler_3d_conv_v1/minimax_h3_latent_upscaler_3d_conv_v1_bf16.safetensors` | `models/latent_upscale_models/minimax_h3_latent_upscaler_3d_bf16.safetensors` | 0.7 GB |
 | H3 2K | <https://huggingface.co/Kijai/MiniMax-H3-experimental> | `loras/minimax_h3_open_regenerate_2k_refiner_rank_16_bf16.safetensors` | `models/loras/minimax/minimax_h3_open_regenerate_2k_refiner_rank_16_bf16.safetensors` | 0.2 GB |
 | H3 / 2K | <https://huggingface.co/lightx2v/Minimax-h3-Turbo> | `minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors` | `models/loras/minimax/minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors` | 2.0 GB |
@@ -469,6 +470,7 @@ Check each model card before commercial use:
 | LightX2V turbo LoRA | See LightX2V model card |
 | Pika H3 Flex adapters | MiniMax H3 Community License; see the Pika model card |
 | LTX-2.5 | Lightricks LTX-2.5 license; see the model card |
+| Best_FaceID LoRA | See the Alissonerdx model card |
 
 If a use case requires commercial rights, verify the current model card rather than relying on this
 table.

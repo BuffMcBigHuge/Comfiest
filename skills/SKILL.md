@@ -897,8 +897,8 @@ Run one job before production for any `generated` or `unverified` file.
 
 Three API-first graphs in `workflows/ltx/api/`: `ltx2-5-t2v`, `ltx2-5-ref2v`, and `ltx2-5-i2v`.
 LTX-2.5 22B distilled generates video and audio in one pass at 512×960, 193 frames / 8.04 s / 24 fps.
-The audio is model output, not a supplied track. The public ref2v graph does **not** ship the private
-`Best_FaceID` LoRA; identity conditioning still works without it.
+The audio is model output, not a supplied track. Ref2v applies the `Best_FaceID_v1.0_LoRA` identity
+adapter at 1.0; it is absent from t2v/i2v.
 
 - Stack: `ltx-2.5-22b-distilled-transformer-comfy-int8-convrot` + Gemma 4 12B (`CLIPLoader` type
   `ltxv`), video/audio VAEs, `LTXIdentityOverlapConditioning` (BFSNodes), `LTXVImgToVideoInplace`.

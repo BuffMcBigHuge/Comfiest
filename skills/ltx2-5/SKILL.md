@@ -22,7 +22,7 @@ Files live in `../../workflows/ltx/api/` and are API format for `run_workflow`.
 | `ltx2-5-ref2v.api.json` | reference subject → video | prompt + one identity image | 512×960, 8.04 s, stereo |
 | `ltx2-5-i2v.api.json` | image → video | prompt + first frame | 512×960, 8.04 s, stereo |
 
-The graphs are 44–46 nodes. Every touchable node carries `_meta.title` (`prompt`, `width`, `height`,
+The graphs are 44–47 nodes. Every touchable node carries `_meta.title` (`prompt`, `width`, `height`,
 `frames`, `frame rate`, `seed`, `reference image`, `first frame`, `save video`).
 
 ## Model stack
@@ -33,11 +33,12 @@ The graphs are 44–46 nodes. Every touchable node carries `_meta.title` (`promp
 | `text_encoders` | `gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors` |
 | `vae/ltx` | `ltx-2.5-video-vae-conv-bf16.safetensors`, `ltx-2.5-audio-vae-bf16.safetensors` |
 | `latent_upscale_models` | `ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors` |
+| `loras/ltx` | `Best_FaceID_v1.0_LoRA.safetensors` (ref2v only) |
 
 `CLIPLoader` uses type `ltxv` with the Gemma 4 12B encoder; it is not interchangeable with the
-Krea/Qwen3-VL encoder. The public ref2v graph **does not ship `Best_FaceID_v1.0_LoRA`** — it has no
-public source. Identity conditioning still works without it; add the LoRA in a scratch copy if you
-have it. The private reference run used it at 1.0.
+Krea/Qwen3-VL encoder. `Best_FaceID_v1.0_LoRA` is applied in ref2v only, at strength 1.0; it is a no-op
+without a reference and is deliberately absent from t2v/i2v. Source:
+<https://huggingface.co/Alissonerdx/LTX-Best-Face-ID>.
 
 ## Effective settings
 
@@ -85,7 +86,6 @@ to every target that may run the job.
 ## Reference conditioning (`ref2v`)
 
 `LTXIdentityOverlapConditioning` (ComfyUI-BFSNodes) widgets:
-
 | Widget | Default | Meaning |
 | - | - | - |
 | `source_id` | `2` | training-time source phase segment |
@@ -129,14 +129,15 @@ All from <https://huggingface.co/Lightricks/LTX-2.5>:
 - `vae/ltx-2.5-video-vae-conv-bf16.safetensors`
 - `vae/ltx-2.5-audio-vae-bf16.safetensors`
 - `latent_upscale_models/ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors`
+- `Best_FaceID_v1.0_LoRA.safetensors` from <https://huggingface.co/Alissonerdx/LTX-Best-Face-ID>
 
 Node packs: core `comfy_extras.nodes_lt*`, `ComfyUI-VideoHelperSuite`, `ComfyUI-KJNodes`,
 `ComfyUI-BFSNodes` (identity conditioning), `rgthree-comfy`, `comfyui-easy-use`.
 
 ## Verified runs
 
-Reference runs on a 24 GB RTX 4090, ComfyUI 0.43.0. Public sanitization changed the input placeholders
-and removed the private face LoRA; the graph shape and settings are unchanged.
+Reference runs on a 24 GB RTX 4090, ComfyUI 0.43.0. Public sanitization changed the input placeholders;
+the model stack and settings are unchanged.
 
 | Graph | Output | Bytes | Note |
 | - | - | - | - |
