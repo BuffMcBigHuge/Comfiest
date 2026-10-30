@@ -97,7 +97,7 @@ If your agent supports skills:
   `skills/minimaxh3-upscale/`, `skills/minimaxh3-perfect-loop/`, `skills/ltx2-5/`, `skills/sam3/`,
   `skills/prompt-writing/`, `skills/workflow-development/`, and `skills/fish-audio-drama3/` as
   sibling skill directories if your client discovers each skill separately. `skills/prompt-writing/`
-  contains six family skills; copy its child directories individually if your client requires a flat
+  contains seven family skills; copy its child directories individually if your client requires a flat
   layout.
 
 The umbrella carries the hard rules and routing; the subskills carry family and recipe detail.
@@ -116,8 +116,8 @@ The umbrella carries the hard rules and routing; the subskills carry family and 
   checks, and alpha-WebM compositing — no character-replacement graph required.
 - **A second video family.** LTX-2.5 22B distilled generates video and audio in one pass from text,
   an identity reference, or a first frame.
-- **Prompt-writing skills for every family.** Krea, Flux, MOSS, YuE2, Music 3, and Drama 3 prompts get
-  the model-specific structure instead of a one-line caption.
+- **Prompt-writing skills for every family.** Krea, Flux, MOSS, LTX, YuE2, Music 3, and Drama 3
+  prompts get the model-specific structure instead of a one-line caption.
 - **A submission loop that survives real life.** `wait: false` + `/history` polling, direct output
   URL fallback when local job state lags, one-job-per-target discipline.
 - **Provenance by default.** Every file lands under a `prompt_id` folder with a run-log entry; vision
@@ -222,7 +222,7 @@ forced-audio lip-sync, and character replacement. See
 [`minimaxh3-perfect-loop`](skills/minimaxh3-perfect-loop/SKILL.md) for seamless 154-frame loops.
 
 Before filling any prompt field, use the matching prompt writer from
-[`skills/prompt-writing/`](skills/prompt-writing/README.md). They cover Krea, Flux, MOSS, YuE2,
+[`skills/prompt-writing/`](skills/prompt-writing/README.md). They cover Krea, Flux, MOSS, LTX, YuE2,
 Music 3, and Drama 3; the index maps each to its workflow.
 
 ## Repository layout
@@ -245,7 +245,7 @@ Music 3, and Drama 3; the index maps each to its workflow.
 │   ├── minimaxh3-perfect-loop/SKILL.md
 │   ├── ltx2-5/SKILL.md                # LTX-2.5 video + joint audio
 │   ├── sam3/SKILL.md                  # native masking family
-│   ├── prompt-writing/                # six family prompt writers + README index
+│   ├── prompt-writing/                # seven family prompt writers + README index
 │   ├── workflow-development/SKILL.md   # edit -> validate -> run -> promote
 │   └── fish-audio-drama3/SKILL.md
 ├── scripts/

@@ -8,6 +8,7 @@ the model families in this repository and return a production-ready prompt rathe
 | Krea 2 | [`krea2-prompt-writer`](krea2-prompt-writer/SKILL.md) | `text2image-krea.json`, `image2image-krea-edit.json` |
 | Flux.2 Klein 9B | [`flux-klein-9b-prompt-writer`](flux-klein-9b-prompt-writer/SKILL.md) | `text2image-fluxklein.json`, `image2image-fluxklein.json` |
 | MOSS-Image | [`moss-image-prompt-writer`](moss-image-prompt-writer/SKILL.md) | `text2image-moss.json` |
+| LTX-2.5 | [`ltx2.5-prompt-writer`](ltx2.5-prompt-writer/SKILL.md) | `workflows/ltx/api/ltx2-5-{t2v,ref2v,i2v}.api.json` |
 | YuE2 3B | [`yue2-prompt-writer`](yue2-prompt-writer/SKILL.md) | `text2music-yue2.json` |
 | MiniMax Music 3 | [`minimax-music3-prompt-writer`](minimax-music3-prompt-writer/SKILL.md) | `text2music-minimaxmusic3.json` |
 | Fish Audio Drama 3 | [`fish-audio-drama3-prompt-writer`](fish-audio-drama3-prompt-writer/SKILL.md) | `workflows/fishdrama3/*.json` |

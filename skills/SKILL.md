@@ -20,7 +20,7 @@ one target for its lifetime.
 | `README.md` | Project overview, quick start, model list, and contribution guide. |
 | `COMFY-SETUP.md` | Install ComfyUI, custom nodes, models, and the TensorRT depth engine. |
 | `skills/SKILL.md` | This file: rules, routing, operating loop, and findings. |
-| `skills/*/SKILL.md` | Family and recipe subskills (MiniMax H3, character replacement, Fish Audio). |
+| `skills/*/SKILL.md` | Family and recipe subskills (MiniMax H3, LTX-2.5, character replacement, Fish Audio). |
 | `MCP-SETUP.md` | MCP transport, installation, client registration, and target setup. |
 | `scripts/` | `install_nodes.py`, `download_models.py` for machine setup. |
 | `workflows/` | Workflow templates; usage notes live in `skills/`. |
@@ -53,7 +53,7 @@ workflow-family subdirectories. Their usage notes live in `skills/minimaxh3/`,
 │   ├── ltx2-5/SKILL.md
 │   ├── sam3/SKILL.md
 │   ├── workflow-development/SKILL.md
-│   ├── prompt-writing/             # six family prompt writers + README index
+│   ├── prompt-writing/             # seven family prompt writers + README index
 │   └── fish-audio-drama3/SKILL.md
 ├── workflows/
 │   ├── *.json                      # root workflows
@@ -236,6 +236,7 @@ caption/lyrics form to produce arrangement rather than a static groove.
 | Krea 2 | `prompt-writing/krea2-prompt-writer/SKILL.md` |
 | Flux.2 Klein 9B | `prompt-writing/flux-klein-9b-prompt-writer/SKILL.md` |
 | MOSS-Image | `prompt-writing/moss-image-prompt-writer/SKILL.md` |
+| LTX-2.5 | `prompt-writing/ltx2.5-prompt-writer/SKILL.md` |
 | YuE2 3B | `prompt-writing/yue2-prompt-writer/SKILL.md` |
 | MiniMax Music 3 | `prompt-writing/minimax-music3-prompt-writer/SKILL.md` |
 | Fish Audio Drama 3 | `prompt-writing/fish-audio-drama3-prompt-writer/SKILL.md` |
@@ -900,6 +901,10 @@ LTX-2.5 22B distilled generates video and audio in one pass at 512×960, 193 fra
 The audio is model output, not a supplied track. Ref2v applies the `Best_FaceID_v1.0_LoRA` identity
 adapter at 1.0; it is absent from t2v/i2v.
 
+**Prompt writing:** use [`prompt-writing/ltx2.5-prompt-writer/SKILL.md`](prompt-writing/ltx2.5-prompt-writer/SKILL.md).
+The prompt drives the generated audio as well as the picture, so describe sound where it happens; do
+not write around a supplied track.
+
 - Stack: `ltx-2.5-22b-distilled-transformer-comfy-int8-convrot` + Gemma 4 12B (`CLIPLoader` type
   `ltxv`), video/audio VAEs, `LTXIdentityOverlapConditioning` (BFSNodes), `LTXVImgToVideoInplace`.
 - Fixed seed `432312402084296`; change `easy seed`, not `RandomNoise`. First pass 8 steps
@@ -1225,6 +1230,6 @@ This file is the repository's operating skill. Keep it portable and current.
 - `skills/ltx2-5/SKILL.md` — LTX-2.5 t2v/ref2v/i2v with joint audio.
 - `skills/sam3/SKILL.md` — native SAM3 image/video mattes, prompt grammar, and alpha compositing.
 - `skills/workflow-development/SKILL.md` — scratch edits, validation, MCP submission, and promotion.
-- `skills/prompt-writing/README.md` — index of the six family prompt-writing skills.
+- `skills/prompt-writing/README.md` — index of the seven family prompt-writing skills.
 - `skills/fish-audio-drama3/SKILL.md` — TTS variant index and reference requirements.
 - `work/README.md` — workspace rules and the pointer to this file.

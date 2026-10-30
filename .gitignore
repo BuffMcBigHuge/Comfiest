@@ -1,7 +1,8 @@
-# Agent workspace
+# Agent workspace — only the README and the empty run-log template ship
 work/*
 !work/README.md
 !work/logs/
+work/logs/*
 !work/logs/run-log.md
 
 # Local environments

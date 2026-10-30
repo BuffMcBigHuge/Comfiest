@@ -12,6 +12,10 @@ audio is model output, not a supplied track — and muxes both into an H.264 MP4
 Three API-first graphs cover text, identity reference, and first-frame conditioning. There are no UI
 mirrors; open the JSON when you need the wiring.
 
+**Prompt writing:** use [`../prompt-writing/ltx2.5-prompt-writer/SKILL.md`](../prompt-writing/ltx2.5-prompt-writer/SKILL.md).
+The prompt drives the generated audio as well as the picture, so describe sound where it happens; do
+not write around a supplied track.
+
 ## Files
 
 Files live in `../../workflows/ltx/api/` and are API format for `run_workflow`.
