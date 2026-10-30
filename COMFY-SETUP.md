@@ -4,7 +4,7 @@ This file is written for an AI agent (or a patient human) setting up a machine f
 in order. Every command is meant to be run by the agent, with the user's confirmation before large
 downloads or package changes.
 
-**Target:** a Linux or Windows machine with an NVIDIA GPU (24 GB class or better) and about **280 GB
+**Target:** a Linux or Windows machine with an NVIDIA GPU (24 GB class or better) and about **320 GB
 of free disk**. AMD, Apple Silicon, and CPU-only setups are not supported by this exact graph set:
 the workflows use CUDA `int8_convrot` models, TensorRT depth, and NVIDIA-oriented custom nodes.
 
@@ -15,10 +15,10 @@ core `CreateVideo`/`SaveVideo` nodes.
 
 1. ComfyUI (latest stable) + a Python 3.12 environment.
 2. PyTorch built for CUDA 13.0 (required by the `int8_convrot` checkpoints).
-3. 16 required custom-node packs (plus 3 optional), including the MiniMax H3 compatibility/acceleration
+3. 17 required custom-node packs (plus 3 optional), including the MiniMax H3 compatibility/acceleration
 
    nodes.
-4. About 235 GB of model files, downloaded from Hugging Face into the right folders.
+4. About 275 GB of model files, downloaded from Hugging Face into the right folders.
 5. A TensorRT depth engine for the character-replacement workflows.
 6. Optionally, the `comfy-mcp` bridge from [`MCP-SETUP.md`](MCP-SETUP.md) so an agent can submit jobs.
 
@@ -139,6 +139,7 @@ python scripts/install_nodes.py --comfyui "$COMFYUI" --include-optional  # optio
 | `ComfyUI-ConditioningKrea2Rebalance`              | <https://github.com/TuZZiL/ComfyUI-ConditioningKrea2Rebalance>     | `ConditioningKrea2Rebalance`                                                                                                                             | Krea 2 conditioning taps.                                                                             |
 | `ComfyUI-PlagueKind-Nodes`                        | <https://github.com/PlagueKind/ComfyUI-PlagueKind-Nodes>           | `H3AdaLNLoRAFix`, `H3SLAAttention`                                                                                                                       | Required by the H3 variants.                                                                          |
 | `ComfyUI-MiniMaxH3-Context-Loop`                  | <https://github.com/ethanfel/ComfyUI-MiniMaxH3-Context-Loop>       | `MiniMaxH3ContexMaskedAVBridge`                                                                                                                          | Perfect-loop graph; the repo keeps the intentional "Contex" spelling in class names.                  |
+| `ComfyUI-BFSNodes`                                | <https://github.com/alisson-anjos/ComfyUI-BFSNodes>                | `LTXIdentityOverlapConditioning`                                                                                                                         | LTX-2.5 ref2v identity conditioning.                                                                  |
 | `ComfyUI_Fill-Nodes`                              | <https://github.com/filliptm/ComfyUI_Fill-Nodes>                   | `FL_RIFE`                                                                                                                                                | Frame interpolation to 48 fps.                                                                        |
 | `ComfyUI-Spectrum-MiniMax-H3`                     | <https://github.com/xmarre/ComfyUI-Spectrum-MiniMax-H3>            | `SpectrumApplyMiniMaxH3`                                                                                                                                 | H3 sampler acceleration.                                                                              |
 | `ComfyUI-Impact-Pack`                             | <https://github.com/ltdrdata/ComfyUI-Impact-Pack>                  | `ImpactSwitch`                                                                                                                                           | Switch used in the H3 graph.                                                                          |
@@ -225,6 +226,11 @@ Paths are relative to `ComfyUI/`. Sizes are approximate.
 | Pika H3 | <https://huggingface.co/Comfy-Org/MiniMax-H3> | `diffusion_models/minimax_h3_ref2va_pruned_int8_convrot.safetensors` | `models/diffusion_models/minimax/minimax_h3_ref2va_pruned_int8_convrot.safetensors` | 21.0 GB |
 | Pika H3 | <https://huggingface.co/Comfy-Org/MiniMax-H3> | `loras/pika_h3_flex_fl2va_v1_bf16.safetensors` | `models/loras/minimax/pika/pika_h3_flex_fl2va_v1_bf16.safetensors` | 2.0 GB |
 | Pika H3 | <https://huggingface.co/Comfy-Org/MiniMax-H3> | `loras/pika_h3_flex_ref2va_v1_bf16.safetensors` | `models/loras/minimax/pika/pika_h3_flex_ref2va_v1_bf16.safetensors` | 2.0 GB |
+| LTX-2.5 | <https://huggingface.co/Lightricks/LTX-2.5> | `diffusion_models/ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors` | `models/checkpoints/ltx/ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors` | 21.5 GB |
+| LTX-2.5 | <https://huggingface.co/Lightricks/LTX-2.5> | `text_encoders/gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors` | `models/text_encoders/gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors` | 15.4 GB |
+| LTX-2.5 | <https://huggingface.co/Lightricks/LTX-2.5> | `vae/ltx-2.5-video-vae-conv-bf16.safetensors` | `models/vae/ltx/ltx-2.5-video-vae-conv-bf16.safetensors` | 1.5 GB |
+| LTX-2.5 | <https://huggingface.co/Lightricks/LTX-2.5> | `vae/ltx-2.5-audio-vae-bf16.safetensors` | `models/vae/ltx/ltx-2.5-audio-vae-bf16.safetensors` | 0.4 GB |
+| LTX-2.5 | <https://huggingface.co/Lightricks/LTX-2.5> | `latent_upscale_models/ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors` | `models/latent_upscale_models/ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors` | 1.0 GB |
 | H3 2K | <https://huggingface.co/LBH-123-AI/Minimax_h3_latent_Upscaler> | `minimax_h3_latent_upscaler_3d_conv_v1/minimax_h3_latent_upscaler_3d_conv_v1_bf16.safetensors` | `models/latent_upscale_models/minimax_h3_latent_upscaler_3d_bf16.safetensors` | 0.7 GB |
 | H3 2K | <https://huggingface.co/Kijai/MiniMax-H3-experimental> | `loras/minimax_h3_open_regenerate_2k_refiner_rank_16_bf16.safetensors` | `models/loras/minimax/minimax_h3_open_regenerate_2k_refiner_rank_16_bf16.safetensors` | 0.2 GB |
 | H3 / 2K | <https://huggingface.co/lightx2v/Minimax-h3-Turbo> | `minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors` | `models/loras/minimax/minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors` | 2.0 GB |
@@ -391,6 +397,7 @@ comfy run --workflow workflows/minimaxh3/ref2video-minimax-1p.json --print-promp
 comfy run --workflow workflows/minimaxh3/api/upscale-minimax-2k-v2v.api.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/minimaxh3/api/perfect-loop-minimax-h3.api.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/minimaxh3/api/pika-h3-t2v.api.json --print-prompt --host 127.0.0.1 --port 8188
+comfy run --workflow workflows/ltx/api/ltx2-5-t2v.api.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/sam3/api/sam3-mask-video.api.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/text2music-yue2.json         --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/text2music-minimaxmusic3.json --print-prompt --host 127.0.0.1 --port 8188
@@ -461,6 +468,7 @@ Check each model card before commercial use:
 | SAM3 | Meta SAM license |
 | LightX2V turbo LoRA | See LightX2V model card |
 | Pika H3 Flex adapters | MiniMax H3 Community License; see the Pika model card |
+| LTX-2.5 | Lightricks LTX-2.5 license; see the model card |
 
 If a use case requires commercial rights, verify the current model card rather than relying on this
 table.
@@ -471,7 +479,7 @@ table.
 
 Run in order, stopping to ask the user before the multi-gigabyte steps:
 
-- [ ] Confirm NVIDIA GPU, 24 GB+ VRAM, 280 GB free disk, Python 3.12.
+- [ ] Confirm NVIDIA GPU, 24 GB+ VRAM, 320 GB free disk, Python 3.12.
 - [ ] Install ComfyUI + CUDA 13 PyTorch (`comfy install --nvidia --cuda-version 13.0 --version latest`).
 - [ ] Verify `torch.cuda.is_available()`.
 - [ ] Run `python scripts/install_nodes.py --comfyui "$COMFYUI"`.

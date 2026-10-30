@@ -27,10 +27,10 @@ one target for its lifetime.
 | `work/` | Writable agent workspace (scratch, uploads, outputs, analysis, post, exports, logs). |
 | `LICENSE` | MIT license for this repository. |
 
-`workflows/minimaxh3/`, `workflows/sam3/`, and `workflows/fishdrama3/` are workflow-family
-subdirectories. Their usage notes live in `skills/minimaxh3/`, `skills/minimaxh3-pika/`,
-`skills/minimaxh3-character-replace/`, `skills/minimaxh3-upscale/`,
-`skills/minimaxh3-perfect-loop/`, `skills/sam3/`, `skills/workflow-development/`,
+`workflows/minimaxh3/`, `workflows/ltx/`, `workflows/sam3/`, and `workflows/fishdrama3/` are
+workflow-family subdirectories. Their usage notes live in `skills/minimaxh3/`,
+`skills/minimaxh3-pika/`, `skills/minimaxh3-character-replace/`, `skills/minimaxh3-upscale/`,
+`skills/minimaxh3-perfect-loop/`, `skills/ltx2-5/`, `skills/sam3/`, `skills/workflow-development/`,
 `skills/prompt-writing/`, and `skills/fish-audio-drama3/`.
 `work/` is the only writable area of the repository.
 
@@ -50,6 +50,7 @@ subdirectories. Their usage notes live in `skills/minimaxh3/`, `skills/minimaxh3
 │   ├── minimaxh3-character-replace/SKILL.md
 │   ├── minimaxh3-upscale/SKILL.md
 │   ├── minimaxh3-perfect-loop/SKILL.md
+│   ├── ltx2-5/SKILL.md
 │   ├── sam3/SKILL.md
 │   ├── workflow-development/SKILL.md
 │   ├── prompt-writing/             # six family prompt writers + README index
@@ -57,6 +58,7 @@ subdirectories. Their usage notes live in `skills/minimaxh3/`, `skills/minimaxh3
 ├── workflows/
 │   ├── *.json                      # root workflows
 │   ├── fishdrama3/                 # TTS variants + base
+│   ├── ltx/                        # LTX-2.5 t2v/ref2v/i2v
 │   ├── sam3/                       # native image/video matte graphs
 │   └── minimaxh3/                  # H3 base, UI variants, api/ mirrors
 └── work/                           # writable workspace; see Working directory
@@ -85,7 +87,8 @@ directory) and reuse that absolute prefix for the session.
 - **Maintained additions:** the two `*-forced` UI files, their two API mirrors, the three
   `charreplace-*` API workflows, the three `upscale-*` API workflows, the three `sam3-*` API
   workflows, the three `pika-h3-*` API workflows, the three `image2image-fluxklein-{2,3,4}ref.json`
-  additions, and `perfect-loop-minimax-h3.api.json` are maintained rather than one-off templates.
+  additions, the three `ltx2-5-*` API workflows, and `perfect-loop-minimax-h3.api.json` are maintained
+  rather than one-off templates.
   Edit them only on an explicit user request.
 - **Markdown documentation lives in `skills/`.** Inventory and usage notes belong in this file or in
   the family/recipe subskills (`skills/minimaxh3/`, `skills/minimaxh3-character-replace/`,
@@ -216,6 +219,7 @@ explicit approval.
 | Song from style + lyrics | YuE2 3B | `workflows/text2music-yue2.json` | full-song model with vocals; 120 s |
 | Song from caption + lyrics | MiniMax Music 3 | `workflows/text2music-minimaxmusic3.json` | caption-driven; tiled audio decode |
 | Video from text or references | MiniMax H3 / Pika H3 Flex | `workflows/minimaxh3/api/pika-h3-*.api.json` + fastvideo variants | Pika 6-step default; fastvideo 8-step drafts; 3 Pika + 14 fastvideo + 3 charreplace |
+| Video with joint audio | LTX-2.5 22B distilled | `workflows/ltx/api/*.api.json` | t2v/ref2v/i2v; 512×960; 8.04 s |
 | 2K upscale / refine | MiniMax H3 + refiner | `workflows/minimaxh3/api/upscale-*.api.json` | t2v/v2v latent upscale; 2560×1440 output |
 | Seamless video loop | MiniMax H3 Perfect Loop | `workflows/minimaxh3/api/perfect-loop-minimax-h3.api.json` | 154 f / 6.42 s; audio included; ×2 seam check |
 | Image or video matte | SAM3 (native) | `workflows/sam3/api/*.api.json` | text-prompted luma matte; image, video, tracker |
@@ -252,7 +256,7 @@ How to use the table:
 Routing constraints:
 
 - One job at a time per target. Krea/Flux/MOSS are light; Music 3, MiniMax H3, the 2K upscale path,
-  and the perfect loop are heavy; Drama 3 is heavy on system RAM.
+  the perfect loop, and LTX-2.5 are heavy; Drama 3 is heavy on system RAM.
 - The workflow JSON is the final authority on node IDs and model filenames. The family sections call
   out known traps: dead branches, decoy LoRA loaders, optional files that are not installed.
 - To build or adapt a graph, use [`workflow-development/SKILL.md`](workflow-development/SKILL.md).
@@ -889,6 +893,27 @@ Run one job before production for any `generated` or `unverified` file.
 - `20.frame_rate` must match the source fps; the loader fps is not wired to the saver.
 - See `skills/sam3/SKILL.md` for prompt grammar, knobs, coverage check, alpha WebM, and gotchas.
 
+### LTX-2.5 — video with joint audio
+
+Three API-first graphs in `workflows/ltx/api/`: `ltx2-5-t2v`, `ltx2-5-ref2v`, and `ltx2-5-i2v`.
+LTX-2.5 22B distilled generates video and audio in one pass at 512×960, 193 frames / 8.04 s / 24 fps.
+The audio is model output, not a supplied track. The public ref2v graph does **not** ship the private
+`Best_FaceID` LoRA; identity conditioning still works without it.
+
+- Stack: `ltx-2.5-22b-distilled-transformer-comfy-int8-convrot` + Gemma 4 12B (`CLIPLoader` type
+  `ltxv`), video/audio VAEs, `LTXIdentityOverlapConditioning` (BFSNodes), `LTXVImgToVideoInplace`.
+- Fixed seed `432312402084296`; change `easy seed`, not `RandomNoise`. First pass 8 steps
+  `euler_ancestral_cfg_pp` + `LTXVScheduler`; refiner 4 steps `euler_cfg_pp` with
+  `0.85, 0.7250, 0.4219, 0.0`; cfg 1.
+- `VHS_VideoCombine.frame_rate` must be 24; the source template's 8 would stretch 8 s of audio over
+  24 s. Frames must be `8n+1` (193 or 201).
+- 22B int8 + Gemma 12B does not fit 24 GB at once; keep `PathchSageAttentionKJ`,
+  `LTXVChunkFeedForward (2, 4096)`, and `LTX2AttentionTunerPatch`.
+- Save prefixes: `COMFY_WORKFLOWS/LTX/t2v`, `.../ref2v`, `.../i2v`.
+
+Full addresses, reference widgets, i2v semantics, model sources, and gotchas:
+[`ltx2-5/SKILL.md`](ltx2-5/SKILL.md).
+
 ## MCP behavior and findings
 
 The full edit/validate/run/promote loop is in
@@ -1119,6 +1144,10 @@ Before production:
 | Pika H3 output is mushy or broken | 8-step scheduler, sigma-shift node, or a stacked turbo adapter | Use `lcm`, the seven Pika sigmas, one adapter at 1.0, and no sigma-shift node. |
 | Pika Ref2VA loses reference identity | Wrong base/adapter pairing | Use `ref2va_pruned` + `pika_h3_flex_ref2va_v1_bf16`; fl2va is for T2V/FL2VA. |
 | Klein multi-ref ignores a reference or mixes subjects | A `LoadImage` slot is unset, or the prompt uses “reference 2” | Set every slot `#710`–`#713`; describe subjects by content (“the woman”, “the coat”). Reference 1 still sets the canvas. |
+| LTX-2.5 video plays at the wrong speed | `VHS_VideoCombine.frame_rate` does not match 24 fps | Set it to 24; 8 turns 8 s of audio into a 24 s video. |
+| LTX-2.5 frames drop or decode short | Frame count is not `8n+1` | Use 193 or 201; 197 decodes as 193. |
+| LTX-2.5 ref2v loses identity | Reference prompt names clothing, or `reference_guidance_scale` is too low | Keep the prompt vague about wardrobe; raise guidance to 2–4. |
+| LTX-2.5 OOM on 24 GB | Dropped `PathchSageAttentionKJ`, `LTXVChunkFeedForward`, or `LTX2AttentionTunerPatch` | Keep all three; 22B int8 + Gemma 12B streams weights. |
 | SAM3 returns a nearly-full matte | Absent target falls back to the salient object, or categories union | Use one specific category, raise `13.threshold`, and check mean luma; never stack speculative categories. |
 | SAM3 video frame count multiplies | `13.individual_masks=true` on video | Keep it `false` for video. |
 | SAM3 classes missing or resolve to an old custom pack | ComfyUI lacks core `comfy_extras.nodes_sam3` | Update to 0.43.0+; verify `/object_info/SAM3_Detect` reports `comfy_extras.nodes_sam3`. |
@@ -1167,12 +1196,14 @@ This file is the repository's operating skill. Keep it portable and current.
 - Node packs: `rgthree-comfy`, `RES4LYF`, `was-node-suite-comfyui`,
   `comfyui-easy-use`, `comfyui-various`, `ComfyUI-KJNodes`, `ComfyUI-VideoHelperSuite`,
   `ComfyUI-Drama3`, `comfyui-krea2edit`, `ComfyUI-ConditioningKrea2Rebalance`,
-  `comfyui-plaguekind-nodes`, `ComfyUI-MiniMaxH3-Context-Loop`, `ComfyUI_Fill-Nodes`,
+  `comfyui-plaguekind-nodes`, `ComfyUI-MiniMaxH3-Context-Loop`, `ComfyUI-BFSNodes`, `ComfyUI_Fill-Nodes`,
   `ComfyUI-Spectrum-MiniMax-H3`, `ComfyUI-Impact-Pack`,
   `ComfyUI-Depth-Anything-Tensorrt`.
   Optional: `ComfyUI-Frame-Interpolation` (the H3 graphs use Fill-Nodes `FL_RIFE`), the latent
   upscaler pack, and `ComfyUI-GGUF` (legacy GGUF graphs only; public Flux uses `CLIPLoader`).
 - Native SAM3 needs core `comfy_extras.nodes_sam3` (0.43.0+). No custom SAM3 pack is required.
+- LTX-2.5 needs core `comfy_extras.nodes_lt*`, `ComfyUI-BFSNodes` for ref2v identity conditioning,
+  and the Gemma 4 12B encoder (`CLIPLoader` type `ltxv`).
 - Models: see the family sections. Verify each target's loader option lists
   (`/object_info/<Class>`) rather than assuming the reference deployment's inventory or trusting
   `/models/<folder>`, which can be empty.
@@ -1191,6 +1222,7 @@ This file is the repository's operating skill. Keep it portable and current.
 - `skills/minimaxh3-character-replace/SKILL.md` — character-replacement setup and run examples.
 - `skills/minimaxh3-upscale/SKILL.md` — 2K t2v/v2v upscale and refine.
 - `skills/minimaxh3-perfect-loop/SKILL.md` — seamless 154-frame T2AV loop and seam checks.
+- `skills/ltx2-5/SKILL.md` — LTX-2.5 t2v/ref2v/i2v with joint audio.
 - `skills/sam3/SKILL.md` — native SAM3 image/video mattes, prompt grammar, and alpha compositing.
 - `skills/workflow-development/SKILL.md` — scratch edits, validation, MCP submission, and promotion.
 - `skills/prompt-writing/README.md` — index of the six family prompt-writing skills.

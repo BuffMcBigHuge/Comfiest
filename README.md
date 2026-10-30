@@ -63,6 +63,7 @@ Built for the [Comfy Org Open Source Higgsfield](https://comfy.org/open-source-h
 | **Speech** | Fish Audio Drama 3 — single/dual speaker, voice clone |
 | **Music** | YuE2 3B, MiniMax Music 3 |
 | **Video from text or references** | MiniMax H3 — Pika H3 Flex 6-step default, fastvideo variants, 1–2 pictures, video/audio references, forced lip-sync, character swap |
+| **Video with joint audio** | LTX-2.5 22B distilled — text, identity reference, or first frame |
 | **2K upscale / refine** | MiniMax H3 refiner — latent-space t2v/v2v upscale to 2560×1440 |
 | **Seamless loops** | MiniMax H3 Perfect Loop — text-to-looping-video with synchronized audio |
 | **Mattes / segmentation** | SAM3 — text-prompted image/video luma mattes, native ComfyUI nodes |
@@ -93,7 +94,7 @@ If your agent supports skills:
 
 - Copy `skills/SKILL.md` to `<client-skills>/comfiest/SKILL.md` for the umbrella rules and routing.
 - Copy `skills/minimaxh3/`, `skills/minimaxh3-pika/`, `skills/minimaxh3-character-replace/`,
-  `skills/minimaxh3-upscale/`, `skills/minimaxh3-perfect-loop/`, `skills/sam3/`,
+  `skills/minimaxh3-upscale/`, `skills/minimaxh3-perfect-loop/`, `skills/ltx2-5/`, `skills/sam3/`,
   `skills/prompt-writing/`, `skills/workflow-development/`, and `skills/fish-audio-drama3/` as
   sibling skill directories if your client discovers each skill separately. `skills/prompt-writing/`
   contains six family skills; copy its child directories individually if your client requires a flat
@@ -113,6 +114,8 @@ The umbrella carries the hard rules and routing; the subskills carry family and 
   [`skills/workflow-development/SKILL.md`](skills/workflow-development/SKILL.md).
 - **A native matte primitive.** SAM3 image/video segmentation with open-vocabulary prompts, coverage
   checks, and alpha-WebM compositing — no character-replacement graph required.
+- **A second video family.** LTX-2.5 22B distilled generates video and audio in one pass from text,
+  an identity reference, or a first frame.
 - **Prompt-writing skills for every family.** Krea, Flux, MOSS, YuE2, Music 3, and Drama 3 prompts get
   the model-specific structure instead of a one-line caption.
 - **A submission loop that survives real life.** `wait: false` + `/history` polling, direct output
@@ -188,6 +191,7 @@ host:
 | Krea / Flux edit | `example.png` | Stage in `work/uploads/<project>/`, upload with `upload_file`. The Klein 2/3/4-ref graphs need every `LoadImage` slot set; all defaults are `example.png`. |
 | Drama 3 clone variants | `example.wav` | Upload clean single-speaker clips and replace the transcript placeholders to match. |
 | MiniMax H3 reference variants | `example.png`, `example.mp4`, `example.wav` | Upload the slots the variant uses; every image slot uses the same placeholder. |
+| LTX-2.5 ref2v / i2v | `example.png` | Upload a subject image for ref2v, or a first frame for i2v; replace the file in `work/uploads/<project>/`. |
 
 > **Voice-clone inputs:** The transcripts in the TTS templates are placeholders (“The quick brown
 > fox…”). A clone only works when the transcript matches the clip word for word, so replace both.
@@ -208,6 +212,7 @@ host:
 | 2K upscale / refine | MiniMax H3 + refiner | [Upscale workflows](workflows/minimaxh3/api/) | t2v/v2v; 2560×1440; 5 s and 8 s |
 | Seamless video loop | MiniMax H3 Perfect Loop | [Perfect loop workflow](workflows/minimaxh3/api/perfect-loop-minimax-h3.api.json) | 154 f / 6.42 s; audio; ×2 seam check |
 | Image or video matte | SAM3 | [SAM3 workflows](workflows/sam3/api/) | text-prompted luma matte; image + video + tracker |
+| Video with joint audio | LTX-2.5 22B distilled | [LTX workflows](workflows/ltx/api/) | t2v / ref2v / i2v; 512×960; 8.04 s |
 
 MiniMax H3 is the video workhorse: text-to-video, 1–2 picture references, video/audio references,
 forced-audio lip-sync, and character replacement. See
@@ -238,6 +243,7 @@ Music 3, and Drama 3; the index maps each to its workflow.
 │   ├── minimaxh3-character-replace/SKILL.md
 │   ├── minimaxh3-upscale/SKILL.md
 │   ├── minimaxh3-perfect-loop/SKILL.md
+│   ├── ltx2-5/SKILL.md                # LTX-2.5 video + joint audio
 │   ├── sam3/SKILL.md                  # native masking family
 │   ├── prompt-writing/                # six family prompt writers + README index
 │   ├── workflow-development/SKILL.md   # edit -> validate -> run -> promote
@@ -248,9 +254,10 @@ Music 3, and Drama 3; the index maps each to its workflow.
 │   ├── validate_workflow.py # check an API graph against a live target
 │   ├── wait_job.py          # poll /history when the MCP wait fails
 │   └── fetch_output.py      # download outputs when fetch_outputs fails
-├── workflows/               # 57 workflow templates
+├── workflows/               # 60 workflow templates
 │   ├── *.json
 │   ├── fishdrama3/          # TTS base + variants
+│   ├── ltx/                 # LTX-2.5 t2v/ref2v/i2v graphs
 │   ├── sam3/                # native image/video matte graphs
 │   └── minimaxh3/           # H3 base, UI variants, api/ mirrors
 └── work/                    # writable agent workspace (not required to run)
@@ -294,14 +301,15 @@ fork rather than editing the shipped template.
 - `comfy-cli` + `comfy-mcp` (Python 3.12 tested).
 - Node packs: the full set is installed by [`COMFY-SETUP.md`](COMFY-SETUP.md) — rgthree, RES4LYF,
   WAS, Easy-Use, various, KJNodes, VideoHelperSuite, Drama3, krea2edit, Conditioning Rebalance,
-  PlagueKind, Context-Loop, Fill-Nodes, Spectrum, Impact Pack, and Depth-Anything-TensorRT.
+  PlagueKind, Context-Loop, BFSNodes, Fill-Nodes, Spectrum, Impact Pack, and Depth-Anything-TensorRT.
   Optional: Frame-Interpolation (the H3 graphs use Fill-Nodes `FL_RIFE`), the latent upscaler, and
   ComfyUI-GGUF (legacy GGUF graphs only).
 - Models: Krea 2 Turbo/Edit, Flux.2 Klein 9B + Qwen3-8B fp8mixed, MOSS-Image, YuE2 3B, MiniMax Music 3,
   Fish Audio Drama 3, MiniMax H3 fastvideo stack + Pika H3 Flex adapters + 2K refiner/upscaler and the
-  loop Turbo adapter, SAM3 segmentation. Exact filenames live in the workflow sections of
-  [`skills/SKILL.md`](skills/SKILL.md); verify each host with `/object_info/<LoaderClass>` option
-  lists. `/models/<folder>` can return an empty body even when the model is installed.
+  loop Turbo adapter, LTX-2.5 22B distilled + Gemma 4 12B, SAM3 segmentation. Exact filenames live in
+  the workflow sections of [`skills/SKILL.md`](skills/SKILL.md); verify each host with
+  `/object_info/<LoaderClass>` option lists. `/models/<folder>` can return an empty body even when the
+  model is installed.
   The full download list, Hugging Face locations, and folder layout are in
   [`COMFY-SETUP.md`](COMFY-SETUP.md).
 - GPU: 24 GB-class for video and Drama 3; 128 GB+ system RAM recommended for Drama 3.

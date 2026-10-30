@@ -106,6 +106,24 @@ MODELS = [
      "models/loras/minimax/minimax_h3_fl2v_lightx2v_v0.1_dareties_v4_step600_comfy_fro_fulladaln.safetensors",
      0.9, False),
 
+    # LTX-2.5 (22B distilled, joint video + audio)
+    ("ltx", "Lightricks/LTX-2.5",
+     "diffusion_models/ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors",
+     "models/checkpoints/ltx/ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors",
+     21.5, False),
+    ("ltx", "Lightricks/LTX-2.5",
+     "text_encoders/gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors",
+     "models/text_encoders/gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors",
+     15.4, False),
+    ("ltx", "Lightricks/LTX-2.5", "vae/ltx-2.5-video-vae-conv-bf16.safetensors",
+     "models/vae/ltx/ltx-2.5-video-vae-conv-bf16.safetensors", 1.5, False),
+    ("ltx", "Lightricks/LTX-2.5", "vae/ltx-2.5-audio-vae-bf16.safetensors",
+     "models/vae/ltx/ltx-2.5-audio-vae-bf16.safetensors", 0.4, False),
+    ("ltx", "Lightricks/LTX-2.5",
+     "latent_upscale_models/ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors",
+     "models/latent_upscale_models/ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors",
+     1.0, False),
+
     # SAM3 (native image/video mattes + character replacement)
     ("sam3", "Comfy-Org/sam3.1", "checkpoints/sam3.1_multiplex_fp16.safetensors",
      "models/checkpoints/sam3.1_multiplex_fp16.safetensors", 1.7, False),
