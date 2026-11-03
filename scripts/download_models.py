@@ -126,6 +126,12 @@ MODELS = [
     ("ltx", "Alissonerdx/LTX-Best-Face-ID", "Best_FaceID_v1.0_LoRA.safetensors",
      "models/loras/ltx/Best_FaceID_v1.0_LoRA.safetensors", 2.5, False),
 
+    # RelayVSR X2 (pixel-space video super-resolution)
+    ("relayvsr", "lightx2v/RelayVSR_X2", "wan_x2.safetensors",
+     "models/relayvsr/RelayVSR_X2/wan_x2.safetensors", 10.1, False),
+    ("relayvsr", "lightx2v/RelayVSR_X2", "flash_x2.safetensors",
+     "models/relayvsr/RelayVSR_X2/flash_x2.safetensors", 0.13, False),
+
     # SAM3 (native image/video mattes + character replacement)
     ("sam3", "Comfy-Org/sam3.1", "checkpoints/sam3.1_multiplex_fp16.safetensors",
      "models/checkpoints/sam3.1_multiplex_fp16.safetensors", 1.7, False),

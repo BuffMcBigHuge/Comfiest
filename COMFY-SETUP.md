@@ -15,10 +15,10 @@ core `CreateVideo`/`SaveVideo` nodes.
 
 1. ComfyUI (latest stable) + a Python 3.12 environment.
 2. PyTorch built for CUDA 13.0 (required by the `int8_convrot` checkpoints).
-3. 17 required custom-node packs (plus 3 optional), including the MiniMax H3 compatibility/acceleration
+3. 18 required custom-node packs (plus 3 optional), including the MiniMax H3 compatibility/acceleration
 
    nodes.
-4. About 277 GB of model files, downloaded from Hugging Face into the right folders.
+4. About 288 GB of model files, downloaded from Hugging Face into the right folders.
 5. A TensorRT depth engine for the character-replacement workflows.
 6. Optionally, the `comfy-mcp` bridge from [`MCP-SETUP.md`](MCP-SETUP.md) so an agent can submit jobs.
 
@@ -140,6 +140,7 @@ python scripts/install_nodes.py --comfyui "$COMFYUI" --include-optional  # optio
 | `ComfyUI-PlagueKind-Nodes`                        | <https://github.com/PlagueKind/ComfyUI-PlagueKind-Nodes>           | `H3AdaLNLoRAFix`, `H3SLAAttention`                                                                                                                       | Required by the H3 variants.                                                                          |
 | `ComfyUI-MiniMaxH3-Context-Loop`                  | <https://github.com/ethanfel/ComfyUI-MiniMaxH3-Context-Loop>       | `MiniMaxH3ContexMaskedAVBridge`                                                                                                                          | Perfect-loop graph; the repo keeps the intentional "Contex" spelling in class names.                  |
 | `ComfyUI-BFSNodes`                                | <https://github.com/alisson-anjos/ComfyUI-BFSNodes>                | `LTXIdentityOverlapConditioning`                                                                                                                         | LTX-2.5 ref2v identity conditioning.                                                                  |
+| `Comfyui-Relay-VSR`                               | <https://github.com/bbaudio-2025/Comfyui-Relay-VSR>                | `RelayVSRModelLoader`, `RelayVSRUpscale`                                                                                                                 | RelayVSR X2 video super-resolution.                                                                   |
 | `ComfyUI_Fill-Nodes`                              | <https://github.com/filliptm/ComfyUI_Fill-Nodes>                   | `FL_RIFE`                                                                                                                                                | Frame interpolation to 48 fps.                                                                        |
 | `ComfyUI-Spectrum-MiniMax-H3`                     | <https://github.com/xmarre/ComfyUI-Spectrum-MiniMax-H3>            | `SpectrumApplyMiniMaxH3`                                                                                                                                 | H3 sampler acceleration.                                                                              |
 | `ComfyUI-Impact-Pack`                             | <https://github.com/ltdrdata/ComfyUI-Impact-Pack>                  | `ImpactSwitch`                                                                                                                                           | Switch used in the H3 graph.                                                                          |
@@ -232,6 +233,8 @@ Paths are relative to `ComfyUI/`. Sizes are approximate.
 | LTX-2.5 | <https://huggingface.co/Lightricks/LTX-2.5> | `vae/ltx-2.5-audio-vae-bf16.safetensors` | `models/vae/ltx/ltx-2.5-audio-vae-bf16.safetensors` | 0.4 GB |
 | LTX-2.5 | <https://huggingface.co/Lightricks/LTX-2.5> | `latent_upscale_models/ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors` | `models/latent_upscale_models/ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors` | 1.0 GB |
 | LTX-2.5 | <https://huggingface.co/Alissonerdx/LTX-Best-Face-ID> | `Best_FaceID_v1.0_LoRA.safetensors` | `models/loras/ltx/Best_FaceID_v1.0_LoRA.safetensors` | 2.5 GB |
+| RelayVSR | <https://huggingface.co/lightx2v/RelayVSR_X2> | `wan_x2.safetensors` | `models/relayvsr/RelayVSR_X2/wan_x2.safetensors` | 10.1 GB |
+| RelayVSR | <https://huggingface.co/lightx2v/RelayVSR_X2> | `flash_x2.safetensors` | `models/relayvsr/RelayVSR_X2/flash_x2.safetensors` | 0.1 GB |
 | H3 2K | <https://huggingface.co/LBH-123-AI/Minimax_h3_latent_Upscaler> | `minimax_h3_latent_upscaler_3d_conv_v1/minimax_h3_latent_upscaler_3d_conv_v1_bf16.safetensors` | `models/latent_upscale_models/minimax_h3_latent_upscaler_3d_bf16.safetensors` | 0.7 GB |
 | H3 2K | <https://huggingface.co/Kijai/MiniMax-H3-experimental> | `loras/minimax_h3_open_regenerate_2k_refiner_rank_16_bf16.safetensors` | `models/loras/minimax/minimax_h3_open_regenerate_2k_refiner_rank_16_bf16.safetensors` | 0.2 GB |
 | H3 / 2K | <https://huggingface.co/lightx2v/Minimax-h3-Turbo> | `minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors` | `models/loras/minimax/minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors` | 2.0 GB |
@@ -399,6 +402,7 @@ comfy run --workflow workflows/minimaxh3/api/upscale-minimax-2k-v2v.api.json --p
 comfy run --workflow workflows/minimaxh3/api/perfect-loop-minimax-h3.api.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/minimaxh3/api/pika-h3-t2v.api.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/ltx/api/ltx2-5-t2v.api.json --print-prompt --host 127.0.0.1 --port 8188
+comfy run --workflow workflows/relayvsr/api/video-upscale-relayvsr-x2.api.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/sam3/api/sam3-mask-video.api.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/text2music-yue2.json         --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/text2music-minimaxmusic3.json --print-prompt --host 127.0.0.1 --port 8188
@@ -471,6 +475,7 @@ Check each model card before commercial use:
 | Pika H3 Flex adapters | MiniMax H3 Community License; see the Pika model card |
 | LTX-2.5 | Lightricks LTX-2.5 license; see the model card |
 | Best_FaceID LoRA | See the Alissonerdx model card |
+| RelayVSR | See the LightX2V RelayVSR_X2 model card |
 
 If a use case requires commercial rights, verify the current model card rather than relying on this
 table.

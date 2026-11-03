@@ -27,11 +27,12 @@ one target for its lifetime.
 | `work/` | Writable agent workspace (scratch, uploads, outputs, analysis, post, exports, logs). |
 | `LICENSE` | MIT license for this repository. |
 
-`workflows/minimaxh3/`, `workflows/ltx/`, `workflows/sam3/`, and `workflows/fishdrama3/` are
-workflow-family subdirectories. Their usage notes live in `skills/minimaxh3/`,
-`skills/minimaxh3-pika/`, `skills/minimaxh3-character-replace/`, `skills/minimaxh3-upscale/`,
-`skills/minimaxh3-perfect-loop/`, `skills/ltx2-5/`, `skills/sam3/`, `skills/workflow-development/`,
-`skills/prompt-writing/`, and `skills/fish-audio-drama3/`.
+`workflows/minimaxh3/`, `workflows/ltx/`, `workflows/relayvsr/`, `workflows/sam3/`, and
+`workflows/fishdrama3/` are workflow-family subdirectories. Their usage notes live in
+`skills/minimaxh3/`, `skills/minimaxh3-pika/`, `skills/minimaxh3-character-replace/`,
+`skills/minimaxh3-upscale/`, `skills/minimaxh3-perfect-loop/`, `skills/ltx2-5/`, `skills/relayvsr/`,
+`skills/sam3/`, `skills/workflow-development/`, `skills/prompt-writing/`, and
+`skills/fish-audio-drama3/`.
 `work/` is the only writable area of the repository.
 
 ```text
@@ -51,6 +52,7 @@ workflow-family subdirectories. Their usage notes live in `skills/minimaxh3/`,
 │   ├── minimaxh3-upscale/SKILL.md
 │   ├── minimaxh3-perfect-loop/SKILL.md
 │   ├── ltx2-5/SKILL.md
+│   ├── relayvsr/SKILL.md
 │   ├── sam3/SKILL.md
 │   ├── workflow-development/SKILL.md
 │   ├── prompt-writing/             # seven family prompt writers + README index
@@ -59,6 +61,7 @@ workflow-family subdirectories. Their usage notes live in `skills/minimaxh3/`,
 │   ├── *.json                      # root workflows
 │   ├── fishdrama3/                 # TTS variants + base
 │   ├── ltx/                        # LTX-2.5 t2v/ref2v/i2v
+│   ├── relayvsr/                   # RelayVSR X2 video upscale
 │   ├── sam3/                       # native image/video matte graphs
 │   └── minimaxh3/                  # H3 base, UI variants, api/ mirrors
 └── work/                           # writable workspace; see Working directory
@@ -87,8 +90,8 @@ directory) and reuse that absolute prefix for the session.
 - **Maintained additions:** the two `*-forced` UI files, their two API mirrors, the three
   `charreplace-*` API workflows, the three `upscale-*` API workflows, the three `sam3-*` API
   workflows, the three `pika-h3-*` API workflows, the three `image2image-fluxklein-{2,3,4}ref.json`
-  additions, the three `ltx2-5-*` API workflows, and `perfect-loop-minimax-h3.api.json` are maintained
-  rather than one-off templates.
+  additions, the three `ltx2-5-*` API workflows, the RelayVSR UI/API pair, and
+  `perfect-loop-minimax-h3.api.json` are maintained rather than one-off templates.
   Edit them only on an explicit user request.
 - **Markdown documentation lives in `skills/`.** Inventory and usage notes belong in this file or in
   the family/recipe subskills (`skills/minimaxh3/`, `skills/minimaxh3-character-replace/`,
@@ -220,6 +223,7 @@ explicit approval.
 | Song from caption + lyrics | MiniMax Music 3 | `workflows/text2music-minimaxmusic3.json` | caption-driven; tiled audio decode |
 | Video from text or references | MiniMax H3 / Pika H3 Flex | `workflows/minimaxh3/api/pika-h3-*.api.json` + fastvideo variants | Pika 6-step default; fastvideo 8-step drafts; 3 Pika + 14 fastvideo + 3 charreplace |
 | Video with joint audio | LTX-2.5 22B distilled | `workflows/ltx/api/*.api.json` | t2v/ref2v/i2v; 512×960; 8.04 s |
+| Video 2× upscale | RelayVSR X2 | `workflows/relayvsr/api/video-upscale-relayvsr-x2.api.json` | pixel-space 2×; audio passthrough |
 | 2K upscale / refine | MiniMax H3 + refiner | `workflows/minimaxh3/api/upscale-*.api.json` | t2v/v2v latent upscale; 2560×1440 output |
 | Seamless video loop | MiniMax H3 Perfect Loop | `workflows/minimaxh3/api/perfect-loop-minimax-h3.api.json` | 154 f / 6.42 s; audio included; ×2 seam check |
 | Image or video matte | SAM3 (native) | `workflows/sam3/api/*.api.json` | text-prompted luma matte; image, video, tracker |
@@ -257,7 +261,7 @@ How to use the table:
 Routing constraints:
 
 - One job at a time per target. Krea/Flux/MOSS are light; Music 3, MiniMax H3, the 2K upscale path,
-  the perfect loop, and LTX-2.5 are heavy; Drama 3 is heavy on system RAM.
+  the perfect loop, LTX-2.5, and RelayVSR are heavy; Drama 3 is heavy on system RAM.
 - The workflow JSON is the final authority on node IDs and model filenames. The family sections call
   out known traps: dead branches, decoy LoRA loaders, optional files that are not installed.
 - To build or adapt a graph, use [`workflow-development/SKILL.md`](workflow-development/SKILL.md).
@@ -919,6 +923,24 @@ not write around a supplied track.
 Full addresses, reference widgets, i2v semantics, model sources, and gotchas:
 [`ltx2-5/SKILL.md`](ltx2-5/SKILL.md).
 
+### RelayVSR X2 — 2× video super-resolution
+
+`workflows/relayvsr/` contains a four-node UI/API pair. RelayVSR is a one-step distilled pixel-space
+upscaler (Wan backbone + Flash decoder), not a re-generator: video in, 2× video out, source audio
+passed through. Use it as a finishing pass on H3/LTX output, or when the H3 refiner is too slow.
+
+- `RelayVSRModelLoader #1`: `bundle=RelayVSR_X2`, `dtype=bf16`, `offload=true`.
+- `RelayVSRUpscale #2`: `sr_ratio=2` is mandatory with X2 weights; `chunk_len=16`, `seed=42`.
+- `VHS_LoadVideoFFmpeg #3` → `RelayVSRUpscale` → `VHS_VideoCombine #4`.
+- Output is 2× the input; audio is not enhanced. `force_rate 24` + save at 24 fps is the shipped
+  24 fps path. For a 48 fps source, set `force_rate 0` and `frame_rate 48`.
+- `VHS_VideoCombine` muxes with `-shortest`; a 193-frame stream can lose its tail frame. Use
+  `CreateVideo` → `SaveVideo` if the exact tail matters.
+- Models: `models/relayvsr/RelayVSR_X2/{wan_x2,flash_x2}.safetensors`; node pack
+  `Comfyui-Relay-VSR`.
+
+Full settings, cost, and gotchas: [`relayvsr/SKILL.md`](relayvsr/SKILL.md).
+
 ## MCP behavior and findings
 
 The full edit/validate/run/promote loop is in
@@ -1153,6 +1175,10 @@ Before production:
 | LTX-2.5 frames drop or decode short | Frame count is not `8n+1` | Use 193 or 201; 197 decodes as 193. |
 | LTX-2.5 ref2v loses identity | Reference prompt names clothing, or `reference_guidance_scale` is too low | Keep the prompt vague about wardrobe; raise guidance to 2–4. |
 | LTX-2.5 OOM on 24 GB | Dropped `PathchSageAttentionKJ`, `LTXVChunkFeedForward`, or `LTX2AttentionTunerPatch` | Keep all three; 22B int8 + Gemma 12B streams weights. |
+| RelayVSR raises `RelayVSR x2 权重仅支持 2 倍放大` | `sr_ratio` is not 2 | Use `sr_ratio=2` with X2 weights. |
+| RelayVSR output plays fast/slow | `force_rate` and save `frame_rate` disagree | Set both to the source rate, or `force_rate 0` and the source fps. |
+| RelayVSR OOM at 1080p | `offload` disabled or chunk too large | Keep `offload=true`, reduce `chunk_len`, or lower source resolution. |
+| RelayVSR bundle missing after adding weights | Bundle list is scanned at import | Restart ComfyUI or set the loader's advanced `path`. |
 | SAM3 returns a nearly-full matte | Absent target falls back to the salient object, or categories union | Use one specific category, raise `13.threshold`, and check mean luma; never stack speculative categories. |
 | SAM3 video frame count multiplies | `13.individual_masks=true` on video | Keep it `false` for video. |
 | SAM3 classes missing or resolve to an old custom pack | ComfyUI lacks core `comfy_extras.nodes_sam3` | Update to 0.43.0+; verify `/object_info/SAM3_Detect` reports `comfy_extras.nodes_sam3`. |
@@ -1201,7 +1227,8 @@ This file is the repository's operating skill. Keep it portable and current.
 - Node packs: `rgthree-comfy`, `RES4LYF`, `was-node-suite-comfyui`,
   `comfyui-easy-use`, `comfyui-various`, `ComfyUI-KJNodes`, `ComfyUI-VideoHelperSuite`,
   `ComfyUI-Drama3`, `comfyui-krea2edit`, `ComfyUI-ConditioningKrea2Rebalance`,
-  `comfyui-plaguekind-nodes`, `ComfyUI-MiniMaxH3-Context-Loop`, `ComfyUI-BFSNodes`, `ComfyUI_Fill-Nodes`,
+  `comfyui-plaguekind-nodes`, `ComfyUI-MiniMaxH3-Context-Loop`, `ComfyUI-BFSNodes`,
+  `Comfyui-Relay-VSR`, `ComfyUI_Fill-Nodes`,
   `ComfyUI-Spectrum-MiniMax-H3`, `ComfyUI-Impact-Pack`,
   `ComfyUI-Depth-Anything-Tensorrt`.
   Optional: `ComfyUI-Frame-Interpolation` (the H3 graphs use Fill-Nodes `FL_RIFE`), the latent
@@ -1209,6 +1236,7 @@ This file is the repository's operating skill. Keep it portable and current.
 - Native SAM3 needs core `comfy_extras.nodes_sam3` (0.43.0+). No custom SAM3 pack is required.
 - LTX-2.5 needs core `comfy_extras.nodes_lt*`, `ComfyUI-BFSNodes` for ref2v identity conditioning,
   and the Gemma 4 12B encoder (`CLIPLoader` type `ltxv`).
+- RelayVSR needs `Comfyui-Relay-VSR` and VideoHelperSuite; no extra pip packages.
 - Models: see the family sections. Verify each target's loader option lists
   (`/object_info/<Class>`) rather than assuming the reference deployment's inventory or trusting
   `/models/<folder>`, which can be empty.
@@ -1228,6 +1256,7 @@ This file is the repository's operating skill. Keep it portable and current.
 - `skills/minimaxh3-upscale/SKILL.md` — 2K t2v/v2v upscale and refine.
 - `skills/minimaxh3-perfect-loop/SKILL.md` — seamless 154-frame T2AV loop and seam checks.
 - `skills/ltx2-5/SKILL.md` — LTX-2.5 t2v/ref2v/i2v with joint audio.
+- `skills/relayvsr/SKILL.md` — RelayVSR X2 2× video upscale and audio passthrough.
 - `skills/sam3/SKILL.md` — native SAM3 image/video mattes, prompt grammar, and alpha compositing.
 - `skills/workflow-development/SKILL.md` — scratch edits, validation, MCP submission, and promotion.
 - `skills/prompt-writing/README.md` — index of the seven family prompt-writing skills.

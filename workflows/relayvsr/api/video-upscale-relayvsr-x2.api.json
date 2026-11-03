@@ -1,0 +1,74 @@
+{
+  "1": {
+    "class_type": "RelayVSRModelLoader",
+    "inputs": {
+      "bundle": "RelayVSR_X2",
+      "dtype": "bf16",
+      "offload": true,
+      "path": ""
+    },
+    "_meta": {
+      "title": "RelayVSR X2 weights — bundle under models/relayvsr"
+    }
+  },
+  "2": {
+    "class_type": "RelayVSRUpscale",
+    "inputs": {
+      "model": [
+        "1",
+        0
+      ],
+      "images": [
+        "3",
+        0
+      ],
+      "sr_ratio": 2,
+      "chunk_len": 16,
+      "seed": 42
+    },
+    "_meta": {
+      "title": "2x upscale — chunk_len 16; seed barely matters (1-step)"
+    }
+  },
+  "3": {
+    "class_type": "VHS_LoadVideoFFmpeg",
+    "inputs": {
+      "video": "example.mp4",
+      "force_rate": 24,
+      "custom_width": 0,
+      "custom_height": 0,
+      "frame_load_cap": 0,
+      "start_time": 0,
+      "format": "None"
+    },
+    "_meta": {
+      "title": "SOURCE VIDEO — slot: video; force_rate 0 keeps source fps"
+    }
+  },
+  "4": {
+    "class_type": "VHS_VideoCombine",
+    "inputs": {
+      "images": [
+        "2",
+        0
+      ],
+      "audio": [
+        "3",
+        2
+      ],
+      "frame_rate": 24,
+      "loop_count": 0,
+      "filename_prefix": "COMFY_WORKFLOWS/RELAYVSR_X2",
+      "format": "video/h264-mp4",
+      "pix_fmt": "yuv420p",
+      "crf": 19,
+      "save_metadata": true,
+      "trim_to_audio": false,
+      "pingpong": false,
+      "save_output": true
+    },
+    "_meta": {
+      "title": "SAVE — frame_rate must match the loader's effective fps"
+    }
+  }
+}
