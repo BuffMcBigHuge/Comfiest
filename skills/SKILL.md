@@ -27,11 +27,11 @@ one target for its lifetime.
 | `work/` | Writable agent workspace (scratch, uploads, outputs, analysis, post, exports, logs). |
 | `LICENSE` | MIT license for this repository. |
 
-`workflows/minimaxh3/`, `workflows/ltx/`, `workflows/relayvsr/`, `workflows/sam3/`, and
-`workflows/fishdrama3/` are workflow-family subdirectories. Their usage notes live in
-`skills/minimaxh3/`, `skills/minimaxh3-pika/`, `skills/minimaxh3-character-replace/`,
+`workflows/minimaxh3/`, `workflows/ltx/`, `workflows/relayvsr/`, `workflows/ph3-image/`,
+`workflows/sam3/`, and `workflows/fishdrama3/` are workflow-family subdirectories. Their usage notes
+live in `skills/minimaxh3/`, `skills/minimaxh3-pika/`, `skills/minimaxh3-character-replace/`,
 `skills/minimaxh3-upscale/`, `skills/minimaxh3-perfect-loop/`, `skills/ltx2-5/`, `skills/relayvsr/`,
-`skills/sam3/`, `skills/workflow-development/`, `skills/prompt-writing/`, and
+`skills/ph3-image/`, `skills/sam3/`, `skills/workflow-development/`, `skills/prompt-writing/`, and
 `skills/fish-audio-drama3/`.
 `work/` is the only writable area of the repository.
 
@@ -53,6 +53,7 @@ one target for its lifetime.
 │   ├── minimaxh3-perfect-loop/SKILL.md
 │   ├── ltx2-5/SKILL.md
 │   ├── relayvsr/SKILL.md
+│   ├── ph3-image/SKILL.md
 │   ├── sam3/SKILL.md
 │   ├── workflow-development/SKILL.md
 │   ├── prompt-writing/             # seven family prompt writers + README index
@@ -61,6 +62,7 @@ one target for its lifetime.
 │   ├── *.json                      # root workflows
 │   ├── fishdrama3/                 # TTS variants + base
 │   ├── ltx/                        # LTX-2.5 t2v/ref2v/i2v
+│   ├── ph3-image/                  # P-H3-Image T2I and multi-ref edits
 │   ├── relayvsr/                   # RelayVSR X2 video upscale
 │   ├── sam3/                       # native image/video matte graphs
 │   └── minimaxh3/                  # H3 base, UI variants, api/ mirrors
@@ -90,8 +92,9 @@ directory) and reuse that absolute prefix for the session.
 - **Maintained additions:** the two `*-forced` UI files, their two API mirrors, the three
   `charreplace-*` API workflows, the three `upscale-*` API workflows, the three `sam3-*` API
   workflows, the three `pika-h3-*` API workflows, the three `image2image-fluxklein-{2,3,4}ref.json`
-  additions, the three `ltx2-5-*` API workflows, the RelayVSR UI/API pair, and
-  `perfect-loop-minimax-h3.api.json` are maintained rather than one-off templates.
+  additions, the three `ltx2-5-*` API workflows, the RelayVSR UI/API pair, the P-H3-Image
+  UI/API additions, and `perfect-loop-minimax-h3.api.json` are maintained rather than one-off
+  templates.
   Edit them only on an explicit user request.
 - **Markdown documentation lives in `skills/`.** Inventory and usage notes belong in this file or in
   the family/recipe subskills (`skills/minimaxh3/`, `skills/minimaxh3-character-replace/`,
@@ -223,6 +226,7 @@ explicit approval.
 | Song from caption + lyrics | MiniMax Music 3 | `workflows/text2music-minimaxmusic3.json` | caption-driven; tiled audio decode |
 | Video from text or references | MiniMax H3 / Pika H3 Flex | `workflows/minimaxh3/api/pika-h3-*.api.json` + fastvideo variants | Pika 6-step default; fastvideo 8-step drafts; 3 Pika + 14 fastvideo + 3 charreplace |
 | Video with joint audio | LTX-2.5 22B distilled | `workflows/ltx/api/*.api.json` | t2v/ref2v/i2v; 512×960; 8.04 s |
+| Multi-reference image edit | P-H3-Image | `workflows/ph3-image/ph3-image-edit-{4,5}img*.json` | 4 MP; up to 9 refs; native w4a8 |
 | Video 2× upscale | RelayVSR X2 | `workflows/relayvsr/api/video-upscale-relayvsr-x2.api.json` | pixel-space 2×; audio passthrough |
 | 2K upscale / refine | MiniMax H3 + refiner | `workflows/minimaxh3/api/upscale-*.api.json` | t2v/v2v latent upscale; 2560×1440 output |
 | Seamless video loop | MiniMax H3 Perfect Loop | `workflows/minimaxh3/api/perfect-loop-minimax-h3.api.json` | 154 f / 6.42 s; audio included; ×2 seam check |
@@ -941,6 +945,22 @@ passed through. Use it as a finishing pass on H3/LTX output, or when the H3 refi
 
 Full settings, cost, and gotchas: [`relayvsr/SKILL.md`](relayvsr/SKILL.md).
 
+### P-H3-Image — native T2I and multi-reference edit
+
+P-H3-Image is PrunaAI's image distillation of MiniMax-H3. It is native ComfyUI 0.44.0+
+(`PH3ImageConditioning`), no custom nodes or LoRAs. The w4a8 set is the 24 GB option; bf16/int8 do not
+fit. Four graphs: 4-ref API/UI, 5-ref API, and T2I UI.
+
+- `image_1` is the subject and sets the 4 MP canvas; refs go to `PH3ImageConditioning` at native size.
+- `BatchImagesNode` + `StringFormat` feed the prompt upsampler one `<Picture N>` block per image;
+  `TextGenerate` runs thinking off for edits.
+- Autogrow keys: `images.image_1..image_9` on the conditioning, `images.image0..N` on `BatchImagesNode`.
+- 8-step `ManualSigmas` + `euler`, cfg 1, `MiniMaxH3SigmaShift` 1.0/1.0.
+- Public copies use `example.png` for every slot and generic prompts; set all slots and map the
+  subject/setting/garment/prop in the prompt.
+
+Full addresses, model set, runs, and gotchas: [`ph3-image/SKILL.md`](ph3-image/SKILL.md).
+
 ## MCP behavior and findings
 
 The full edit/validate/run/promote loop is in
@@ -1179,6 +1199,9 @@ Before production:
 | RelayVSR output plays fast/slow | `force_rate` and save `frame_rate` disagree | Set both to the source rate, or `force_rate 0` and the source fps. |
 | RelayVSR OOM at 1080p | `offload` disabled or chunk too large | Keep `offload=true`, reduce `chunk_len`, or lower source resolution. |
 | RelayVSR bundle missing after adding weights | Bundle list is scanned at import | Restart ComfyUI or set the loader's advanced `path`. |
+| P-H3-Image `PH3ImageConditioning` missing | ComfyUI is older than 0.44.0 | Update ComfyUI; verify `/object_info/PH3ImageConditioning`. |
+| P-H3-Image OOM | bf16/int8 set or 8 MP on 24 GB | Use the w4a8 diffusion/encoder/upsampler/VAE set; 4 MP is the tested size. |
+| P-H3-Image ignores a reference | A slot is unset or the prompt does not bind `<Picture N>` | Set every image slot; name the subject/setting/garment/prop per picture. |
 | SAM3 returns a nearly-full matte | Absent target falls back to the salient object, or categories union | Use one specific category, raise `13.threshold`, and check mean luma; never stack speculative categories. |
 | SAM3 video frame count multiplies | `13.individual_masks=true` on video | Keep it `false` for video. |
 | SAM3 classes missing or resolve to an old custom pack | ComfyUI lacks core `comfy_extras.nodes_sam3` | Update to 0.43.0+; verify `/object_info/SAM3_Detect` reports `comfy_extras.nodes_sam3`. |
@@ -1220,7 +1243,8 @@ This file is the repository's operating skill. Keep it portable and current.
 > A machine with nothing installed yet? Follow [`COMFY-SETUP.md`](../COMFY-SETUP.md) first. It covers
 > ComfyUI, PyTorch/CUDA, every custom-node pack, every model file, and the TensorRT depth engine.
 
-- ComfyUI 0.43.0 or newer (the perfect loop uses core `CreateVideo`/`SaveVideo`).
+- ComfyUI 0.44.0 or newer (P-H3-Image needs `PH3ImageConditioning`; the perfect loop also needs
+  `CreateVideo`/`SaveVideo`).
 - 2K upscale/refine needs `MiniMaxH3LatentUpscaleWithModel` (ComfyUI PR #17412 or newer).
 - ComfyUI frontend 1.57.1 or newer.
 - `comfy-aimdo` >= 0.6.0, `comfy-kitchen` >= 0.2.40, `comfyui-workflow-templates` >= 0.11.96.
@@ -1237,6 +1261,7 @@ This file is the repository's operating skill. Keep it portable and current.
 - LTX-2.5 needs core `comfy_extras.nodes_lt*`, `ComfyUI-BFSNodes` for ref2v identity conditioning,
   and the Gemma 4 12B encoder (`CLIPLoader` type `ltxv`).
 - RelayVSR needs `Comfyui-Relay-VSR` and VideoHelperSuite; no extra pip packages.
+- P-H3-Image needs ComfyUI 0.44.0+ and its w4a8 model set; no custom pack or LoRA.
 - Models: see the family sections. Verify each target's loader option lists
   (`/object_info/<Class>`) rather than assuming the reference deployment's inventory or trusting
   `/models/<folder>`, which can be empty.
@@ -1257,6 +1282,7 @@ This file is the repository's operating skill. Keep it portable and current.
 - `skills/minimaxh3-perfect-loop/SKILL.md` — seamless 154-frame T2AV loop and seam checks.
 - `skills/ltx2-5/SKILL.md` — LTX-2.5 t2v/ref2v/i2v with joint audio.
 - `skills/relayvsr/SKILL.md` — RelayVSR X2 2× video upscale and audio passthrough.
+- `skills/ph3-image/SKILL.md` — P-H3-Image native T2I and multi-reference edits.
 - `skills/sam3/SKILL.md` — native SAM3 image/video mattes, prompt grammar, and alpha compositing.
 - `skills/workflow-development/SKILL.md` — scratch edits, validation, MCP submission, and promotion.
 - `skills/prompt-writing/README.md` — index of the seven family prompt-writing skills.

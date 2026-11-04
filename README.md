@@ -58,8 +58,8 @@ Built for the [Comfy Org Open Source Higgsfield](https://comfy.org/open-source-h
 
 | Create | Models and capabilities |
 | --- | --- |
-| **Images from text** | Krea 2 Turbo, Flux.2 Klein 9B, MOSS-Image |
-| **Image edits** | Krea 2 Edit, Flux.2 Klein 9B reference edit (1–4 references) |
+| **Images from text** | Krea 2 Turbo, Flux.2 Klein 9B, MOSS-Image, P-H3-Image |
+| **Image edits** | Krea 2 Edit, Flux.2 Klein 9B reference edit (1–4 references), P-H3-Image (up to 9 references) |
 | **Speech** | Fish Audio Drama 3 — single/dual speaker, voice clone |
 | **Music** | YuE2 3B, MiniMax Music 3 |
 | **Video from text or references** | MiniMax H3 — Pika H3 Flex 6-step default, fastvideo variants, 1–2 pictures, video/audio references, forced lip-sync, character swap |
@@ -96,7 +96,7 @@ If your agent supports skills:
 - Copy `skills/SKILL.md` to `<client-skills>/comfiest/SKILL.md` for the umbrella rules and routing.
 - Copy `skills/minimaxh3/`, `skills/minimaxh3-pika/`, `skills/minimaxh3-character-replace/`,
   `skills/minimaxh3-upscale/`, `skills/minimaxh3-perfect-loop/`, `skills/ltx2-5/`, `skills/relayvsr/`,
-  `skills/sam3/`, `skills/prompt-writing/`, `skills/workflow-development/`, and
+  `skills/ph3-image/`, `skills/sam3/`, `skills/prompt-writing/`, `skills/workflow-development/`, and
   `skills/fish-audio-drama3/` as sibling skill directories if your client discovers each skill
   separately. `skills/prompt-writing/` contains seven family skills; copy its child directories
   individually if your client requires a flat layout.
@@ -130,7 +130,7 @@ The umbrella carries the hard rules and routing; the subskills carry family and 
 
 ### 1. Set up ComfyUI
 
-Install ComfyUI 0.43 or newer with the node packs and models listed in
+Install ComfyUI 0.44 or newer with the node packs and models listed in
 [`skills/SKILL.md`](skills/SKILL.md#target-requirements). A 24 GB-class GPU is the baseline. Drama 3
 loads 38.6 GB of experts into system RAM; use a high-RAM host.
 
@@ -194,6 +194,7 @@ host:
 | MiniMax H3 reference variants | `example.png`, `example.mp4`, `example.wav` | Upload the slots the variant uses; every image slot uses the same placeholder. |
 | LTX-2.5 ref2v / i2v | `example.png` | Upload a subject image for ref2v, or a first frame for i2v; replace the file in `work/uploads/<project>/`. |
 | RelayVSR | `example.mp4` | Upload the source clip; output is 2× its size and keeps its audio. |
+| P-H3-Image edit | `example.png` | Upload the subject plus 3–4 references; every image slot defaults to `example.png`. |
 
 > **Voice-clone inputs:** The transcripts in the TTS templates are placeholders (“The quick brown
 > fox…”). A clone only works when the transcript matches the clip word for word, so replace both.
@@ -207,6 +208,7 @@ host:
 | Stylized text → image | Flux.2 Klein 9B | [Text to image](workflows/text2image-fluxklein.json) | 4-step RES4LYF |
 | Reference edit | Flux.2 Klein 9B | [1 ref](workflows/image2image-fluxklein.json), [2 ref](workflows/image2image-fluxklein-2ref.json), [3 ref](workflows/image2image-fluxklein-3ref.json), [4 ref](workflows/image2image-fluxklein-4ref.json) | ordered reference list; reference 1 sets the canvas |
 | Fast photoreal still / keyframe | MOSS-Image | [Text to image](workflows/text2image-moss.json) | 8-step DMD; 1776×1184; optional prompt upsampler |
+| Multi-reference image edit | P-H3-Image | [4 ref](workflows/ph3-image/ph3-image-edit-4img.api.json), [5 ref](workflows/ph3-image/ph3-image-edit-5img.api.json), [T2I](workflows/ph3-image/ph3-image-t2i.json) | w4a8; up to 9 refs; 4 MP |
 | Song from style + lyrics | YuE2 3B | [Style + lyrics](workflows/text2music-yue2.json) | 120 s, vocals |
 | Song from caption + lyrics | MiniMax Music 3 | [Caption + lyrics](workflows/text2music-minimaxmusic3.json) | tiled audio decode |
 | Speech / voice clone | Fish Audio Drama 3 | [Speech workflows](workflows/fishdrama3/) | 4 variants, 1–2 speakers |
@@ -248,6 +250,7 @@ Music 3, and Drama 3; the index maps each to its workflow.
 │   ├── minimaxh3-perfect-loop/SKILL.md
 │   ├── ltx2-5/SKILL.md                # LTX-2.5 video + joint audio
 │   ├── relayvsr/SKILL.md              # RelayVSR X2 video upscale
+│   ├── ph3-image/SKILL.md             # P-H3-Image multi-ref edit + T2I
 │   ├── sam3/SKILL.md                  # native masking family
 │   ├── prompt-writing/                # seven family prompt writers + README index
 │   ├── workflow-development/SKILL.md   # edit -> validate -> run -> promote
@@ -258,10 +261,11 @@ Music 3, and Drama 3; the index maps each to its workflow.
 │   ├── validate_workflow.py # check an API graph against a live target
 │   ├── wait_job.py          # poll /history when the MCP wait fails
 │   └── fetch_output.py      # download outputs when fetch_outputs fails
-├── workflows/               # 62 workflow templates
+├── workflows/               # 66 workflow templates
 │   ├── *.json
 │   ├── fishdrama3/          # TTS base + variants
 │   ├── ltx/                 # LTX-2.5 t2v/ref2v/i2v graphs
+│   ├── ph3-image/           # P-H3-Image T2I and multi-ref edits
 │   ├── relayvsr/            # RelayVSR X2 video upscale
 │   ├── sam3/                # native image/video matte graphs
 │   └── minimaxh3/           # H3 base, UI variants, api/ mirrors
@@ -302,7 +306,7 @@ fork rather than editing the shipped template.
 
 ## Requirements
 
-- ComfyUI 0.43+ and frontend 1.57.1+.
+- ComfyUI 0.44+ and frontend 1.57.1+.
 - `comfy-cli` + `comfy-mcp` (Python 3.12 tested).
 - Node packs: the full set is installed by [`COMFY-SETUP.md`](COMFY-SETUP.md) — rgthree, RES4LYF,
   WAS, Easy-Use, various, KJNodes, VideoHelperSuite, Drama3, krea2edit, Conditioning Rebalance,
@@ -310,10 +314,10 @@ fork rather than editing the shipped template.
   Depth-Anything-TensorRT.
   Optional: Frame-Interpolation (the H3 graphs use Fill-Nodes `FL_RIFE`), the latent upscaler, and
   ComfyUI-GGUF (legacy GGUF graphs only).
-- Models: Krea 2 Turbo/Edit, Flux.2 Klein 9B + Qwen3-8B fp8mixed, MOSS-Image, YuE2 3B, MiniMax Music 3,
-  Fish Audio Drama 3, MiniMax H3 fastvideo stack + Pika H3 Flex adapters + 2K refiner/upscaler and the
-  loop Turbo adapter, LTX-2.5 22B distilled + Gemma 4 12B + Best-FaceID identity LoRA, RelayVSR X2,
-  SAM3 segmentation. Exact filenames live in the workflow sections of
+- Models: Krea 2 Turbo/Edit, Flux.2 Klein 9B + Qwen3-8B fp8mixed, MOSS-Image, P-H3-Image w4a8,
+  YuE2 3B, MiniMax Music 3, Fish Audio Drama 3, MiniMax H3 fastvideo stack + Pika H3 Flex adapters +
+  2K refiner/upscaler and the loop Turbo adapter, LTX-2.5 22B distilled + Gemma 4 12B + Best-FaceID
+  identity LoRA, RelayVSR X2, SAM3 segmentation. Exact filenames live in the workflow sections of
   [`skills/SKILL.md`](skills/SKILL.md); verify each host with `/object_info/<LoaderClass>` option
   lists. `/models/<folder>` can return an empty body even when the model is installed.
   The full download list, Hugging Face locations, and folder layout are in

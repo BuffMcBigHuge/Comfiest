@@ -4,12 +4,12 @@ This file is written for an AI agent (or a patient human) setting up a machine f
 in order. Every command is meant to be run by the agent, with the user's confirmation before large
 downloads or package changes.
 
-**Target:** a Linux or Windows machine with an NVIDIA GPU (24 GB class or better) and about **320 GB
+**Target:** a Linux or Windows machine with an NVIDIA GPU (24 GB class or better) and about **360 GB
 of free disk**. AMD, Apple Silicon, and CPU-only setups are not supported by this exact graph set:
 the workflows use CUDA `int8_convrot` models, TensorRT depth, and NVIDIA-oriented custom nodes.
 
-The shipped graphs are validated on **ComfyUI 0.43.0**; the perfect-loop graph needs that build's
-core `CreateVideo`/`SaveVideo` nodes.
+The shipped graphs are validated on **ComfyUI 0.44.0**; P-H3-Image requires that build's
+`PH3ImageConditioning` (`comfy_extras.nodes_minimax_h3.py`).
 
 **What gets installed**
 
@@ -18,7 +18,7 @@ core `CreateVideo`/`SaveVideo` nodes.
 3. 18 required custom-node packs (plus 3 optional), including the MiniMax H3 compatibility/acceleration
 
    nodes.
-4. About 288 GB of model files, downloaded from Hugging Face into the right folders.
+4. About 315 GB of model files, downloaded from Hugging Face into the right folders.
 5. A TensorRT depth engine for the character-replacement workflows.
 6. Optionally, the `comfy-mcp` bridge from [`MCP-SETUP.md`](MCP-SETUP.md) so an agent can submit jobs.
 
@@ -235,6 +235,10 @@ Paths are relative to `ComfyUI/`. Sizes are approximate.
 | LTX-2.5 | <https://huggingface.co/Alissonerdx/LTX-Best-Face-ID> | `Best_FaceID_v1.0_LoRA.safetensors` | `models/loras/ltx/Best_FaceID_v1.0_LoRA.safetensors` | 2.5 GB |
 | RelayVSR | <https://huggingface.co/lightx2v/RelayVSR_X2> | `wan_x2.safetensors` | `models/relayvsr/RelayVSR_X2/wan_x2.safetensors` | 10.1 GB |
 | RelayVSR | <https://huggingface.co/lightx2v/RelayVSR_X2> | `flash_x2.safetensors` | `models/relayvsr/RelayVSR_X2/flash_x2.safetensors` | 0.1 GB |
+| P-H3-Image | <https://huggingface.co/PrunaAI/P-H3-Image-Comfy> | `diffusion_models/p-h3-image_w4a8.safetensors` | `models/diffusion_models/p-h3-image_w4a8.safetensors` | 13.4 GB |
+| P-H3-Image | <https://huggingface.co/PrunaAI/P-H3-Image-Comfy> | `text_encoders/p-h3-image_text_encoder_w4a8.safetensors` | `models/text_encoders/p-h3-image_text_encoder_w4a8.safetensors` | 3.6 GB |
+| P-H3-Image | <https://huggingface.co/PrunaAI/P-H3-Image-Comfy> | `text_encoders/p-h3-image_prompt_upsampler_w4a8.safetensors` | `models/text_encoders/p-h3-image_prompt_upsampler_w4a8.safetensors` | 6.7 GB |
+| P-H3-Image | <https://huggingface.co/PrunaAI/P-H3-Image-Comfy> | `vae/p-h3-image_vae_int8_convrot.safetensors` | `models/vae/p-h3-image_vae_int8_convrot.safetensors` | 3.1 GB |
 | H3 2K | <https://huggingface.co/LBH-123-AI/Minimax_h3_latent_Upscaler> | `minimax_h3_latent_upscaler_3d_conv_v1/minimax_h3_latent_upscaler_3d_conv_v1_bf16.safetensors` | `models/latent_upscale_models/minimax_h3_latent_upscaler_3d_bf16.safetensors` | 0.7 GB |
 | H3 2K | <https://huggingface.co/Kijai/MiniMax-H3-experimental> | `loras/minimax_h3_open_regenerate_2k_refiner_rank_16_bf16.safetensors` | `models/loras/minimax/minimax_h3_open_regenerate_2k_refiner_rank_16_bf16.safetensors` | 0.2 GB |
 | H3 / 2K | <https://huggingface.co/lightx2v/Minimax-h3-Turbo> | `minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors` | `models/loras/minimax/minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors` | 2.0 GB |
@@ -377,6 +381,7 @@ curl "http://127.0.0.1:8188/object_info/SAM3_Detect"
 curl "http://127.0.0.1:8188/object_info/SAM3_VideoTrack"
 curl "http://127.0.0.1:8188/object_info/SAM3_TrackToMask"
 curl "http://127.0.0.1:8188/object_info/GrowMaskWithBlur"
+curl "http://127.0.0.1:8188/object_info/PH3ImageConditioning"
 ```
 
 A 200 response with a node definition means the class loaded. A 404 means the pack is missing or
@@ -403,6 +408,7 @@ comfy run --workflow workflows/minimaxh3/api/perfect-loop-minimax-h3.api.json --
 comfy run --workflow workflows/minimaxh3/api/pika-h3-t2v.api.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/ltx/api/ltx2-5-t2v.api.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/relayvsr/api/video-upscale-relayvsr-x2.api.json --print-prompt --host 127.0.0.1 --port 8188
+comfy run --workflow workflows/ph3-image/ph3-image-edit-4img.api.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/sam3/api/sam3-mask-video.api.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/text2music-yue2.json         --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/text2music-minimaxmusic3.json --print-prompt --host 127.0.0.1 --port 8188
@@ -476,6 +482,7 @@ Check each model card before commercial use:
 | LTX-2.5 | Lightricks LTX-2.5 license; see the model card |
 | Best_FaceID LoRA | See the Alissonerdx model card |
 | RelayVSR | See the LightX2V RelayVSR_X2 model card |
+| P-H3-Image | PrunaAI / MiniMax H3 license; see the model card |
 
 If a use case requires commercial rights, verify the current model card rather than relying on this
 table.
@@ -486,7 +493,7 @@ table.
 
 Run in order, stopping to ask the user before the multi-gigabyte steps:
 
-- [ ] Confirm NVIDIA GPU, 24 GB+ VRAM, 320 GB free disk, Python 3.12.
+- [ ] Confirm NVIDIA GPU, 24 GB+ VRAM, 360 GB free disk, Python 3.12.
 - [ ] Install ComfyUI + CUDA 13 PyTorch (`comfy install --nvidia --cuda-version 13.0 --version latest`).
 - [ ] Verify `torch.cuda.is_available()`.
 - [ ] Run `python scripts/install_nodes.py --comfyui "$COMFYUI"`.

@@ -132,6 +132,16 @@ MODELS = [
     ("relayvsr", "lightx2v/RelayVSR_X2", "flash_x2.safetensors",
      "models/relayvsr/RelayVSR_X2/flash_x2.safetensors", 0.13, False),
 
+    # P-H3-Image (PrunaAI distilled H3 image model, w4a8 24 GB set)
+    ("ph3", "PrunaAI/P-H3-Image-Comfy", "diffusion_models/p-h3-image_w4a8.safetensors",
+     "models/diffusion_models/p-h3-image_w4a8.safetensors", 13.4, False),
+    ("ph3", "PrunaAI/P-H3-Image-Comfy", "text_encoders/p-h3-image_text_encoder_w4a8.safetensors",
+     "models/text_encoders/p-h3-image_text_encoder_w4a8.safetensors", 3.6, False),
+    ("ph3", "PrunaAI/P-H3-Image-Comfy", "text_encoders/p-h3-image_prompt_upsampler_w4a8.safetensors",
+     "models/text_encoders/p-h3-image_prompt_upsampler_w4a8.safetensors", 6.7, False),
+    ("ph3", "PrunaAI/P-H3-Image-Comfy", "vae/p-h3-image_vae_int8_convrot.safetensors",
+     "models/vae/p-h3-image_vae_int8_convrot.safetensors", 3.1, False),
+
     # SAM3 (native image/video mattes + character replacement)
     ("sam3", "Comfy-Org/sam3.1", "checkpoints/sam3.1_multiplex_fp16.safetensors",
      "models/checkpoints/sam3.1_multiplex_fp16.safetensors", 1.7, False),
