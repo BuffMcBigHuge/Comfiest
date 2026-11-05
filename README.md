@@ -30,6 +30,12 @@
   <a href="#contributing">Contributing</a>
 </p>
 
+<p align="center">
+  <a href="https://youtu.be/MOtF6weKl6c">
+    <img src="assets/video-thumb.jpg" alt="Watch the video: Comfiest" width="640">
+  </a>
+</p>
+
 ---
 
 ## New in Comfiest
