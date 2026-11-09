@@ -4,13 +4,12 @@ This file is written for an AI agent (or a patient human) setting up a machine f
 in order. Every command is meant to be run by the agent, with the user's confirmation before large
 downloads or package changes.
 
-**Target:** a Linux or Windows machine with an NVIDIA GPU (24 GB class or better) and about **370 GB
+**Target:** a Linux or Windows machine with an NVIDIA GPU (24 GB class or better) and about **360 GB
 of free disk**. AMD, Apple Silicon, and CPU-only setups are not supported by this exact graph set:
 the workflows use CUDA `int8_convrot` models, TensorRT depth, and NVIDIA-oriented custom nodes.
 
 The shipped graphs are validated on **ComfyUI 0.44.0**; P-H3-Image requires that build's
-`PH3ImageConditioning` (`comfy_extras.nodes_minimax_h3.py`), and the IC 2K refiner uses 0.44's core
-`BlockSparseAttention`, `ModelAttentionBackend`, `ComfyMathExpression`, and `TrimAudioDuration`.
+`PH3ImageConditioning` (`comfy_extras.nodes_minimax_h3.py`).
 
 **What gets installed**
 
@@ -19,7 +18,7 @@ The shipped graphs are validated on **ComfyUI 0.44.0**; P-H3-Image requires that
 3. 18 required custom-node packs (plus 3 optional), including the MiniMax H3 compatibility/acceleration
 
    nodes.
-4. About 325 GB of model files, downloaded from Hugging Face into the right folders.
+4. About 315 GB of model files, downloaded from Hugging Face into the right folders.
 5. A TensorRT depth engine for the character-replacement workflows.
 6. Optionally, the `comfy-mcp` bridge from [`MCP-SETUP.md`](MCP-SETUP.md) so an agent can submit jobs.
 
@@ -189,8 +188,7 @@ python scripts/download_models.py --comfyui "$COMFYUI"
 
 It downloads into a temporary staging folder inside ComfyUI, moves each file to its final path, skips
 files that already exist, and prints the source repo for every file. Use `--dry-run` to see the plan,
-`--only krea,flux,h3` to download one family, and `--verify` to check an existing install. After the H3
-download, run the HyperFlow alpha patch described below before using the IC refiner.
+`--only krea,flux,h3` to download one family, and `--verify` to check an existing install.
 
 **Gated model.** `black-forest-labs/FLUX.2-klein-9b-fp8` requires accepting the license on Hugging
 Face and logging in:
@@ -245,8 +243,6 @@ Paths are relative to `ComfyUI/`. Sizes are approximate.
 | H3 2K | <https://huggingface.co/Kijai/MiniMax-H3-experimental> | `loras/minimax_h3_open_regenerate_2k_refiner_rank_16_bf16.safetensors` | `models/loras/minimax/minimax_h3_open_regenerate_2k_refiner_rank_16_bf16.safetensors` | 0.2 GB |
 | H3 / 2K | <https://huggingface.co/lightx2v/Minimax-h3-Turbo> | `minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors` | `models/loras/minimax/minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors` | 2.0 GB |
 | H3 2K | <https://huggingface.co/RunningHubAI/rh-minimax-h3-lms-v1.0-r64.safetensors-lora> | `minimax_h3_lms_v1.0_r64.safetensors` | `models/loras/minimax/minimax_h3_lms_v1.0_r64.safetensors` | 1.2 GB |
-| H3 2K IC | <https://huggingface.co/drbaph/MiniMax-H3-Turbo-Lora-ComfyUI> | `minimax_h3_hyperflow_8step_v1.0_comfyui_bf16.safetensors` | `models/loras/minimax/minimax_h3_hyperflow_8step_v1.0_comfyui_bf16.safetensors` | 3.9 GB |
-| H3 2K IC | <https://huggingface.co/slmonker/Open-H3-Regenerate-2K-IC-ComfyUI> | `minimax_h3_open_regenerate_2k_ic_comfy_bf16.safetensors` | `models/loras/minimax/minimax_h3_open_regenerate_2k_ic_comfy_bf16.safetensors` | 5.9 GB |
 | H3 loop | <https://huggingface.co/HAOOOOOOO51/Minimax_h3_fl2v_lightx2v_turbo_4to8step_v0.1-v1.0_768p_v4_step600_dareties_fro095_pruned> | `minimax_h3_fl2v_lightx2v_turbo_4to8step_v0.1-v1.0_768p_v4_step600_dareties_fro095_pruned.safetensors` | `models/loras/minimax/minimax_h3_fl2v_lightx2v_v0.1_dareties_v4_step600_comfy_fro_fulladaln.safetensors` | 0.9 GB |
 | SAM3 | <https://huggingface.co/Comfy-Org/sam3.1> | `checkpoints/sam3.1_multiplex_fp16.safetensors` | `models/checkpoints/sam3.1_multiplex_fp16.safetensors` | 1.7 GB |
 | Optional | <https://huggingface.co/akatz-ai/MiniMax-H3-Character-Swap-LoRA> | `h3_character_swap_v1.5.safetensors` | `models/loras/minimax/h3_character_swap_v1.5.safetensors` | 0.2 GB |
@@ -266,25 +262,6 @@ family too, so `--only moss` works without a separate Flux download.
 
 The 2K upscale/refine graphs also need `MiniMaxH3LatentUpscaleWithModel` (ComfyUI PR #17412 or newer);
 verify it with `/object_info/MiniMaxH3LatentUpscaleWithModel`.
-
-The IC fidelity refiner reuses the same base model, VAE, text encoder, and latent upscaler as the
-existing 2K path; it adds the HyperFlow and IC LoRAs above. **No custom node pack is required** — the
-graph was rebuilt with core ComfyUI 0.44 nodes plus the already-required KJNodes, VideoHelperSuite, and
-PlagueKind packs. The published graph's `OpenH3IC*` helper nodes and `LynnRealH3VAELoader`/`sol_h3_vae`
-are not used.
-
-**HyperFlow alpha patch (required).** The upstream HyperFlow ComfyUI conversion writes the fused-QKV
-adapter alphas at 1/3 strength (`alpha = 256` for a 768-row fused `lora_A`). Run the patch once after
-downloading it; it changes only those scalar alpha tensors, not the weights:
-
-```bash
-python scripts/patch_hyperflow_alpha.py --comfyui "$COMFYUI"
-python scripts/patch_hyperflow_alpha.py --comfyui "$COMFYUI" --write
-```
-
-The first command is a dry run; `--write` applies the fix and verifies it. The script is idempotent, so
-a re-run reports zero changes. Without the patch the graph still runs, but HyperFlow contributes at
-1/3 strength and the result no longer matches the verified IC output.
 
 The perfect-loop graph was verified with a full-AdaLN conversion of the LightX2V v0.1 4–8 step Turbo
 adapter. The published download is the author's pruned-backbone release of the same Turbo A
@@ -396,8 +373,6 @@ curl "http://127.0.0.1:8188/object_info/CLIPLoader"
 curl "http://127.0.0.1:8188/object_info/H3AdaLNLoRAFix"
 curl "http://127.0.0.1:8188/object_info/MMH3UltimateUpscale"
 curl "http://127.0.0.1:8188/object_info/MiniMaxH3LatentUpscaleWithModel"
-curl "http://127.0.0.1:8188/object_info/MiniMaxH3ReferenceToVideo"
-curl "http://127.0.0.1:8188/object_info/BlockSparseAttention"
 curl "http://127.0.0.1:8188/object_info/MiniMaxH3ContexMaskedAVBridge"
 curl "http://127.0.0.1:8188/object_info/SaveVideo"
 curl "http://127.0.0.1:8188/object_info/SpectrumApplyMiniMaxH3"
@@ -429,7 +404,6 @@ comfy run --workflow workflows/image2image-fluxklein-4ref.json --print-prompt --
 comfy run --workflow workflows/text2image-moss.json         --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/minimaxh3/ref2video-minimax-1p.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/minimaxh3/api/upscale-minimax-2k-v2v.api.json --print-prompt --host 127.0.0.1 --port 8188
-comfy run --workflow workflows/minimaxh3/api/upscale-minimax-2k-ic.api.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/minimaxh3/api/perfect-loop-minimax-h3.api.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/minimaxh3/api/pika-h3-t2v.api.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/ltx/api/ltx2-5-t2v.api.json --print-prompt --host 127.0.0.1 --port 8188
@@ -462,8 +436,6 @@ For agent submission, install `comfy-mcp` and register the target with
 | Symptom | Cause | Fix |
 | - | - | - |
 | `missing_node_type` for `H3AdaLNLoRAFix`, `FL_RIFE`, `SpectrumApplyMiniMaxH3`... | Pack not installed or failed to import | Re-run `scripts/install_nodes.py`; restart; check `comfy logs`. |
-| `missing_node_type` for `BlockSparseAttention` or `ModelAttentionBackend` | ComfyUI older than 0.44.0 | Update ComfyUI; the IC refiner needs the 0.44 core nodes. |
-| IC 2K result is softer than the verified sample | HyperFlow qkv alpha still at 1/3 strength | Run `python scripts/patch_hyperflow_alpha.py --comfyui "$COMFYUI" --write` and re-run. |
 | `CLIPLoaderGGUF` missing | ComfyUI-GGUF not installed | Install the pack, restart. |
 | `Power Lora Loader (rgthree)` missing | rgthree pack not installed | Install the pack, restart. |
 | `int8_convrot` load error, `comfy_kitchen` error, or black output | PyTorch/CUDA mismatch | Install the cu130 PyTorch build; update `comfy-kitchen` via ComfyUI requirements. |
@@ -507,8 +479,6 @@ Check each model card before commercial use:
 | SAM3 | Meta SAM license |
 | LightX2V turbo LoRA | See LightX2V model card |
 | Pika H3 Flex adapters | MiniMax H3 Community License; see the Pika model card |
-| Regenerate-2K / IC refiner | MiniMax H3 Community License; see the Sana and slmonker model cards |
-| HyperFlow LoRA | Apache-2.0 per the drbaph conversion; see the upstream HyperFlow project |
 | LTX-2.5 | Lightricks LTX-2.5 license; see the model card |
 | Best_FaceID LoRA | See the Alissonerdx model card |
 | RelayVSR | See the LightX2V RelayVSR_X2 model card |
@@ -523,14 +493,13 @@ table.
 
 Run in order, stopping to ask the user before the multi-gigabyte steps:
 
-- [ ] Confirm NVIDIA GPU, 24 GB+ VRAM, 370 GB free disk, Python 3.12.
+- [ ] Confirm NVIDIA GPU, 24 GB+ VRAM, 360 GB free disk, Python 3.12.
 - [ ] Install ComfyUI + CUDA 13 PyTorch (`comfy install --nvidia --cuda-version 13.0 --version latest`).
 - [ ] Verify `torch.cuda.is_available()`.
 - [ ] Run `python scripts/install_nodes.py --comfyui "$COMFYUI"`.
 - [ ] Restart ComfyUI; confirm no `IMPORT FAILED` in `comfy logs`.
-- [ ] Confirm ComfyUI 0.44.0+ and `/object_info/SaveVideo` for the perfect-loop graph.
+- [ ] Confirm ComfyUI 0.43.0+ and `/object_info/SaveVideo` for the perfect-loop graph.
 - [ ] Run `python scripts/download_models.py --comfyui "$COMFYUI"`.
-- [ ] Run `python scripts/patch_hyperflow_alpha.py --comfyui "$COMFYUI" --write` for the IC refiner.
 - [ ] For char-replace: build `depth_anything_v2_vitl-fp16.engine`.
 - [ ] Run `python scripts/download_models.py --comfyui "$COMFYUI" --verify`.
 - [ ] For a new or adapted workflow, follow `skills/workflow-development/SKILL.md` and validate with

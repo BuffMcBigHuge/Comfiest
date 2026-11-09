@@ -101,13 +101,6 @@ MODELS = [
     ("h3", "RunningHubAI/rh-minimax-h3-lms-v1.0-r64.safetensors-lora",
      "minimax_h3_lms_v1.0_r64.safetensors",
      "models/loras/minimax/minimax_h3_lms_v1.0_r64.safetensors", 1.2, False),
-    # IC fidelity refiner: HyperFlow (patch qkv alpha after download) + IC LoRA
-    ("h3", "drbaph/MiniMax-H3-Turbo-Lora-ComfyUI",
-     "minimax_h3_hyperflow_8step_v1.0_comfyui_bf16.safetensors",
-     "models/loras/minimax/minimax_h3_hyperflow_8step_v1.0_comfyui_bf16.safetensors", 3.9, False),
-    ("h3", "slmonker/Open-H3-Regenerate-2K-IC-ComfyUI",
-     "minimax_h3_open_regenerate_2k_ic_comfy_bf16.safetensors",
-     "models/loras/minimax/minimax_h3_open_regenerate_2k_ic_comfy_bf16.safetensors", 5.9, False),
     ("h3", "HAOOOOOOO51/Minimax_h3_fl2v_lightx2v_turbo_4to8step_v0.1-v1.0_768p_v4_step600_dareties_fro095_pruned",
      "minimax_h3_fl2v_lightx2v_turbo_4to8step_v0.1-v1.0_768p_v4_step600_dareties_fro095_pruned.safetensors",
      "models/loras/minimax/minimax_h3_fl2v_lightx2v_v0.1_dareties_v4_step600_comfy_fro_fulladaln.safetensors",

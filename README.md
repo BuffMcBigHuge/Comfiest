@@ -49,14 +49,11 @@
 >   [Pika T2V](workflows/minimaxh3/api/pika-h3-t2v.api.json)
 > - **Upscale refiner LoRA** — the [Regenerate-2K refiner LoRA](https://huggingface.co/Kijai/MiniMax-H3-experimental/blob/main/loras/minimax_h3_open_regenerate_2k_refiner_rank_16_bf16.safetensors)
 >   plus latent 2× upscale for 2560×1440 finals. [Upscale workflows](workflows/minimaxh3/api/)
-> - **Fidelity 2K refiner** — the [Open-H3-Regenerate-2K-IC LoRA](https://huggingface.co/slmonker/Open-H3-Regenerate-2K-IC-ComfyUI)
->   holds ~27 dB PSNR to the draft, adds detail only in the finest band, and keeps the draft audio
->   bit-aligned. [IC upscale](workflows/minimaxh3/api/upscale-minimax-2k-ic.api.json)
 > - **Looping videos** — seamless 154-frame H3 loops with synchronized audio and a ×2 seam check,
 >   built on the [MiniMax H3 base](https://huggingface.co/Comfy-Org/MiniMax-H3).
 >   [Perfect loop](workflows/minimaxh3/api/perfect-loop-minimax-h3.api.json)
 >
-> These are brand-new innovations in the MiniMax H3 ecosystem, and Comfiest supports all four.
+> These are brand-new innovations in the MiniMax H3 ecosystem, and Comfiest supports all three.
 
 Comfiest packages the parts of an AI production pipeline that normally live in someone's head:
 model routing, workflow templates, hardware limits, submission loops, output provenance, and the
@@ -74,7 +71,7 @@ Built for the [Comfy Org Open Source Higgsfield](https://comfy.org/open-source-h
 | **Video from text or references** | MiniMax H3 — Pika H3 Flex 6-step default, fastvideo variants, 1–2 pictures, video/audio references, forced lip-sync, character swap |
 | **Video with joint audio** | LTX-2.5 22B distilled — text, identity reference, or first frame |
 | **Video upscale / restoration** | RelayVSR X2 — one-step pixel-space 2× super-resolution with audio passthrough |
-| **2K upscale / refine** | MiniMax H3 refiner — latent-space t2v/v2v upscale to 2560×1440, with 2-step re-synthesis or 3-step IC fidelity |
+| **2K upscale / refine** | MiniMax H3 refiner — latent-space t2v/v2v upscale to 2560×1440 |
 | **Seamless loops** | MiniMax H3 Perfect Loop — text-to-looping-video with synchronized audio |
 | **Mattes / segmentation** | SAM3 — text-prompted image/video luma mattes, native ComfyUI nodes |
 
@@ -203,7 +200,6 @@ host:
 | MiniMax H3 reference variants | `example.png`, `example.mp4`, `example.wav` | Upload the slots the variant uses; every image slot uses the same placeholder. |
 | LTX-2.5 ref2v / i2v | `example.png` | Upload a subject image for ref2v, or a first frame for i2v; replace the file in `work/uploads/<project>/`. |
 | RelayVSR | `example.mp4` | Upload the source clip; output is 2× its size and keeps its audio. |
-| IC 2K refiner | `example.mp4` | Upload a 768P draft; the graph refines it to 2K and muxes its audio. |
 | P-H3-Image edit | `example.png` | Upload the subject plus 3–4 references; every image slot defaults to `example.png`. |
 
 > **Voice-clone inputs:** The transcripts in the TTS templates are placeholders (“The quick brown
@@ -223,7 +219,7 @@ host:
 | Song from caption + lyrics | MiniMax Music 3 | [Caption + lyrics](workflows/text2music-minimaxmusic3.json) | tiled audio decode |
 | Speech / voice clone | Fish Audio Drama 3 | [Speech workflows](workflows/fishdrama3/) | 4 variants, 1–2 speakers |
 | Video + audio | MiniMax H3 / Pika H3 Flex | [Pika T2V](workflows/minimaxh3/api/pika-h3-t2v.api.json), [FL2VA](workflows/minimaxh3/api/pika-h3-fl2va.api.json), [Ref2VA](workflows/minimaxh3/api/pika-h3-ref2va.api.json) | Pika 6-step default; 14 fastvideo variants + 3 char-replace drafts |
-| 2K upscale / refine | MiniMax H3 + refiner | [Upscale workflows](workflows/minimaxh3/api/) | t2v/v2v; 2560×1440; 5 s and 8 s; [IC fidelity pass](workflows/minimaxh3/api/upscale-minimax-2k-ic.api.json) |
+| 2K upscale / refine | MiniMax H3 + refiner | [Upscale workflows](workflows/minimaxh3/api/) | t2v/v2v; 2560×1440; 5 s and 8 s |
 | Seamless video loop | MiniMax H3 Perfect Loop | [Perfect loop workflow](workflows/minimaxh3/api/perfect-loop-minimax-h3.api.json) | 154 f / 6.42 s; audio; ×2 seam check |
 | Image or video matte | SAM3 | [SAM3 workflows](workflows/sam3/api/) | text-prompted luma matte; image + video + tracker |
 | Video with joint audio | LTX-2.5 22B distilled | [LTX workflows](workflows/ltx/api/) | t2v / ref2v / i2v; 512×960; 8.04 s |
@@ -268,11 +264,10 @@ Music 3, and Drama 3; the index maps each to its workflow.
 ├── scripts/
 │   ├── install_nodes.py     # clone/update custom nodes, pip requirements
 │   ├── download_models.py   # Hugging Face downloads into ComfyUI folders
-│   ├── patch_hyperflow_alpha.py # fix the IC HyperFlow fused-QKV alpha
 │   ├── validate_workflow.py # check an API graph against a live target
 │   ├── wait_job.py          # poll /history when the MCP wait fails
 │   └── fetch_output.py      # download outputs when fetch_outputs fails
-├── workflows/               # 67 workflow templates
+├── workflows/               # 66 workflow templates
 │   ├── *.json
 │   ├── fishdrama3/          # TTS base + variants
 │   ├── ltx/                 # LTX-2.5 t2v/ref2v/i2v graphs
@@ -306,8 +301,7 @@ This repository is the sanitized public edition of a working production suite:
 
 - Non-functional LoRAs (character, style, anatomy, adult-oriented) were removed. The surviving LoRAs
   are functional: MiniMax H3 turbo adapters (v1.2 and 4–8 step), Pika H3 Flex fl2va/ref2va, the 2K
-  re-synthesis refiner, the HyperFlow and IC fidelity adapters, the LMS sharpener, the LTX Best-FaceID
-  identity LoRA, and the MOSS-Image DMD sampler.
+  refiner and LMS sharpener, the LTX Best-FaceID identity LoRA, and the MOSS-Image DMD sampler.
 - Every baked-in prompt was replaced with a neutral demo prompt (fox-themed for t2v). Reference
   image, video, and audio names were genericized to `example.*`.
 - UI workflows were conversion-validated against a live ComfyUI target; the sanitized graphs have not
@@ -328,9 +322,8 @@ fork rather than editing the shipped template.
   ComfyUI-GGUF (legacy GGUF graphs only).
 - Models: Krea 2 Turbo/Edit, Flux.2 Klein 9B + Qwen3-8B fp8mixed, MOSS-Image, P-H3-Image w4a8,
   YuE2 3B, MiniMax Music 3, Fish Audio Drama 3, MiniMax H3 fastvideo stack + Pika H3 Flex adapters +
-  2K refiner/upscaler + HyperFlow and IC fidelity LoRAs and the loop Turbo adapter, LTX-2.5 22B
-  distilled + Gemma 4 12B + Best-FaceID identity LoRA, RelayVSR X2, SAM3 segmentation. Exact filenames
-  live in the workflow sections of
+  2K refiner/upscaler and the loop Turbo adapter, LTX-2.5 22B distilled + Gemma 4 12B + Best-FaceID
+  identity LoRA, RelayVSR X2, SAM3 segmentation. Exact filenames live in the workflow sections of
   [`skills/SKILL.md`](skills/SKILL.md); verify each host with `/object_info/<LoaderClass>` option
   lists. `/models/<folder>` can return an empty body even when the model is installed.
   The full download list, Hugging Face locations, and folder layout are in
