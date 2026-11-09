@@ -23,7 +23,7 @@ The fastvideo variants below are the faster 8-step draft path (v1.2 turbo, RIFE 
 - `../../workflows/minimaxh3/api/*.api.json` — pre-slimmed API workflows for `run_workflow`.
 - `../minimaxh3-character-replace/SKILL.md` — SAM3 + depth-guided motion guide + character-replacement
   guide.
-- `../minimaxh3-upscale/SKILL.md` — 2K t2v/v2v latent upscale and refine.
+- `../minimaxh3-upscale/SKILL.md` — 2K t2v/v2v latent upscale, 2-step re-synthesis refiner, and 3-step IC fidelity refiner.
 - `../minimaxh3-perfect-loop/SKILL.md` — seamless 154-frame T2AV loop, seam math, and save path.
 - `../sam3/SKILL.md` — native SAM3 mattes when you only need segmentation, not a full replacement.
 
