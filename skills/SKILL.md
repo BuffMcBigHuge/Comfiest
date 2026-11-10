@@ -43,7 +43,11 @@ subdirectories. Their usage notes live in `skills/minimaxh3/`, `skills/minimaxh3
 ├── MCP-SETUP.md
 ├── scripts/
 │   ├── install_nodes.py
-│   └── download_models.py
+│   ├── download_models.py
+│   ├── validate_workflow.py        # --static graph checks, or --url for a live target
+│   ├── wait_job.py                 # poll /history when the MCP wait fails
+│   ├── fetch_output.py             # download outputs when fetch_outputs fails
+│   └── comfy_api.py                # shared /history lookup with the ?max_items fallback
 ├── skills/
 │   ├── SKILL.md                    # this file
 │   ├── minimaxh3/SKILL.md

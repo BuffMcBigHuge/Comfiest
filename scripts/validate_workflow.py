@@ -67,18 +67,22 @@ LINK_ONLY_TYPES = frozenset(
     }
 )
 
-# Nodes that terminate a graph. Anything else must be consumed by a link.
-OUTPUT_CLASSES = frozenset(
-    {
-        "SaveImage",
-        "SaveVideo",
-        "VHS_VideoCombine",
-        "PreviewImage",
-        "PreviewAudio",
-        "SaveAudio",
-        "PreviewAny",
-    }
-)
+# Terminal classes used when no target is available (--static). The live target
+# answers this authoritatively through `output_node` in /object_info, so this is
+# only the fallback: every shipped terminal is a Save*/Preview* node, plus the
+# VideoHelperSuite combiner. Do not enumerate save formats here — SaveAudioAdvanced,
+# SaveAudioMP3 and SaveAudioOpus are all matched by the prefix rule.
+STATIC_OUTPUT_PREFIXES = ("Save", "Preview")
+STATIC_OUTPUT_CLASSES = frozenset({"VHS_VideoCombine", "VHS_VideoCombineFFmpeg"})
+
+
+def is_output_class(class_type: str, object_info: dict | None = None) -> bool:
+    """True when a node terminates the graph rather than feeding another node."""
+    if object_info is not None:
+        schema = object_info.get(class_type)
+        if isinstance(schema, dict) and "output_node" in schema:
+            return bool(schema["output_node"])
+    return class_type.startswith(STATIC_OUTPUT_PREFIXES) or class_type in STATIC_OUTPUT_CLASSES
 
 
 def get_json(base: str, path: str, timeout: int) -> dict | list:
@@ -151,21 +155,55 @@ def loader_options(object_info: dict, class_name: str, input_name: str) -> list 
     return combo_options(spec)
 
 
-def check_save_prefix(node_id: str, class_type: str, inputs: dict) -> list[str]:
+def check_save_prefix(node_id: str, class_type: str, inputs: dict) -> tuple[list[str], list[str]]:
+    """Validate a save node's filename_prefix.
+
+    An empty prefix is an error: ComfyUI rejects the node, and provenance is lost
+    because the run can no longer be identified by prompt_id alone. A token or
+    absolute path is a warning, since it still runs but breaks collection.
+    """
+    errors: list[str] = []
     warnings: list[str] = []
     prefix = inputs.get("filename_prefix")
     if not prefix:
-        warnings.append(f"[{node_id}] {class_type}: empty filename_prefix")
+        errors.append(f"[{node_id}] {class_type}: empty filename_prefix")
     elif "%" in str(prefix):
         warnings.append(f"[{node_id}] {class_type}: filename_prefix has a date/token: {prefix}")
     elif len(str(prefix)) > 1 and str(prefix)[1] == ":":
         warnings.append(f"[{node_id}] {class_type}: absolute filename_prefix: {prefix}")
-    return warnings
+    return errors, warnings
 
 
-def check_graph_integrity(graph: dict, errors: list[str], warnings: list[str]) -> None:
+def unreachable_nodes(graph: dict, object_info: dict | None = None) -> list[str]:
+    """Nodes that cannot reach a terminal node, found by backward traversal.
+
+    A one-hop "nothing consumes my output" test only names the leaf of a dead
+    chain: in `#146 -> #147`, deleting #147 promotes #146 to the next run's
+    leaf. Walking upstream from the output nodes finds the whole chain at once.
+    """
+    reachable: set[str] = {
+        node_id
+        for node_id, node in graph.items()
+        if is_output_class(node.get("class_type") or "?", object_info)
+    }
+    stack = list(reachable)
+    while stack:
+        node = graph[stack.pop()]
+        for value in (node.get("inputs") or {}).values():
+            if is_link(value) and value[0] in graph and value[0] not in reachable:
+                reachable.add(value[0])
+                stack.append(value[0])
+
+    return sorted((set(graph) - reachable), key=lambda node_id: (len(node_id), node_id))
+
+
+def check_graph_integrity(
+    graph: dict,
+    errors: list[str],
+    warnings: list[str],
+    object_info: dict | None = None,
+) -> None:
     """Checks that need no target: link shape, tensor literals, dead nodes."""
-    referenced: set[str] = set()
     for node_id, node in graph.items():
         class_type = node.get("class_type") or "?"
         for key, value in (node.get("inputs") or {}).items():
@@ -187,14 +225,12 @@ def check_graph_integrity(graph: dict, errors: list[str], warnings: list[str]) -
             if source_id not in graph:
                 errors.append(f"[{node_id}] {class_type}.{key}: link to missing node {source_id}")
                 continue
-            referenced.add(source_id)
             if not isinstance(slot, int):
                 errors.append(f"[{node_id}] {class_type}.{key}: link slot is not an int: {slot!r}")
 
-    for node_id, node in graph.items():
-        class_type = node.get("class_type") or "?"
-        if class_type not in OUTPUT_CLASSES and node_id not in referenced:
-            warnings.append(f"[{node_id}] {class_type}: unreachable (nothing consumes its output)")
+    for node_id in unreachable_nodes(graph, object_info):
+        class_type = graph[node_id].get("class_type") or "?"
+        warnings.append(f"[{node_id}] {class_type}: unreachable (does not feed an output node)")
 
 
 def main() -> int:
@@ -250,7 +286,7 @@ def main() -> int:
         errors: list[str] = []
         warnings: list[str] = []
 
-        check_graph_integrity(graph, errors, warnings)
+        check_graph_integrity(graph, errors, warnings, object_info)
 
         for node_id, node in graph.items():
             class_type = node.get("class_type")
@@ -259,8 +295,13 @@ def main() -> int:
                 continue
             inputs = node.get("inputs") or {}
 
-            if class_type in ("SaveImage", "SaveVideo", "VHS_VideoCombine"):
-                warnings.extend(check_save_prefix(node_id, class_type, inputs))
+            # Any node carrying a prefix gets it checked, so no save format
+            # (SaveAudioAdvanced, SaveAudioMP3, SaveAudioOpus, custom packs) is
+            # missed by a hardcoded class list.
+            if "filename_prefix" in inputs:
+                prefix_errors, prefix_warnings = check_save_prefix(node_id, class_type, inputs)
+                errors.extend(prefix_errors)
+                warnings.extend(prefix_warnings)
 
             if object_info is None:
                 continue
