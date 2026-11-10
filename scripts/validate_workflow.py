@@ -1,13 +1,21 @@
 #!/usr/bin/env python3
-"""Validate an API-format ComfyUI workflow against a live target.
+"""Validate an API-format ComfyUI workflow, statically or against a live target.
 
-Checks node classes, required inputs, combo values, links, loader option lists
-(model files), and save prefixes. It does not submit a job and does not modify
-the workflow.
+Static checks need no server and are what CI runs:
+
+    python scripts/validate_workflow.py <workflow.api.json> --static [--strict]
+
+They cover graph integrity — link targets that exist, tensor inputs that are
+actually linked rather than carrying a filename, dead nodes, and save prefixes.
+They cannot check node classes, required inputs, or loader option lists, because
+those live in the target's `/object_info`.
+
+Live checks add those, against a running ComfyUI:
 
     python scripts/validate_workflow.py <workflow.api.json> --url http://127.0.0.1:8188
 
-For a UI-format export, convert it first (this also does not queue a job):
+Pass several files to check a directory's worth in one call. For a UI-format
+export, convert it first (this also does not queue a job):
 
     comfy run --workflow <workflow.json> --print-prompt --json --host <host> --port <port>
 """
@@ -16,10 +24,61 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
-import urllib.error
 import urllib.request
 from pathlib import Path
+
+# A media filename as a literal input value. Loaders are the only classes that
+# legitimately carry one; everywhere else it means a tensor link was overwritten
+# by a filename, which is the exact damage a placeholder-sanitization pass causes.
+MEDIA_FILENAME = re.compile(
+    r"\.(png|jpe?g|webp|gif|bmp|tiff?|mp4|mov|mkv|webm|avi|wav|mp3|flac|ogg|m4a)$",
+    re.IGNORECASE,
+)
+
+# Input schema types that only ever accept a link `[source_node_id, slot]`.
+# A literal here is always a bug: ComfyUI coerces it late (or not at all) and the
+# node fails at execution with a type error. IMAGEUPLOAD is deliberately absent:
+# it is a widget that carries a filename string.
+LINK_ONLY_TYPES = frozenset(
+    {
+        "IMAGE",
+        "LATENT",
+        "MASK",
+        "AUDIO",
+        "VIDEO",
+        "MODEL",
+        "CLIP",
+        "VAE",
+        "CONDITIONING",
+        "CONTROL_NET",
+        "SIGMAS",
+        "GUIDER",
+        "SAMPLER",
+        "NOISE",
+        "CLIP_VISION",
+        "CLIP_VISION_OUTPUT",
+        "UPSCALE_MODEL",
+        "STYLE_MODEL",
+        "AUDIO_ENCODER",
+        "LATENT_OPERATION",
+        "TIMESTEP",
+    }
+)
+
+# Nodes that terminate a graph. Anything else must be consumed by a link.
+OUTPUT_CLASSES = frozenset(
+    {
+        "SaveImage",
+        "SaveVideo",
+        "VHS_VideoCombine",
+        "PreviewImage",
+        "PreviewAudio",
+        "SaveAudio",
+        "PreviewAny",
+    }
+)
 
 
 def get_json(base: str, path: str, timeout: int) -> dict | list:
@@ -38,6 +97,25 @@ def combo_options(spec) -> list | None:
     if kind == "COMBO" and isinstance(config, dict):
         return config.get("options")
     return None
+
+
+def is_link_only(spec) -> str | None:
+    """Return the tensor type name when an input schema accepts links only."""
+    if not isinstance(spec, list) or not spec:
+        return None
+    kind = spec[0]
+    if isinstance(kind, str) and kind in LINK_ONLY_TYPES:
+        return kind
+    return None
+
+
+def is_link(value) -> bool:
+    return isinstance(value, list) and len(value) == 2 and isinstance(value[0], str)
+
+
+def is_loader(class_type: str) -> bool:
+    """Loader nodes take a filename where every other node takes a link."""
+    return class_type.startswith(("Load", "VHS_Load"))
 
 
 def collect_input_names(section) -> set[str]:
@@ -73,165 +151,243 @@ def loader_options(object_info: dict, class_name: str, input_name: str) -> list 
     return combo_options(spec)
 
 
+def check_save_prefix(node_id: str, class_type: str, inputs: dict) -> list[str]:
+    warnings: list[str] = []
+    prefix = inputs.get("filename_prefix")
+    if not prefix:
+        warnings.append(f"[{node_id}] {class_type}: empty filename_prefix")
+    elif "%" in str(prefix):
+        warnings.append(f"[{node_id}] {class_type}: filename_prefix has a date/token: {prefix}")
+    elif len(str(prefix)) > 1 and str(prefix)[1] == ":":
+        warnings.append(f"[{node_id}] {class_type}: absolute filename_prefix: {prefix}")
+    return warnings
+
+
+def check_graph_integrity(graph: dict, errors: list[str], warnings: list[str]) -> None:
+    """Checks that need no target: link shape, tensor literals, dead nodes."""
+    referenced: set[str] = set()
+    for node_id, node in graph.items():
+        class_type = node.get("class_type") or "?"
+        for key, value in (node.get("inputs") or {}).items():
+            if not is_link(value):
+                # A media filename on a non-loader input is a link that a
+                # sanitization pass replaced with a placeholder.
+                if (
+                    isinstance(value, str)
+                    and MEDIA_FILENAME.search(value)
+                    and not is_loader(class_type)
+                    and not key.endswith("_prefix")
+                ):
+                    errors.append(
+                        f"[{node_id}] {class_type}.{key}: media filename on a non-loader input; "
+                        f"expected a link, got {value!r}"
+                    )
+                continue
+            source_id, slot = value
+            if source_id not in graph:
+                errors.append(f"[{node_id}] {class_type}.{key}: link to missing node {source_id}")
+                continue
+            referenced.add(source_id)
+            if not isinstance(slot, int):
+                errors.append(f"[{node_id}] {class_type}.{key}: link slot is not an int: {slot!r}")
+
+    for node_id, node in graph.items():
+        class_type = node.get("class_type") or "?"
+        if class_type not in OUTPUT_CLASSES and node_id not in referenced:
+            warnings.append(f"[{node_id}] {class_type}: unreachable (nothing consumes its output)")
+
+
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("workflow", type=Path)
+    parser = argparse.ArgumentParser(
+        description="Validate API-format ComfyUI workflows. Use --static for graph integrity "
+        "with no server (what CI runs), or --url for node classes and model files against a live target.",
+        epilog=(
+            "examples:\n"
+            "  python scripts/validate_workflow.py --static workflows/ltx/api/*.api.json\n"
+            "  python scripts/validate_workflow.py graph.api.json --url http://127.0.0.1:8188\n"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument("workflow", type=Path, nargs="+")
     parser.add_argument("--url", default="http://127.0.0.1:8188")
     parser.add_argument("--timeout", type=int, default=120)
+    parser.add_argument(
+        "--static",
+        action="store_true",
+        help="graph integrity only; no server needed",
+    )
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="exit non-zero on warnings as well as errors (use in CI)",
+    )
     args = parser.parse_args()
 
     base = args.url.rstrip("/")
-    try:
-        graph = json.loads(args.workflow.read_text(encoding="utf-8"))
-    except Exception as exc:
-        print(f"ERROR: cannot parse {args.workflow}: {exc}")
-        return 2
+    object_info: dict | None = None
+    if not args.static:
+        try:
+            object_info = get_json(base, "/object_info", args.timeout)
+        except Exception as exc:
+            print(f"ERROR: cannot read {base}/object_info: {exc}")
+            print("  (use --static to check graph integrity without a server)")
+            return 2
 
-    if not isinstance(graph, dict) or "nodes" in graph:
-        print("ERROR: this is a UI-format workflow. Convert it first:")
-        print("  comfy run --workflow <file> --print-prompt --json --host <host> --port <port>")
-        print("  then inspect the prompt_preview and save an API-format copy under work/scratch/.")
-        return 2
+    failed = 0
+    for path in args.workflow:
+        try:
+            graph = json.loads(path.read_text(encoding="utf-8"))
+        except Exception as exc:
+            print(f"ERROR: cannot parse {path}: {exc}")
+            return 2
 
-    try:
-        object_info = get_json(base, "/object_info", args.timeout)
-    except Exception as exc:
-        print(f"ERROR: cannot read {base}/object_info: {exc}")
-        return 2
+        if not isinstance(graph, dict) or "nodes" in graph:
+            print(f"ERROR: {path} is a UI-format workflow. Convert it first:")
+            print("  comfy run --workflow <file> --print-prompt --json --host <host> --port <port>")
+            print("  then inspect the prompt_preview and save an API-format copy under work/scratch/.")
+            return 2
 
-    errors: list[str] = []
-    warnings: list[str] = []
+        errors: list[str] = []
+        warnings: list[str] = []
 
-    for node_id, node in graph.items():
-        class_type = node.get("class_type")
-        if not class_type:
-            errors.append(f"[{node_id}] missing class_type")
-            continue
-        if class_type not in object_info:
-            errors.append(f"[{node_id}] missing node class: {class_type}")
-            continue
+        check_graph_integrity(graph, errors, warnings)
 
-        schema = object_info[class_type]
-        required = (schema.get("input") or {}).get("required") or {}
-        optional = (schema.get("input") or {}).get("optional") or {}
-        outputs = schema.get("output") or []
-        inputs = node.get("inputs") or {}
-        known_inputs = collect_input_names(required) | collect_input_names(optional)
-        for name, spec in {**required, **optional}.items():
-            if name in inputs:
-                known_inputs |= format_option_names(spec, inputs[name])
-
-        # Dynamic combos expose extra required inputs under the selected key.
-        dynamic_required: dict = {}
-        for key, spec in required.items():
-            if isinstance(spec, list) and spec and spec[0] == "COMFY_DYNAMICCOMBO_V3":
-                selected = inputs.get(key)
-                for option in (spec[1] or {}).get("options", []):
-                    if option.get("key") == selected:
-                        dynamic_required = (option.get("inputs") or {}).get("required") or {}
-                        break
-                else:
-                    if selected is not None:
-                        errors.append(f"[{node_id}] {class_type}.{key}: '{selected}' not in dynamic options")
-
-        all_required = {**required, **dynamic_required}
-        for key, spec in all_required.items():
-            if key in optional:
-                # A dynamic sub-input can also be declared as a top-level
-                # optional fallback (for example SaveVideo.codec).
+        for node_id, node in graph.items():
+            class_type = node.get("class_type")
+            if not class_type:
+                errors.append(f"[{node_id}] missing class_type")
                 continue
-            if key in dynamic_required and key not in required:
-                parent = next(
-                    (
-                        name
-                        for name, parent_spec in required.items()
-                        if isinstance(parent_spec, list)
-                        and parent_spec
-                        and parent_spec[0] == "COMFY_DYNAMICCOMBO_V3"
-                        and any(
-                            option.get("key") == inputs.get(name)
-                            and key in ((option.get("inputs") or {}).get("required") or {})
-                            for option in (parent_spec[1] or {}).get("options", [])
-                        )
-                    ),
-                    None,
-                )
-                if parent is not None and f"{parent}.{key}" in inputs:
-                    continue
-            if key not in inputs:
-                if any(name.startswith(key + ".") for name in inputs):
-                    continue
-                config = spec[1] if isinstance(spec, list) and len(spec) > 1 else {}
-                if not (isinstance(config, dict) and "default" in config):
-                    errors.append(f"[{node_id}] {class_type}: missing required input '{key}'")
+            inputs = node.get("inputs") or {}
 
-        for key, value in inputs.items():
-            if "." in key and key.split(".", 1)[0] in {**required, **optional}:
-                continue
-            spec = required.get(key) or optional.get(key)
-            if spec is None:
-                if key in known_inputs:
-                    continue
-                if class_type == "Any Switch (rgthree)" and key.startswith("any_"):
-                    continue
-                if not key.startswith(("PowerLora", "lora_", "➕")):
-                    warnings.append(f"[{node_id}] {class_type}: input '{key}' not in schema")
+            if class_type in ("SaveImage", "SaveVideo", "VHS_VideoCombine"):
+                warnings.extend(check_save_prefix(node_id, class_type, inputs))
+
+            if object_info is None:
                 continue
 
-            if isinstance(value, list) and len(value) == 2 and isinstance(value[0], str):
-                source_id, slot = value
-                if source_id not in graph:
-                    errors.append(f"[{node_id}] {class_type}.{key}: link to missing node {source_id}")
+            if class_type not in object_info:
+                errors.append(f"[{node_id}] missing node class: {class_type}")
+                continue
+
+            schema = object_info[class_type]
+            required = (schema.get("input") or {}).get("required") or {}
+            optional = (schema.get("input") or {}).get("optional") or {}
+            known_inputs = collect_input_names(required) | collect_input_names(optional)
+            for name, spec in {**required, **optional}.items():
+                if name in inputs:
+                    known_inputs |= format_option_names(spec, inputs[name])
+
+            # Dynamic combos expose extra required inputs under the selected key.
+            dynamic_required: dict = {}
+            for key, spec in required.items():
+                if isinstance(spec, list) and spec and spec[0] == "COMFY_DYNAMICCOMBO_V3":
+                    selected = inputs.get(key)
+                    for option in (spec[1] or {}).get("options", []):
+                        if option.get("key") == selected:
+                            dynamic_required = (option.get("inputs") or {}).get("required") or {}
+                            break
+                    else:
+                        if selected is not None:
+                            errors.append(f"[{node_id}] {class_type}.{key}: '{selected}' not in dynamic options")
+
+            all_required = {**required, **dynamic_required}
+            for key, spec in all_required.items():
+                if key in optional:
+                    # A dynamic sub-input can also be declared as a top-level
+                    # optional fallback (for example SaveVideo.codec).
                     continue
-                source_outputs = object_info.get(graph[source_id].get("class_type"), {}).get("output") or []
-                if not isinstance(slot, int) or slot >= len(source_outputs):
-                    errors.append(
-                        f"[{node_id}] {class_type}.{key}: {source_id} has no output {slot} "
-                        f"(has {len(source_outputs)})"
+                if key in dynamic_required and key not in required:
+                    parent = next(
+                        (
+                            name
+                            for name, parent_spec in required.items()
+                            if isinstance(parent_spec, list)
+                            and parent_spec
+                            and parent_spec[0] == "COMFY_DYNAMICCOMBO_V3"
+                            and any(
+                                option.get("key") == inputs.get(name)
+                                and key in ((option.get("inputs") or {}).get("required") or {})
+                                for option in (parent_spec[1] or {}).get("options", [])
+                            )
+                        ),
+                        None,
                     )
-                continue
+                    if parent is not None and f"{parent}.{key}" in inputs:
+                        continue
+                if key not in inputs:
+                    if any(name.startswith(key + ".") for name in inputs):
+                        continue
+                    config = spec[1] if isinstance(spec, list) and len(spec) > 1 else {}
+                    if not (isinstance(config, dict) and "default" in config):
+                        errors.append(f"[{node_id}] {class_type}: missing required input '{key}'")
 
-            options = combo_options(spec)
-            if options is not None and value not in options:
-                if isinstance(value, str) and value.startswith("example."):
-                    warnings.append(
-                        f"[{node_id}] {class_type}.{key}: placeholder '{value}' is not in the loader options yet"
-                    )
-                else:
-                    errors.append(f"[{node_id}] {class_type}.{key}: '{value}' not in loader options ({len(options)})")
-
-        # rgthree's loader stores slots as objects instead of links. Its slot
-        # names are not in the node schema, so compare against the core LoRA
-        # loader's option list.
-        if class_type == "Power Lora Loader (rgthree)":
-            lora_list = loader_options(object_info, "LoraLoaderModelOnly", "lora_name")
-            if lora_list is None:
-                lora_list = loader_options(object_info, "LoraLoader", "lora_name")
-            loras = set(lora_list or [])
             for key, value in inputs.items():
-                if not key.startswith("lora_") or not isinstance(value, dict):
+                if "." in key and key.split(".", 1)[0] in {**required, **optional}:
                     continue
-                name = value.get("lora")
-                if not name or name == "None" or not value.get("on", True):
+                spec = required.get(key) or optional.get(key)
+                if spec is None:
+                    if key in known_inputs:
+                        continue
+                    if class_type == "Any Switch (rgthree)" and key.startswith("any_"):
+                        continue
+                    if not key.startswith(("PowerLora", "lora_", "➕")):
+                        warnings.append(f"[{node_id}] {class_type}: input '{key}' not in schema")
                     continue
-                if loras and name not in loras:
-                    errors.append(f"[{node_id}] {class_type}.{key}: LoRA not in loader options: {name}")
 
-        if class_type in ("SaveImage", "SaveVideo", "VHS_VideoCombine"):
-            prefix = inputs.get("filename_prefix")
-            if not prefix:
-                errors.append(f"[{node_id}] {class_type}: empty filename_prefix")
-            elif "%" in str(prefix):
-                warnings.append(f"[{node_id}] {class_type}: filename_prefix has a date/token: {prefix}")
-            elif len(str(prefix)) > 1 and str(prefix)[1] == ":":
-                warnings.append(f"[{node_id}] {class_type}: absolute filename_prefix: {prefix}")
+                if is_link(value):
+                    source_id, slot = value
+                    source_outputs = object_info.get(graph[source_id].get("class_type"), {}).get("output") or []
+                    if not isinstance(slot, int) or slot >= len(source_outputs):
+                        errors.append(
+                            f"[{node_id}] {class_type}.{key}: {source_id} has no output {slot} "
+                            f"(has {len(source_outputs)})"
+                        )
+                    continue
 
-    print(f"{args.workflow}: {len(graph)} nodes, {len(errors)} errors, {len(warnings)} warnings")
-    for error in errors:
-        print("  ERROR  ", error)
-    for warning in warnings:
-        print("  warn   ", warning)
-    return 1 if errors else 0
+                tensor = is_link_only(spec)
+                if tensor is not None:
+                    errors.append(
+                        f"[{node_id}] {class_type}.{key}: expected a link for type {tensor}, "
+                        f"got {type(value).__name__}: {value!r}"
+                    )
+                    continue
+
+                options = combo_options(spec)
+                if options is not None and value not in options:
+                    if isinstance(value, str) and value.startswith("example."):
+                        warnings.append(
+                            f"[{node_id}] {class_type}.{key}: placeholder '{value}' is not in the loader options yet"
+                        )
+                    else:
+                        errors.append(f"[{node_id}] {class_type}.{key}: '{value}' not in loader options ({len(options)})")
+
+            # rgthree's loader stores slots as objects instead of links. Its slot
+            # names are not in the node schema, so compare against the core LoRA
+            # loader's option list.
+            if class_type == "Power Lora Loader (rgthree)":
+                lora_list = loader_options(object_info, "LoraLoaderModelOnly", "lora_name")
+                if lora_list is None:
+                    lora_list = loader_options(object_info, "LoraLoader", "lora_name")
+                loras = set(lora_list or [])
+                for key, value in inputs.items():
+                    if not key.startswith("lora_") or not isinstance(value, dict):
+                        continue
+                    name = value.get("lora")
+                    if not name or name == "None" or not value.get("on", True):
+                        continue
+                    if loras and name not in loras:
+                        errors.append(f"[{node_id}] {class_type}.{key}: LoRA not in loader options: {name}")
+
+        mode = "static" if object_info is None else "live"
+        print(f"{path}: {len(graph)} nodes, {len(errors)} errors, {len(warnings)} warnings ({mode})")
+        for error in errors:
+            print("  ERROR  ", error)
+        for warning in warnings:
+            print("  warn   ", warning)
+        if errors or (args.strict and warnings):
+            failed += 1
+
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":

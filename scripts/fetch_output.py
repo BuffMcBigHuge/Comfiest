@@ -13,17 +13,12 @@ The out-dir is written as given; preserve the remote filename and the
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 import urllib.parse
 import urllib.request
 from pathlib import Path
 
-
-def history(base: str, prompt_id: str, timeout: int) -> dict:
-    url = f"{base}/history/{urllib.parse.quote(prompt_id)}"
-    with urllib.request.urlopen(url, timeout=timeout) as response:
-        return json.load(response)
+from comfy_api import history_entry
 
 
 def download(base: str, item: dict, destination: Path, timeout: int) -> Path:
@@ -55,7 +50,7 @@ def main() -> int:
 
     base = args.url.rstrip("/")
     try:
-        entry = history(base, args.prompt_id, 30).get(args.prompt_id)
+        entry = history_entry(base, args.prompt_id, 30)
     except Exception as exc:
         print(f"ERROR: cannot read history: {exc}")
         return 2
