@@ -770,7 +770,7 @@ them. Do not enable those branches without installing the files.
 | Audio VAE | `minimax\minimax_h3_audio_vae_fp32.safetensors` |
 | Resolution | `ResolutionSelector`: 9:16, 0.3 MP, multiple 32 (≈416×736) |
 | Length | 8 s (192 frames at 24 fps; the `length` node rounds up to a 17-frame grid) |
-| Sampling | 3-step manual sigmas `0.9035, 0.6316, 0.3158, 0.0000`, `er_sde`, `beta` scheduler, cfg 1 |
+| Sampling | 8 steps: `22:8` `INTConstant` (TOTAL STEPS) → `22:7` `BasicScheduler` (beta), `er_sde` sampler, cfg 1 |
 | Sigma shift | video 6, audio 3 (`MiniMaxH3SigmaShift`) |
 | Seed | `easy seed` = `557826801843623` |
 | References | `ref_image_size=max`; first picture is `ref_image_0` |
@@ -792,10 +792,10 @@ list before a run; `/models/<folder>` can be empty even when the file is install
 #### Variants and UI/API differences
 
 The 12 base UI variants keep the full 97-node graph with unused reference branches bypassed; the two
-forced-audio files are 78-node derivatives. The 14 family API mirrors are pre-slimmed (39–46 nodes)
+forced-audio files are 78-node derivatives. The 14 family API mirrors are pre-slimmed (33–40 nodes)
 with the same models, LoRAs, refs, settings, seed, and save prefix; they contain no
 `Fast Groups Bypasser`/`Label` nodes and are the preferred MCP execution files. The three
-`charreplace-*` API workflows are separate 56–57 node graphs with the SAM3/mask motion-guide chain.
+`charreplace-*` API workflows are separate 46–49 node graphs with the SAM3/mask motion-guide chain.
 
 | Variant | UI file | API file | Refs (P/V/A) | Save prefix | Historical status |
 | - | - | - | - | - | - |
