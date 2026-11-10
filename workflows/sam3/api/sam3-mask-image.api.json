@@ -37,7 +37,7 @@
         "11",
         0
       ],
-      "image": "example.png",
+      "image": ["10", 0],
       "conditioning": [
         "12",
         0
@@ -97,7 +97,7 @@
   "16": {
     "class_type": "ImageInvert",
     "inputs": {
-      "image": "example.png"
+      "image": ["10", 0]
     },
     "_meta": {
       "title": "Preview: inverted source"
