@@ -72,7 +72,7 @@ VHS_LoadVideo (24 fps, 124 frames)
 | `ImageScaleToTotalPixels` | `nearest-exact`, `0.15` MP, resolution steps `1` |
 | `MiniMaxH3ReferenceToVideo` | `ref_image_size=match`, 1.0 MP, 124 frames |
 | `LoraLoaderModelOnly` | optional character-swap LoRA (not shipped) |
-| sampler | family fastvideo model, 3 steps, RIFE 2× → 48 fps |
+| sampler | family fastvideo model, 8 steps (`22:8` → `22:7` `BasicScheduler`), RIFE 2× → 48 fps |
 | seeds | 9601 keepbg, 9602 charbg, 9603 refbg (change per take) |
 
 ## Prompt structure

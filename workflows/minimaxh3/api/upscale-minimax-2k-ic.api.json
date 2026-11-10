@@ -73,15 +73,6 @@
       "title": "Video VAE"
     }
   },
-  "4": {
-    "inputs": {
-      "vae_name": "minimax\\minimax_h3_audio_vae_fp32.safetensors"
-    },
-    "class_type": "VAELoader",
-    "_meta": {
-      "title": "Audio VAE"
-    }
-  },
   "30": {
     "inputs": {
       "unet_name": "minimax\\minimax_h3_ref2va_pruned_int8_convrot.safetensors",
