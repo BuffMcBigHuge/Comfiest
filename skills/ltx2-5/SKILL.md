@@ -84,8 +84,9 @@ Edit a copy under `work/scratch/`; never write back into `workflows/`. The API f
 - **i2v:** `46.image` defaults to `example.png`; `LTXVImgToVideoInplace #34` writes it into the first
   latent frames with a noise mask of `1 - strength`. `strength 1.0` is a full first-frame lock.
 
-`upload_file` preserves the filename; stage images in `work/uploads/<project>/` and upload the same file
-to every target that may run the job.
+`upload_file` keeps the filename unless the target already has that file, in which case it writes
+`name (1).ext`; stage images in `work/uploads/<project>/` and upload the same file to every target that
+may run the job.
 
 ## Reference conditioning (`ref2v`)
 
@@ -151,6 +152,14 @@ the model stack and settings are unchanged.
 
 A full run is ~90 s on the reference 4090 including the 22B load. The i2v satchel strap came back with
 a floral print instead of woven tan; that is the “conditioned, not pasted” behaviour, not a bug.
+
+Re-verified after the public-release link repair, ComfyUI 0.45.0, RTX 4090, 2026-11-10:
+
+| Graph | Output | Bytes | Note |
+| - | - | - | - |
+| `t2v` | `t2v_00001-audio.mp4` | 3,149,640 | shipped fox demo; 512×960, 8.04 s, 48 kHz |
+| `i2v` | `i2v_00001-audio.mp4` | 3,497,550 | first frame carried the source composition and pose |
+| `ref2v` | `ref2v_00002-audio.mp4` | 2,218,762 | identity reference conditioning |
 
 Validate before production:
 

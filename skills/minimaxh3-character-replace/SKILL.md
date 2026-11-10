@@ -153,6 +153,12 @@ the numbers below as historical reference, not a guarantee for the sanitized gra
 - SAM3 mask check: 18.8% white, bbox `209,365–589,1278`; mask sample and clips are recorded in the
   local run log and work tree, which are not shipped with the repository
 
+The sanitized `charreplace-keepbg` graph was executed on 2026-11-10 (ComfyUI 0.45.0) after the dead
+nodes were removed: `CHARREPLACE_KEEPBG_00034-audio.mp4`, 6,092,286 B, 768×1376, 247 f, 5.15 s. The
+original background survived the swap, which is the check that the kept `#2005` composite — not the
+unused `#2009` grey-background branch — is the one wired to `#2006`. `charbg` and `refbg` remain
+conversion-validated only.
+
 Technical completion is not creative approval. The user watches and judges identity, background, and motion.
 
 ## UI construction

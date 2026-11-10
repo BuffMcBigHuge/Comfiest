@@ -84,7 +84,8 @@ generates its own audio and the mouth follows that. The `*-forced` variants are 
 | `video_1` | `example.mp4` | `LoadVideo` #293 → `GetVideoComponents` #294 |
 | `audio_1` | `example.wav` | `LoadAudio` #290 |
 
-`upload_file` preserves the local filename. Every image slot defaults to `example.png`, every video
+`upload_file` keeps the local filename unless the target already has that name (it then writes
+`name (1).ext`; use the returned `cloud_name`). Every image slot defaults to `example.png`, every video
 slot to `example.mp4`, and every audio slot to `example.wav`. Upload the file once per type, or replace
 individual slots with your own names.
 
@@ -269,8 +270,11 @@ installed.
 ## Verification
 
 The repository does not ship a verification manifest. The public templates were conversion-validated
-against a reference target but not executed end-to-end. Technical completion is not creative approval;
-the user judges the result.
+against a reference target. `text2video-minimax-t2v` was executed end-to-end on 2026-11-10
+(ComfyUI 0.45.0): `MINIMAX_T2V_00012-audio.mp4`, 2,965,988 B, 416×736, 383 f, 7.979 s, audio present —
+the 383-frame count confirms RIFE stayed active after the dead nodes were removed. The other fastvideo
+variants and the Pika graphs remain conversion-validated only. Technical completion is not creative
+approval; the user judges the result.
 
 ## Runtime notes
 

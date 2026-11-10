@@ -52,7 +52,8 @@ Change the source and target in a **copy** under `work/scratch/`; never write ba
 | `12.text` | what to detect | `person` |
 
 Stage assets in `work/uploads/<project>/` with the exact filename, then `upload_file` them to every
-target that may run the job. `upload_file` preserves the filename. Check `VHS_LoadVideo`'s `video`
+target that may run the job. `upload_file` keeps the name unless the target already has that file, in
+which case it writes `name (1).ext`; use the returned `cloud_name`. Check `VHS_LoadVideo`'s `video`
 combo (or `/object_info/VHS_LoadVideo`) before assuming a target has the file.
 
 ## Choosing what SAM3 detects
@@ -172,8 +173,12 @@ target. Reference runs on a 24 GB RTX 4090, ComfyUI 0.43.0:
 | `sam3-track-video` | 48-frame cap | `person` | `SAM3_TRACK_MASK_00001.mp4`, ~2.0 s | 8.96% mean |
 
 The video matte was visually checked (clean silhouette) and round-tripped to a VP9 alpha WebM,
-`alpha_mode=1`, against the source plate. The graph shape is unchanged in the public copy; the
-placeholder inputs have not been rendered.
+`alpha_mode=1`, against the source plate.
+
+The public copy was re-rendered on 2026-11-10 (ComfyUI 0.45.0) after the tensor links were repaired:
+`sam3-mask-image` produced `SAM3_MASK_IMG_00005_.png` (57,547 B, YAVG 110) plus a preview showing the
+subject in colour over an inverted background, and `sam3-mask-video` produced `SAM3_MASK_00003.mp4`
+(203,236 B, 416×736, 124 f) with a matte that tracked the performer.
 
 ## Gotchas
 

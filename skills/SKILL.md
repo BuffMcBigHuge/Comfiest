@@ -318,8 +318,12 @@ Rules:
 - **Organize by project slug:** `work/<area>/<project-slug>/...`. Use kebab-case and reuse the same
   slug across areas (`inbox/my-song`, `outputs/my-song/...`).
 - **`inbox/` is read-only for agents.** Copy assets to `uploads/` or `scratch/`.
-- **`uploads/` uses the exact filename the workflow expects.** `upload_file` preserves the local
-  filename; stage it correctly once and upload the same set to every target that may run the workflow.
+- **`uploads/` uses the exact filename the workflow expects.** `upload_file` keeps the local name
+  **only if the target's `input/` does not already have a file by that name**; otherwise it writes
+  `name (1).ext` and returns the real name as `cloud_name`. The graph loads the literal string in the
+  JSON, so check `cloud_name` and either patch the scratch copy to it or upload under a
+  collision-free name. Stage assets once and upload the same set to every target that may run the
+  workflow.
 - **`scratch/` is the only place for modified workflow JSON.** Name it `<workflow-stem>__<variant>.json`.
 - **`outputs/` preserves the remote filename and adds date + prompt ID:**
   `outputs/<project>/<YYYY-MM-DD>/<prompt_id>/<original-name>`. The `prompt_id` folder is the
@@ -343,9 +347,11 @@ Run-log template:
 
 > **Release status.** Every workflow was sanitized for the public release: non-turbo LoRAs were
 > stripped and baked-in prompts were replaced with fox-themed demo prompts. All UI files were
-> conversion-validated against a reference target, but the sanitized graphs have **not** been executed
-> end-to-end. Statuses below describe the pre-sanitization configuration and are historical; run one
-> job of your own before relying on a workflow.
+> conversion-validated against a reference target. On 2026-11-10 these API graphs were executed
+> end-to-end on the three reference 4090 targets: `ltx2-5-{t2v,i2v,ref2v}`,
+> `sam3-mask-{image,video}`, `text2video-minimax-t2v`, and `charreplace-keepbg`. Every other graph is
+> still conversion-validated only. Statuses below describe the pre-sanitization configuration and are
+> historical; run one job of your own before relying on a workflow.
 
 Each section gives the effective stack, the settings that matter, and the traps that have already
 cost runs. Node IDs refer to the shipped graphs.
@@ -1063,8 +1069,9 @@ that most often decide whether a run succeeds.
 
 ### Uploads
 
-- Stage assets in `work/uploads/<project>/` first. `upload_file` preserves the local filename, so use
-  the exact stable name you want in the remote `input/` directory.
+- Stage assets in `work/uploads/<project>/` first. `upload_file` keeps the local filename unless the
+  target already has that name, in which case it writes `name (1).ext`; the response's `cloud_name`
+  is what the graph must reference.
 - It supports images, video, and audio. TTS reference clips must be uploaded to every target that may
   run the configuration.
 - Workflow paths are read on the MCP machine, not the ComfyUI host; resolve them to absolute paths

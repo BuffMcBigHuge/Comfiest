@@ -43,7 +43,8 @@ work/
   across areas.
 - `inbox/` is read-only. Copy user assets to `uploads/` or `scratch/`; do not overwrite originals.
 - `uploads/` filenames must match the workflow's `LoadImage` / `LoadAudio` values exactly.
-  `upload_file` preserves the filename.
+  `upload_file` keeps the name unless the target already has that file, in which case it writes
+  `name (1).ext`; use the returned `cloud_name`.
 - `scratch/` is the only place for modified workflow JSON. Name it
   `<workflow-stem>__<variant>.json`, for example `tts-fishdrama3__single-clone.json`. Never copy
   scratch files into the `workflows/` tree.
