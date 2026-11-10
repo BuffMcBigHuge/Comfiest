@@ -319,8 +319,10 @@ This repository is the sanitized public edition of a working production suite:
   identity LoRA, and the MOSS-Image DMD sampler.
 - Every baked-in prompt was replaced with a neutral demo prompt (fox-themed for t2v). Reference
   image, video, and audio names were genericized to `example.*`.
-- UI workflows were conversion-validated against a live ComfyUI target; the sanitized graphs have not
-  been executed end-to-end. Run one job before relying on a template in production.
+- UI workflows were conversion-validated against a live ComfyUI target. Seven API graphs have since
+  been executed end-to-end on 2026-11-10 — see the release-status note in
+  [`skills/SKILL.md`](skills/SKILL.md#workflows) — but the rest have not. Run one job before relying on
+  a template in production.
 
 Add your own LoRAs and prompts in `work/scratch/`. If a look needs a custom LoRA, document it in your
 fork rather than editing the shipped template.

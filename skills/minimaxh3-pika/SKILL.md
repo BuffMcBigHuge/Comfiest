@@ -72,7 +72,8 @@ Lightning, fastvideo, or another turbo adapter; it breaks the output. `BasicSche
   `ref_images.ref_image_N` if the graph is extended.
 
 Stage media in `work/uploads/<project>/` under the exact filename and `upload_file` it to the target.
-`upload_file` preserves the name.
+`upload_file` keeps the name unless the target already has that file, in which case it writes
+`name (1).ext`; use the returned `cloud_name`.
 
 ## Prompt format
 
