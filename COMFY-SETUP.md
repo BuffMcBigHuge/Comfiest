@@ -9,7 +9,8 @@ of free disk**. AMD, Apple Silicon, and CPU-only setups are not supported by thi
 the workflows use CUDA `int8_convrot` models, TensorRT depth, and NVIDIA-oriented custom nodes.
 
 The shipped graphs are validated on **ComfyUI 0.44.0**; P-H3-Image requires that build's
-`PH3ImageConditioning` (`comfy_extras.nodes_minimax_h3.py`).
+`PH3ImageConditioning` (`comfy_extras.nodes_minimax_h3.py`), and the IC 2K refiner uses 0.44's core
+`BlockSparseAttention`, `ModelAttentionBackend`, `ComfyMathExpression`, and `TrimAudioDuration`.
 
 **What gets installed**
 
@@ -243,6 +244,7 @@ Paths are relative to `ComfyUI/`. Sizes are approximate.
 | H3 2K | <https://huggingface.co/Kijai/MiniMax-H3-experimental> | `loras/minimax_h3_open_regenerate_2k_refiner_rank_16_bf16.safetensors` | `models/loras/minimax/minimax_h3_open_regenerate_2k_refiner_rank_16_bf16.safetensors` | 0.2 GB |
 | H3 / 2K | <https://huggingface.co/lightx2v/Minimax-h3-Turbo> | `minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors` | `models/loras/minimax/minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors` | 2.0 GB |
 | H3 2K | <https://huggingface.co/RunningHubAI/rh-minimax-h3-lms-v1.0-r64.safetensors-lora> | `minimax_h3_lms_v1.0_r64.safetensors` | `models/loras/minimax/minimax_h3_lms_v1.0_r64.safetensors` | 1.2 GB |
+| H3 2K IC | <https://huggingface.co/Kijai/MiniMax-H3-experimental> | `loras/minimax_h3_open_regenerate_2k_ic_lora_avg_rank_21_bf16.safetensors` | `models/loras/minimax/minimax_h3_open_regenerate_2k_ic_lora_avg_rank_21_bf16.safetensors` | 0.2 GB |
 | H3 loop | <https://huggingface.co/HAOOOOOOO51/Minimax_h3_fl2v_lightx2v_turbo_4to8step_v0.1-v1.0_768p_v4_step600_dareties_fro095_pruned> | `minimax_h3_fl2v_lightx2v_turbo_4to8step_v0.1-v1.0_768p_v4_step600_dareties_fro095_pruned.safetensors` | `models/loras/minimax/minimax_h3_fl2v_lightx2v_v0.1_dareties_v4_step600_comfy_fro_fulladaln.safetensors` | 0.9 GB |
 | SAM3 | <https://huggingface.co/Comfy-Org/sam3.1> | `checkpoints/sam3.1_multiplex_fp16.safetensors` | `models/checkpoints/sam3.1_multiplex_fp16.safetensors` | 1.7 GB |
 | Optional | <https://huggingface.co/akatz-ai/MiniMax-H3-Character-Swap-LoRA> | `h3_character_swap_v1.5.safetensors` | `models/loras/minimax/h3_character_swap_v1.5.safetensors` | 0.2 GB |
@@ -262,6 +264,21 @@ family too, so `--only moss` works without a separate Flux download.
 
 The 2K upscale/refine graphs also need `MiniMaxH3LatentUpscaleWithModel` (ComfyUI PR #17412 or newer);
 verify it with `/object_info/MiniMaxH3LatentUpscaleWithModel`.
+
+The IC fidelity refiner reuses the same base model, VAE, text encoder, and latent upscaler as the
+existing 2K path; it adds only the 0.2 GB Kijai rank-21 IC LoRA and uses LMS Sharp. **No HyperFlow, no
+custom node pack, and no alpha patch.** It is built from core ComfyUI 0.44 nodes plus the
+already-required KJNodes, VideoHelperSuite, and PlagueKind packs. The published graph's `OpenH3IC*`
+helper nodes and `LynnRealH3VAELoader`/`sol_h3_vae` are not used.
+
+Feed it a **Pika H3 Flex 1344×768 draft**, not the fastvideo 4-step preset. `pika-h3-t2v.api.json`
+defaults to 736×416; copy it to `work/scratch/`, set `6.width=1344` and `6.height=768`, and keep the
+6-step contract. On the same prompt and seed, the fastvideo 4-step draft carried ~7× the Laplacian of a
+Pika draft (2046 vs 284) and ~2× the gradient; it is not a valid draft generator for 2K/IC. The IC graph
+reads `example.mp4` from the target's `input/`.
+
+Kijai's IC file writes small signed residual alpha scalars and bakes the scale into `lora_B`. That is the
+same convention as the shipped rank-16 2K refiner; **do not "fix" its alphas**.
 
 The perfect-loop graph was verified with a full-AdaLN conversion of the LightX2V v0.1 4–8 step Turbo
 adapter. The published download is the author's pruned-backbone release of the same Turbo A
@@ -373,6 +390,8 @@ curl "http://127.0.0.1:8188/object_info/CLIPLoader"
 curl "http://127.0.0.1:8188/object_info/H3AdaLNLoRAFix"
 curl "http://127.0.0.1:8188/object_info/MMH3UltimateUpscale"
 curl "http://127.0.0.1:8188/object_info/MiniMaxH3LatentUpscaleWithModel"
+curl "http://127.0.0.1:8188/object_info/MiniMaxH3ReferenceToVideo"
+curl "http://127.0.0.1:8188/object_info/BlockSparseAttention"
 curl "http://127.0.0.1:8188/object_info/MiniMaxH3ContexMaskedAVBridge"
 curl "http://127.0.0.1:8188/object_info/SaveVideo"
 curl "http://127.0.0.1:8188/object_info/SpectrumApplyMiniMaxH3"
@@ -404,6 +423,7 @@ comfy run --workflow workflows/image2image-fluxklein-4ref.json --print-prompt --
 comfy run --workflow workflows/text2image-moss.json         --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/minimaxh3/ref2video-minimax-1p.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/minimaxh3/api/upscale-minimax-2k-v2v.api.json --print-prompt --host 127.0.0.1 --port 8188
+comfy run --workflow workflows/minimaxh3/api/upscale-minimax-2k-ic.api.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/minimaxh3/api/perfect-loop-minimax-h3.api.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/minimaxh3/api/pika-h3-t2v.api.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/ltx/api/ltx2-5-t2v.api.json --print-prompt --host 127.0.0.1 --port 8188
@@ -436,6 +456,10 @@ For agent submission, install `comfy-mcp` and register the target with
 | Symptom | Cause | Fix |
 | - | - | - |
 | `missing_node_type` for `H3AdaLNLoRAFix`, `FL_RIFE`, `SpectrumApplyMiniMaxH3`... | Pack not installed or failed to import | Re-run `scripts/install_nodes.py`; restart; check `comfy logs`. |
+| `missing_node_type` for `BlockSparseAttention` or `ModelAttentionBackend` | ComfyUI older than 0.44.0 | Update ComfyUI; the IC refiner needs the 0.44 core nodes. |
+| IC 2K looks grainy, grid-like, or over-sharp | The draft came from the fastvideo 4-step preset | Use a Pika H3 Flex 1344×768 draft (copy `pika-h3-t2v` to scratch and set `6.width`/`6.height`); re-run the IC pass. |
+| IC 2K re-composes the shot instead of preserving it | Wrong refiner or sigma grid | Use `upscale-minimax-2k-ic.api.json` with `up3`; the 2-step graph and `up4` both change more. |
+| IC LoRA alphas look "wrong" | Kijai folds the scale into `lora_B` and writes residual alpha scalars | Leave them alone; this is the same convention as the rank-16 2K refiner. |
 | `CLIPLoaderGGUF` missing | ComfyUI-GGUF not installed | Install the pack, restart. |
 | `Power Lora Loader (rgthree)` missing | rgthree pack not installed | Install the pack, restart. |
 | `int8_convrot` load error, `comfy_kitchen` error, or black output | PyTorch/CUDA mismatch | Install the cu130 PyTorch build; update `comfy-kitchen` via ComfyUI requirements. |
@@ -479,6 +503,7 @@ Check each model card before commercial use:
 | SAM3 | Meta SAM license |
 | LightX2V turbo LoRA | See LightX2V model card |
 | Pika H3 Flex adapters | MiniMax H3 Community License; see the Pika model card |
+| Open-H3-Regenerate-2K-IC (Kijai rank-21) | MiniMax H3 Community License; see the Sana and Kijai model cards |
 | LTX-2.5 | Lightricks LTX-2.5 license; see the model card |
 | Best_FaceID LoRA | See the Alissonerdx model card |
 | RelayVSR | See the LightX2V RelayVSR_X2 model card |

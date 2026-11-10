@@ -12,7 +12,11 @@ description: MiniMax H3 video workflows in Comfiest — Pika H3 Flex 6-step defa
 MiniMax H3 generates an 8-second, 9:16 clip with synchronized generated audio from text and optional
 picture/video/audio references. **Pika H3 Flex is the default generation path**: 6-step LCM, 24 fps,
 stronger text/signage/edge/reference quality. See [`../minimaxh3-pika/SKILL.md`](../minimaxh3-pika/SKILL.md).
-The fastvideo variants below are the faster 8-step draft path (v1.2 turbo, RIFE to 48 fps).
+The fastvideo variants below are the faster 8-step generation path (v1.2 turbo, RIFE to 48 fps).
+
+**Do not use the fastvideo 4-step preset as a 768P draft for 2K/IC.** On the same prompt and seed it
+carried ~3× the Laplacian and ~1.6× the flicker of Pika even with its full LoRA stack, and ~7×/2× when
+stripped to the motion/dareties pair. Use the Pika 6-step contract for any draft that will be refined.
 
 ## Files
 
@@ -23,7 +27,7 @@ The fastvideo variants below are the faster 8-step draft path (v1.2 turbo, RIFE 
 - `../../workflows/minimaxh3/api/*.api.json` — pre-slimmed API workflows for `run_workflow`.
 - `../minimaxh3-character-replace/SKILL.md` — SAM3 + depth-guided motion guide + character-replacement
   guide.
-- `../minimaxh3-upscale/SKILL.md` — 2K t2v/v2v latent upscale and refine.
+- `../minimaxh3-upscale/SKILL.md` — 2K t2v/v2v latent upscale, 2-step re-synthesis refiner, and 3-step IC fidelity refiner.
 - `../minimaxh3-perfect-loop/SKILL.md` — seamless 154-frame T2AV loop, seam math, and save path.
 - `../sam3/SKILL.md` — native SAM3 mattes when you only need segmentation, not a full replacement.
 
@@ -128,7 +132,7 @@ Leave every `SaveImage`/`VHS_VideoCombine` save prefix exactly as shipped. Ident
 ## Resolution and timing
 
 **Pika default:** 736×416 at 124 frames (5.17 s), 24 fps, no RIFE; local ceiling is 768p. Change
-width/height/length directly on the graph. **Fastvideo drafts:** the scaling rules below apply.
+width/height/length directly on the graph. **Fastvideo variants:** the scaling rules below apply.
 
 - The `Resolution Selector` is driven by the outer `megapixels` widget on the settings subgraph, not
   by the `width`/`height` widgets on the R2V node.
@@ -242,7 +246,7 @@ RIFE. The output audio is forced from the source video.
 sigmas `1.0, 0.972973, 0.923077, 0.8, 0.571429, 0.333333, 0.0`, no sigma-shift node, no extra turbo,
 24 fps. Full contract: [`../minimaxh3-pika/SKILL.md`](../minimaxh3-pika/SKILL.md).
 
-**Fastvideo draft stack (8-step):**
+**Fastvideo stack (8-step):**
 
 - UNET: `minimax\minimax_h3_fastvideo_vsa_datafree_1300step_4step_int8_convrot.safetensors`
 - CLIP: `qwen3vl_32b_minimax_h3_int8_convrot.safetensors`

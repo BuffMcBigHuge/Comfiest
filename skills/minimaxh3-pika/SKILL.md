@@ -10,7 +10,10 @@ Pika H3 Flex is MiniMax-H3 post-trained by Pika Labs and shipped as two ComfyUI 
 the **default H3 generation path** in this repository: 6 steps, 24 fps, native audio, and stronger
 text, signage, edge, and reference identity than the fastvideo stack.
 
-Use the fastvideo variants in `../minimaxh3/SKILL.md` for fast drafts; use Pika for finals.
+Use the fastvideo variants in `../minimaxh3/SKILL.md` for fast generation, but **not** as a 768P draft
+for 2K/IC. For a draft that will be refined, use Pika at 1344×768: copy `pika-h3-t2v.api.json` to
+`work/scratch/`, set `6.width=1344` and `6.height=768`, and keep the 6-step contract. The shipped
+736×416 default is the Pika native size; the IC refiner was verified on a 1344×768 Pika draft.
 
 ## Files
 

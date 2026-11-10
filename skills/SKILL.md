@@ -90,7 +90,7 @@ directory) and reuse that absolute prefix for the session.
   `workflows/minimaxh3/`, `workflows/minimaxh3/api/`, and `workflows/fishdrama3/`. Preserve bytes exactly:
   no line-ending, whitespace, or key-order normalization.
 - **Maintained additions:** the two `*-forced` UI files, their two API mirrors, the three
-  `charreplace-*` API workflows, the three `upscale-*` API workflows, the three `sam3-*` API
+  `charreplace-*` API workflows, the four `upscale-*` API workflows, the three `sam3-*` API
   workflows, the three `pika-h3-*` API workflows, the three `image2image-fluxklein-{2,3,4}ref.json`
   additions, the three `ltx2-5-*` API workflows, the RelayVSR UI/API pair, the P-H3-Image
   UI/API additions, and `perfect-loop-minimax-h3.api.json` are maintained rather than one-off
@@ -224,11 +224,11 @@ explicit approval.
 | Fast photoreal still or keyframe | MOSS-Image | `workflows/text2image-moss.json` | 8-step DMD; 3:2 2 MP (1776×1184); optional prompt upsampler |
 | Song from style + lyrics | YuE2 3B | `workflows/text2music-yue2.json` | full-song model with vocals; 120 s |
 | Song from caption + lyrics | MiniMax Music 3 | `workflows/text2music-minimaxmusic3.json` | caption-driven; tiled audio decode |
-| Video from text or references | MiniMax H3 / Pika H3 Flex | `workflows/minimaxh3/api/pika-h3-*.api.json` + fastvideo variants | Pika 6-step default; fastvideo 8-step drafts; 3 Pika + 14 fastvideo + 3 charreplace |
+| Video from text or references | MiniMax H3 / Pika H3 Flex | `workflows/minimaxh3/api/pika-h3-*.api.json` + fastvideo variants | Pika 6-step default; fastvideo 8-step variants; 3 Pika + 14 fastvideo + 3 charreplace |
 | Video with joint audio | LTX-2.5 22B distilled | `workflows/ltx/api/*.api.json` | t2v/ref2v/i2v; 512×960; 8.04 s |
 | Multi-reference image edit | P-H3-Image | `workflows/ph3-image/ph3-image-edit-{4,5}img*.json` | 4 MP; up to 9 refs; native w4a8 |
 | Video 2× upscale | RelayVSR X2 | `workflows/relayvsr/api/video-upscale-relayvsr-x2.api.json` | pixel-space 2×; audio passthrough |
-| 2K upscale / refine | MiniMax H3 + refiner | `workflows/minimaxh3/api/upscale-*.api.json` | t2v/v2v latent upscale; 2560×1440 output |
+| 2K upscale / refine | MiniMax H3 + refiner | `workflows/minimaxh3/api/upscale-*.api.json` | t2v/v2v latent upscale; 2-step re-synthesis or 3-step IC fidelity; 2560×1440 |
 | Seamless video loop | MiniMax H3 Perfect Loop | `workflows/minimaxh3/api/perfect-loop-minimax-h3.api.json` | 154 f / 6.42 s; audio included; ×2 seam check |
 | Image or video matte | SAM3 (native) | `workflows/sam3/api/*.api.json` | text-prompted luma matte; image, video, tracker |
 | Speech or voice clone | Fish Audio Drama 3 | `workflows/fishdrama3/*.json` | 1–2 speaker TTS; four canonical variants |
@@ -714,8 +714,9 @@ and `pika-h3-ref2va` — use the official 6-step LCM contract, 24 fps, and stron
 reference quality. See [`minimaxh3-pika/SKILL.md`](minimaxh3-pika/SKILL.md).
 
 The older fastvideo family ships 14 pre-wired UI variants plus API mirrors, all using the fastvideo
-model, v1.2 turbo LoRA, 8-step beta sampling, and RIFE to 48 fps. Use those for fast drafts and the
-Pika graphs for finals. Two `*-forced` fastvideo variants add the forced-audio latent chain for
+model, v1.2 turbo LoRA, 8-step beta sampling, and RIFE to 48 fps. Use those for fast generation; use Pika
+for finals and for any 768P draft that will be refined to 2K or fed to the IC refiner. Two `*-forced`
+fastvideo variants add the forced-audio latent chain for
 driving the mouth from a supplied track. Three API-first `charreplace-*` workflows replace the
 performer in a source video with a different character.
 
@@ -814,8 +815,16 @@ optional `h3_character_swap_v1.5` LoRA was removed for the public release; add i
 stronger identity transfer. See `skills/minimaxh3-character-replace/SKILL.md` and the three
 `api/ref2video-minimax-charreplace-*.api.json` files. They are not UI/API pairs.
 
-For 2K upscale/refine (t2v and v2v), see `skills/minimaxh3-upscale/SKILL.md` and the three
-`workflows/minimaxh3/api/upscale-*.api.json` graphs. They are API-first and have no UI twins.
+**Draft stack for 2K/IC.** Use the Pika H3 Flex 6-step contract for a 768P draft that will be refined.
+The fastvideo 4-step preset is not a substitute: on the same prompt and seed it carried ~3× the
+Laplacian and ~1.6× the flicker of Pika even with its full LoRA stack, and ~7×/2× when stripped to the
+motion/dareties pair. See `skills/minimaxh3-pika/SKILL.md` and `skills/minimaxh3-upscale/SKILL.md`.
+
+For 2K upscale/refine, see `skills/minimaxh3-upscale/SKILL.md` and the four
+`workflows/minimaxh3/api/upscale-*.api.json` graphs. They are API-first and have no UI twins. The
+`upscale-minimax-2k-ic.api.json` graph is the fidelity path: it needs a decoded Pika 768P draft, feeds
+it as `<Video 1>` to the ref2va base, and muxes the draft audio without a VAE round trip. It uses LMS
+Sharp plus the 0.2 GB Kijai rank-21 IC LoRA — no HyperFlow and no alpha patch.
 
 For seamless text-to-video loops (154 frames / 6.42 s, with synchronized audio), see
 `skills/minimaxh3-perfect-loop/SKILL.md` and
@@ -1184,6 +1193,10 @@ Before production:
 | Outputs land in unexpected remote folders | An agent changed a workflow save prefix | Never change `filename_prefix`; collect the run by `prompt_id` into `work/outputs`. |
 | `text2image-moss.json` ignores edits to the inner KSampler, seed, size, or loaders | The subgraph instance overrides those widgets | Edit instance `#18` (steps/cfg/sampler/scheduler/negative/models), `ResolutionSelector #19` (size), and `SeedNode #3072` (seed). |
 | 2K upscale fails with missing `MiniMaxH3LatentUpscaleWithModel` | ComfyUI is older than PR #17412 | Update ComfyUI; verify `/object_info/MiniMaxH3LatentUpscaleWithModel`. |
+| IC graph fails on `BlockSparseAttention` or `ModelAttentionBackend` | ComfyUI is older than 0.44.0 | Update ComfyUI; both are core 0.44 nodes. |
+| IC 2K looks grainy, grid-like, or over-sharp | The draft came from the fastvideo 4-step preset | Use a Pika H3 Flex 6-step draft; re-run the IC pass. |
+| IC 2K re-composes the shot instead of preserving it | Wrong refiner or sigma grid | Use `upscale-minimax-2k-ic.api.json` with `up3`; the 2-step graph and `up4` both change more. |
+| IC LoRA alphas look "wrong" | Kijai bakes the scale into `lora_B` and writes residual alpha scalars | Leave them alone; the shipped rank-16 2K refiner uses the same convention. |
 | Perfect loop fails with missing `MiniMaxH3ContexMaskedAVBridge` | `ComfyUI-MiniMaxH3-Context-Loop` is missing or old | Install/update the pack, restart ComfyUI, then `--print-prompt` again. |
 | Perfect loop has an audible gap at the seam | `VHS_VideoCombine` cut audio at the last video DTS | Keep the shipped `CreateVideo` -> `SaveVideo` path; check stream durations with `ffprobe`. |
 | SAM3 matte drifts or plays at the wrong speed | `20.frame_rate` does not match the source fps | Set it to the source fps; the loader fps is not wired to the saver. |
@@ -1245,7 +1258,9 @@ This file is the repository's operating skill. Keep it portable and current.
 
 - ComfyUI 0.44.0 or newer (P-H3-Image needs `PH3ImageConditioning`; the perfect loop also needs
   `CreateVideo`/`SaveVideo`).
-- 2K upscale/refine needs `MiniMaxH3LatentUpscaleWithModel` (ComfyUI PR #17412 or newer).
+- 2K upscale/refine needs `MiniMaxH3LatentUpscaleWithModel` (ComfyUI PR #17412 or newer). The IC path
+  also needs 0.44's core `BlockSparseAttention`, `ModelAttentionBackend`, `ComfyMathExpression`, and
+  `TrimAudioDuration`.
 - ComfyUI frontend 1.57.1 or newer.
 - `comfy-aimdo` >= 0.6.0, `comfy-kitchen` >= 0.2.40, `comfyui-workflow-templates` >= 0.11.96.
 - Node packs: `rgthree-comfy`, `RES4LYF`, `was-node-suite-comfyui`,
@@ -1278,7 +1293,7 @@ This file is the repository's operating skill. Keep it portable and current.
 - `skills/minimaxh3/SKILL.md` — fastvideo variant matrix, timing, and lip-sync guidance.
 - `skills/minimaxh3-pika/SKILL.md` — Pika H3 Flex default 6-step generation (T2V/FL2VA/Ref2VA).
 - `skills/minimaxh3-character-replace/SKILL.md` — character-replacement setup and run examples.
-- `skills/minimaxh3-upscale/SKILL.md` — 2K t2v/v2v upscale and refine.
+- `skills/minimaxh3-upscale/SKILL.md` — 2K t2v/v2v upscale, 2-step re-synthesis refiner, and 3-step IC fidelity refiner.
 - `skills/minimaxh3-perfect-loop/SKILL.md` — seamless 154-frame T2AV loop and seam checks.
 - `skills/ltx2-5/SKILL.md` — LTX-2.5 t2v/ref2v/i2v with joint audio.
 - `skills/relayvsr/SKILL.md` — RelayVSR X2 2× video upscale and audio passthrough.

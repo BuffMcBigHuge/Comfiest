@@ -1,0 +1,622 @@
+{
+  "120": {
+    "inputs": {
+      "value": 124
+    },
+    "class_type": "PrimitiveInt",
+    "_meta": {
+      "title": "LENGTH (124)"
+    }
+  },
+  "121": {
+    "inputs": {
+      "value": 1344
+    },
+    "class_type": "PrimitiveInt",
+    "_meta": {
+      "title": "DRAFT WIDTH"
+    }
+  },
+  "122": {
+    "inputs": {
+      "value": 768
+    },
+    "class_type": "PrimitiveInt",
+    "_meta": {
+      "title": "DRAFT HEIGHT"
+    }
+  },
+  "123": {
+    "inputs": {
+      "value": 2560
+    },
+    "class_type": "PrimitiveInt",
+    "_meta": {
+      "title": "TARGET WIDTH"
+    }
+  },
+  "124": {
+    "inputs": {
+      "value": 1440
+    },
+    "class_type": "PrimitiveInt",
+    "_meta": {
+      "title": "TARGET HEIGHT"
+    }
+  },
+  "10": {
+    "inputs": {
+      "value": "Enhance <Video 1> into a high-quality version of the same video. Preserve the scene, objects, camera motion, timing, and composition of every frame. Restore fine details and remove degradation. Do not continue or change the scene.\n\nScene description: A live-action clip with natural movement, ambient sound, and a static or gently moving camera."
+    },
+    "class_type": "PrimitiveStringMultiline",
+    "_meta": {
+      "title": "IC PROMPT (official prefix + caption)"
+    }
+  },
+  "1": {
+    "inputs": {
+      "clip_name": "qwen3vl_32b_minimax_h3_int8_convrot.safetensors",
+      "type": "minimax",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "Load CLIP"
+    }
+  },
+  "3": {
+    "inputs": {
+      "vae_name": "minimax\\minimax_h3_video_vae_fp16.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Video VAE"
+    }
+  },
+  "4": {
+    "inputs": {
+      "vae_name": "minimax\\minimax_h3_audio_vae_fp32.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Audio VAE"
+    }
+  },
+  "30": {
+    "inputs": {
+      "unet_name": "minimax\\minimax_h3_ref2va_pruned_int8_convrot.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "IC base (ref2va pruned int8)"
+    }
+  },
+  "80": {
+    "inputs": {
+      "attention": "comfy kitchen attention",
+      "model": [
+        "30",
+        0
+      ]
+    },
+    "class_type": "ModelAttentionBackend",
+    "_meta": {
+      "title": "Dense attention backend"
+    }
+  },
+  "32": {
+    "inputs": {
+      "model": [
+        "80",
+        0
+      ],
+      "lora_name": "minimax\\minimax_h3_lms_v1.0_r64.safetensors",
+      "strength_model": 1.0
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "1 - LMS Sharp"
+    }
+  },
+  "33": {
+    "inputs": {
+      "model": [
+        "32",
+        0
+      ],
+      "lora_name": "minimax\\minimax_h3_open_regenerate_2k_ic_lora_avg_rank_21_bf16.safetensors",
+      "strength_model": 1.0
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "2 - Open-H3 Regenerate 2K IC"
+    }
+  },
+  "34": {
+    "inputs": {
+      "model": [
+        "33",
+        0
+      ],
+      "mode": "port"
+    },
+    "class_type": "H3AdaLNLoRAFix",
+    "_meta": {
+      "title": "AdaLN LoRA fix (pruned base)"
+    }
+  },
+  "35": {
+    "inputs": {
+      "model": [
+        "34",
+        0
+      ],
+      "shift_video": 12,
+      "shift_audio": 3
+    },
+    "class_type": "MiniMaxH3SigmaShift",
+    "_meta": {
+      "title": "Sigma shift 12/3"
+    }
+  },
+  "36": {
+    "inputs": {
+      "model": [
+        "35",
+        0
+      ],
+      "chunks": 2,
+      "seq_threshold": 4096
+    },
+    "class_type": "MiniMaxChunkFeedForward",
+    "_meta": {
+      "title": "Chunked FFN (VRAM)"
+    }
+  },
+  "37": {
+    "inputs": {
+      "model": [
+        "36",
+        0
+      ],
+      "selection": "sol-attn",
+      "selection.tau": 1.3,
+      "start_percent": 0.0,
+      "end_percent": 1.0,
+      "dense_blocks": "",
+      "min_tokens": 12288,
+      "extra_tokens": 256,
+      "sink_conditioning": "exact_kv_and_rows",
+      "verbose": false
+    },
+    "class_type": "BlockSparseAttention",
+    "_meta": {
+      "title": "Core sol-attn sparse attention"
+    }
+  },
+  "100": {
+    "inputs": {
+      "video": "example.mp4",
+      "force_rate": 24,
+      "custom_width": 0,
+      "custom_height": 0,
+      "frame_load_cap": [
+        "120",
+        0
+      ],
+      "skip_first_frames": 0,
+      "select_every_nth": 1,
+      "format": "H3"
+    },
+    "class_type": "VHS_LoadVideo",
+    "_meta": {
+      "title": "Draft clip (24 fps)"
+    }
+  },
+  "101": {
+    "inputs": {
+      "image": [
+        "100",
+        0
+      ],
+      "width": [
+        "121",
+        0
+      ],
+      "height": [
+        "122",
+        0
+      ],
+      "upscale_method": "lanczos",
+      "keep_proportion": "crop",
+      "pad_color": "0, 0, 0",
+      "crop_position": "center",
+      "divisible_by": 32
+    },
+    "class_type": "ImageResizeKJv2",
+    "_meta": {
+      "title": "Cover-crop to 1344x768"
+    }
+  },
+  "102": {
+    "inputs": {
+      "image": [
+        "101",
+        0
+      ]
+    },
+    "class_type": "GetImageSize",
+    "_meta": {
+      "title": "Frame count"
+    }
+  },
+  "103": {
+    "inputs": {
+      "expression": "max(1, b - a)",
+      "values.a": [
+        "102",
+        2
+      ],
+      "values.b": [
+        "120",
+        0
+      ]
+    },
+    "class_type": "ComfyMathExpression",
+    "_meta": {
+      "title": "Pad count"
+    }
+  },
+  "104": {
+    "inputs": {
+      "image": [
+        "101",
+        0
+      ],
+      "batch_index": -1,
+      "length": 1
+    },
+    "class_type": "ImageFromBatch",
+    "_meta": {
+      "title": "Last frame"
+    }
+  },
+  "105": {
+    "inputs": {
+      "image": [
+        "104",
+        0
+      ],
+      "amount": [
+        "103",
+        1
+      ]
+    },
+    "class_type": "RepeatImageBatch",
+    "_meta": {
+      "title": "Repeat last frame"
+    }
+  },
+  "106": {
+    "inputs": {
+      "image1": [
+        "101",
+        0
+      ],
+      "image2": [
+        "105",
+        0
+      ]
+    },
+    "class_type": "ImageBatch",
+    "_meta": {
+      "title": "Append padding"
+    }
+  },
+  "107": {
+    "inputs": {
+      "image": [
+        "106",
+        0
+      ],
+      "batch_index": 0,
+      "length": [
+        "120",
+        0
+      ]
+    },
+    "class_type": "ImageFromBatch",
+    "_meta": {
+      "title": "Exact 124 frames"
+    }
+  },
+  "108": {
+    "inputs": {
+      "pixels": [
+        "107",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ],
+      "tile_size": 512,
+      "overlap": 64,
+      "temporal_size": 32,
+      "temporal_overlap": 8
+    },
+    "class_type": "VAEEncodeTiled",
+    "_meta": {
+      "title": "VAE encode draft (video only)"
+    }
+  },
+  "70": {
+    "inputs": {
+      "model_name": "minimax_h3_latent_upscaler_3d_bf16.safetensors"
+    },
+    "class_type": "LatentUpscaleModelLoader",
+    "_meta": {
+      "title": "Load H3 latent upscaler"
+    }
+  },
+  "71": {
+    "inputs": {
+      "model": [
+        "70",
+        0
+      ],
+      "samples": [
+        "108",
+        0
+      ],
+      "width": [
+        "123",
+        0
+      ],
+      "height": [
+        "124",
+        0
+      ]
+    },
+    "class_type": "MiniMaxH3LatentUpscaleWithModel",
+    "_meta": {
+      "title": "Latent upscale -> 2560x1440"
+    }
+  },
+  "40": {
+    "inputs": {
+      "clip": [
+        "1",
+        0
+      ],
+      "prompt": [
+        "10",
+        0
+      ],
+      "width": [
+        "123",
+        0
+      ],
+      "height": [
+        "124",
+        0
+      ],
+      "length": [
+        "120",
+        0
+      ],
+      "ref_image_size": "match",
+      "vae": [
+        "3",
+        0
+      ],
+      "ref_videos.ref_video_0": [
+        "107",
+        0
+      ]
+    },
+    "class_type": "MiniMaxH3ReferenceToVideo",
+    "_meta": {
+      "title": "Ref2VA - draft is <Video 1>"
+    }
+  },
+  "41": {
+    "inputs": {
+      "av_latent": [
+        "40",
+        1
+      ]
+    },
+    "class_type": "LTXVSeparateAVLatent",
+    "_meta": {
+      "title": "Split target AV latent"
+    }
+  },
+  "42": {
+    "inputs": {
+      "value": 0.0,
+      "width": 32,
+      "height": 32
+    },
+    "class_type": "SolidMask",
+    "_meta": {
+      "title": "Zero mask"
+    }
+  },
+  "43": {
+    "inputs": {
+      "samples": [
+        "41",
+        1
+      ],
+      "mask": [
+        "42",
+        0
+      ]
+    },
+    "class_type": "SetLatentNoiseMask",
+    "_meta": {
+      "title": "Freeze audio rows"
+    }
+  },
+  "44": {
+    "inputs": {
+      "video_latent": [
+        "71",
+        0
+      ],
+      "audio_latent": [
+        "43",
+        0
+      ]
+    },
+    "class_type": "LTXVConcatAVLatent",
+    "_meta": {
+      "title": "Compose target latent (upscaled video + frozen audio)"
+    }
+  },
+  "45": {
+    "inputs": {
+      "sigmas": "0.834942, 0.696852, 0.468753, 0"
+    },
+    "class_type": "ManualSigmas",
+    "_meta": {
+      "title": "IC sigmas (up3)"
+    }
+  },
+  "46": {
+    "inputs": {
+      "noise_seed": 888002
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "IC noise"
+    }
+  },
+  "47": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "Euler"
+    }
+  },
+  "48": {
+    "inputs": {
+      "model": [
+        "37",
+        0
+      ],
+      "conditioning": [
+        "40",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "CFG 1 guider"
+    }
+  },
+  "49": {
+    "inputs": {
+      "noise": [
+        "46",
+        0
+      ],
+      "guider": [
+        "48",
+        0
+      ],
+      "sampler": [
+        "47",
+        0
+      ],
+      "sigmas": [
+        "45",
+        0
+      ],
+      "latent_image": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "IC refine"
+    }
+  },
+  "50": {
+    "inputs": {
+      "av_latent": [
+        "49",
+        0
+      ]
+    },
+    "class_type": "LTXVSeparateAVLatent",
+    "_meta": {
+      "title": "Split refined AV"
+    }
+  },
+  "51": {
+    "inputs": {
+      "samples": [
+        "50",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ],
+      "tile_size": 512,
+      "overlap": 64,
+      "temporal_size": 32,
+      "temporal_overlap": 8
+    },
+    "class_type": "VAEDecodeTiled",
+    "_meta": {
+      "title": "Decode 2K video"
+    }
+  },
+  "52": {
+    "inputs": {
+      "audio": [
+        "100",
+        2
+      ],
+      "start_index": 0.0,
+      "duration": 5.1666667
+    },
+    "class_type": "TrimAudioDuration",
+    "_meta": {
+      "title": "Draft audio (124 f)"
+    }
+  },
+  "53": {
+    "inputs": {
+      "images": [
+        "51",
+        0
+      ],
+      "audio": [
+        "52",
+        0
+      ],
+      "frame_rate": 24,
+      "loop_count": 0,
+      "filename_prefix": "H3_2K/IC",
+      "format": "video/h264-mp4",
+      "pix_fmt": "yuv420p",
+      "crf": 12,
+      "save_metadata": true,
+      "trim_to_audio": false,
+      "pingpong": false,
+      "save_output": true
+    },
+    "class_type": "VHS_VideoCombine",
+    "_meta": {
+      "title": "Save 2K IC"
+    }
+  }
+}
