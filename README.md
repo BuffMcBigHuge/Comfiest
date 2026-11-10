@@ -276,9 +276,10 @@ Music 3, and Drama 3; the index maps each to its workflow.
 ├── scripts/
 │   ├── install_nodes.py     # clone/update custom nodes, pip requirements
 │   ├── download_models.py   # Hugging Face downloads into ComfyUI folders
-│   ├── validate_workflow.py # check an API graph against a live target
+│   ├── validate_workflow.py # graph integrity (static) + live-target checks
 │   ├── wait_job.py          # poll /history when the MCP wait fails
-│   └── fetch_output.py      # download outputs when fetch_outputs fails
+│   ├── fetch_output.py      # download outputs when fetch_outputs fails
+│   └── comfy_api.py         # shared /history lookup with the ?max_items fallback
 ├── workflows/               # 72 workflow templates
 │   ├── *.json
 │   ├── fishdrama3/          # TTS base + variants

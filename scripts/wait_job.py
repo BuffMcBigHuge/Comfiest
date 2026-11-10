@@ -2,8 +2,9 @@
 """Poll a ComfyUI prompt until it finishes.
 
 The MCP `job(action="wait")` call can fail at the tool layer while the server job
-is still running. `/history/<prompt_id>` is authoritative; this script polls it
-and exits on success, error, or timeout.
+is still running. `/history` is authoritative; this script polls it (with the
+`?max_items` fallback for builds where the per-ID lookup returns `{}`) and exits
+on success, error, or timeout.
 
     python scripts/wait_job.py <prompt_id> --url http://127.0.0.1:8188
     python scripts/wait_job.py <prompt_id> --url http://<host>:<port> --timeout 3600
@@ -12,18 +13,10 @@ and exits on success, error, or timeout.
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 import time
-import urllib.error
-import urllib.parse
-import urllib.request
 
-
-def history(base: str, prompt_id: str, timeout: int) -> dict:
-    url = f"{base}/history/{urllib.parse.quote(prompt_id)}"
-    with urllib.request.urlopen(url, timeout=timeout) as response:
-        return json.load(response)
+from comfy_api import history_entry
 
 
 def main() -> int:
@@ -40,7 +33,7 @@ def main() -> int:
 
     while True:
         try:
-            entry = history(base, args.prompt_id, 30).get(args.prompt_id)
+            entry = history_entry(base, args.prompt_id, 30)
         except Exception as exc:
             print(f"poll error: {exc}", flush=True)
             entry = None

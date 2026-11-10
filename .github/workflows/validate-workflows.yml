@@ -1,0 +1,52 @@
+name: validate-workflows
+
+on:
+  push:
+    paths:
+      - "workflows/**"
+      - "scripts/**"
+      - ".github/workflows/**"
+  pull_request:
+    paths:
+      - "workflows/**"
+      - "scripts/**"
+      - ".github/workflows/**"
+  workflow_dispatch:
+
+jobs:
+  static:
+    name: Graph integrity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Every shipped graph must at least be valid JSON, UI format included.
+      - name: Parse every workflow file
+        run: |
+          python - <<'PY'
+          import glob, json, sys
+
+          bad = 0
+          paths = sorted(glob.glob("workflows/**/*.json", recursive=True))
+          for path in paths:
+              try:
+                  with open(path, encoding="utf-8") as handle:
+                      json.load(handle)
+              except Exception as exc:
+                  print(f"FAIL {path}: {exc}")
+                  bad += 1
+          print(f"parsed {len(paths)} workflow files, {bad} failed")
+          sys.exit(1 if bad else 0)
+          PY
+
+      # No target needed: dangling links, placeholder literals on tensor inputs,
+      # dead nodes, and save prefixes are all statically checkable.
+      - name: Static graph integrity
+        run: |
+          mapfile -t files < <(find workflows -name '*.api.json' | sort)
+          echo "checking ${#files[@]} API graphs"
+          python scripts/validate_workflow.py --static --strict "${files[@]}"

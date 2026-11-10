@@ -149,16 +149,26 @@ Build rules:
 
 ## 5. Validate before submitting
 
-Static check against the live target:
+Graph integrity first, with no server:
+
+```bash
+python scripts/validate_workflow.py work/scratch/<project>/<graph>.api.json --static
+```
+
+This is the same check CI runs (`--static --strict` over every shipped `.api.json`). It catches
+dangling links, a media filename sitting where a tensor link belongs, unreachable nodes, and save
+prefixes. It cannot check node classes or model files, because those live on the target.
+
+Then the static check against the live target:
 
 ```bash
 python scripts/validate_workflow.py work/scratch/<project>/<graph>.api.json \
   --url http://<host>:<port>
 ```
 
-It checks node classes, required inputs, dynamic combos, link targets, combo values, loader option
-lists for model/LoRA files, and save prefixes. It does not submit a job. Fix every error; read the
-warnings (placeholders that are not uploaded yet are expected on public graphs).
+It adds node classes, required inputs, dynamic combos, combo values, and loader option lists for
+model/LoRA files. It does not submit a job. Fix every error; read the warnings (placeholders that are
+not uploaded yet are expected on public graphs).
 
 It reads model availability from `/object_info`, not `/models/<folder>`: `/models` can return an empty
 body even when the target has the files, and it omits some formats.
@@ -279,7 +289,7 @@ Promotion is a separate, deliberate step. Do not copy scratch files back automat
 - [ ] `filename_prefix` unchanged.
 - [ ] Debug/comparison branches removed.
 - [ ] Every model source and custom-node pack is in `COMFY-SETUP.md`.
-- [ ] `scripts/validate_workflow.py` and `--print-prompt` pass on a target.
+- [ ] `scripts/validate_workflow.py --static` is clean, and `--url` plus `--print-prompt` pass on a target.
 - [ ] `README.md`, umbrella skill, family skill, and counts updated.
 - [ ] Commit pushed; run-log entry retained locally.
 
