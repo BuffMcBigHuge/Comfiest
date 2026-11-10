@@ -95,7 +95,7 @@ directory) and reuse that absolute prefix for the session.
 - **Maintained additions:** the two `*-forced` UI files, their two API mirrors, the three
   `charreplace-*` API workflows, the four `upscale-*` API workflows, the three `sam3-*` API
   workflows, the three `pika-h3-*` API workflows, the three `image2image-fluxklein-{2,3,4}ref.json`
-  additions, the three `ltx2-5-*` API workflows, the three H3-Image API graphs, the RelayVSR UI/API
+  additions, the three `ltx2-5-*` API workflows, the five H3-Image API graphs, the RelayVSR UI/API
   pair, the P-H3-Image UI/API additions, and `perfect-loop-minimax-h3.api.json` are maintained rather
   than one-off templates.
   Edit them only on an explicit user request.
@@ -231,7 +231,7 @@ explicit approval.
 | Video with joint audio | LTX-2.5 22B distilled | `workflows/ltx/api/*.api.json` | t2v/ref2v/i2v; 512×960; 8.04 s |
 | Multi-reference image edit | P-H3-Image | `workflows/ph3-image/ph3-image-edit-{4,5}img*.json` | 4 MP; up to 9 refs; native w4a8 |
 | 16 MP text → image | MiniMax-H3-Image | `workflows/h3-image/h3-image-t2i-{4mp,16mp}.api.json` | 6-step CFG 1; 4096² native; exact multi-line text |
-| Reference edit (H3-Image) | MiniMax-H3-Image | `workflows/h3-image/h3-image-edit.api.json` | 2048²; `<Picture 1>`; local attribute changes |
+| Reference edit (H3-Image) | MiniMax-H3-Image | `workflows/h3-image/h3-image-edit{,-2ref,-4ref}.api.json` | 1/2/4 refs; object replacement; local attribute changes |
 | Video 2× upscale | RelayVSR X2 | `workflows/relayvsr/api/video-upscale-relayvsr-x2.api.json` | pixel-space 2×; audio passthrough |
 | 2K upscale / refine | MiniMax H3 + refiner | `workflows/minimaxh3/api/upscale-*.api.json` | t2v/v2v latent upscale; 2-step re-synthesis or 3-step IC fidelity; 2560×1440 |
 | Seamless video loop | MiniMax H3 Perfect Loop | `workflows/minimaxh3/api/perfect-loop-minimax-h3.api.json` | 154 f / 6.42 s; audio included; ×2 seam check |
@@ -966,7 +966,7 @@ Full settings, cost, and gotchas: [`relayvsr/SKILL.md`](relayvsr/SKILL.md).
 MiniMax-H3-Image is Comfy-Org's 33.1B H3 image model: the H3 architecture without the audio branch,
 one checkpoint for text-to-image and editing (up to 16 references), **6 steps at CFG 1**, and a native
 ~16 MP with no upscaler. It is native ComfyUI **0.45.0+** (`MiniMaxH3ImageConditioning`), no custom
-nodes and no LoRAs. Three API graphs: 4 MP T2I, 16 MP T2I, and a 4 MP edit.
+nodes and no LoRAs. Five API graphs: 4 MP T2I, 16 MP T2I, and 1/2/4-reference edits.
 
 - `KSampler`: 6 steps, `cfg 1.0`, `euler`, `simple`, denoise 1.0; the negative is a zeroed conditioning,
   so there is no negative prompt and no guidance pass.
@@ -975,7 +975,11 @@ nodes and no LoRAs. Three API graphs: 4 MP T2I, 16 MP T2I, and a 4 MP edit.
 - Sizes are multiples of 32: 2048² for iteration, 4096² for production, 5472×3072 for wide.
   `width`/`height` 0 follows `image_1`'s size after reference scaling, or 2048² without an image.
 - Edit: `<Picture 1>` is the edited image; describe the finished image and state what is preserved.
-  Local attribute changes work; whole-scene re-imagining is partial and noisy.
+  Local attribute changes work; whole-scene re-imagining is partial and noisy. Object replacement from
+  `<Picture 2>` works structurally.
+- The public edit graphs ship 1, 2 and 4 references. The node accepts up to 16; adding references
+  re-composes the image (1↔4 20.19 dB, 1↔8 9.87 dB) and costs ~+11 s each. Keep 1–2 for identity and a
+  prop, 4 for a full composition. 16 refs were not tested.
 - Text is the standout: quote exact wording, place it, and state the order. Read
   [`prompt-writing/minimax-h3-image-prompt-writer/SKILL.md`](prompt-writing/minimax-h3-image-prompt-writer/SKILL.md)
   before filling a prompt.
@@ -1247,6 +1251,7 @@ Before production:
 | H3-Image `MiniMaxH3ImageConditioning` missing or empty | ComfyUI older than 0.45.0, or a partial build | Update to 0.45.0+; verify the node lists `clip`, `prompt`, `width`, `height`. |
 | H3-Image output is the wrong size | Width/height not a multiple of 32 | Use 2048², 4096², 5472×3072, 4736×3552, etc. |
 | H3-Image edit is noisy or only partly changes | Whole-scene re-imagining against a strong reference | Change one local attribute; describe the finished image and state what is preserved. |
+| H3-Image multi-ref output changes between 1/4/8 refs | Adding references re-composes, not just informs | Judge identity on faces; keep 1–2 refs for identity and a prop, 4 for a full composition. |
 | H3-Image seed does not reproduce across builds | w4a8 and int8 change the composition at the same seed | Pick one build and stay on it. |
 | H3-Image text is wrong or missing | Unquoted or unplaced text | Quote exact wording, say where it sits, and state the order. |
 | SAM3 returns a nearly-full matte | Absent target falls back to the salient object, or categories union | Use one specific category, raise `13.threshold`, and check mean luma; never stack speculative categories. |

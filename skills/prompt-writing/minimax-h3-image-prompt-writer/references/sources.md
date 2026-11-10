@@ -42,6 +42,11 @@
   28 % still read as snow-white and Laplacian ~1192 (noisy). Rewriting the instruction as a description
   of the finished image changed nothing (green 9.0 % vs 10.0 %) — the reference anchor is the limit,
   not the phrasing.
+- Edit, object replacement (`<Picture 1>` station, `<Picture 2>` red bicycle): works structurally.
+  2752×1536, 27.7 s, Laplacian 2238; the object lands in the right place, with edit-path grit.
+- Multi-reference identity, 1 / 4 / 8 refs: 20.4 / 47.1 / 102.3 s (about +11 s per reference). 1↔4 is
+  20.19 dB and 1↔8 is 9.87 dB at 256 px — adding references re-composes, so judge identity on faces,
+  not pixel similarity. Keep 1–2 refs for identity and a prop; 4 for a full composition.
 - Expander on "a red fox in snow" produced: *"A solitary red fox stands upright in a field of fresh,
   undisturbed snow, its vibrant russet coat contrasting sharply with the surrounding white landscape…
   It occupies the lower half of the frame, while the background fades into a flat, wintry horizon under

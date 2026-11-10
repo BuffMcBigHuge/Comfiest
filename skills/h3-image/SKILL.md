@@ -24,6 +24,8 @@ have no UI twins.
 | `h3-image-t2i-4mp.api.json` | text -> 2048² draft | 8 | 4.2 MP | `H3_IMAGE/T2I_4MP` |
 | `h3-image-t2i-16mp.api.json` | text -> 4096² production | 8 | 16.8 MP | `H3_IMAGE/T2I_16MP` |
 | `h3-image-edit.api.json` | `<Picture 1>` local edit -> 2048² | 9 | 4.2 MP | `H3_IMAGE/EDIT` |
+| `h3-image-edit-2ref.api.json` | object replacement from `<Picture 2>`; follows Picture 1's size | 10 | source size | `H3_IMAGE/EDIT_2REF` |
+| `h3-image-edit-4ref.api.json` | identity + garment + prop + setting from 4 refs -> 2048² | 12 | 4.2 MP | `H3_IMAGE/EDIT_4REF` |
 
 The source graphs were verified before sanitization. The public copies were statically validated and
 `--print-prompt`-checked, not re-rendered end-to-end.
@@ -66,12 +68,14 @@ ConditioningZeroOut(positive) -> negative
 KSampler(6 steps, cfg 1.0, euler, simple, denoise 1.0) -> VAEDecode -> SaveImage
 ```
 
-Editing adds one `LoadImage` wired to `MiniMaxH3ImageConditioning.images.image_1`; the prompt refers to
-it as `<Picture 1>`. For more references, add `images.image_2` … `images.image_16` and refer to each
-`<Picture N>` in order.
+Editing adds one `LoadImage` per reference, wired to `MiniMaxH3ImageConditioning.images.image_1`,
+`images.image_2`, … in order; the prompt refers to them as `<Picture 1>`, `<Picture 2>`, …. The public
+graphs ship 1, 2 and 4 references. For more, add `images.image_5` … `images.image_16`; the node accepts
+16, but 16 was not exercised in this release.
 
 `width`/`height` 0 means "use image_1's size after reference scaling, or 2048² when there is no image".
-Every size must be a multiple of 32.
+The 2-ref graph uses 0 so it follows `<Picture 1>`; the 1-ref and 4-ref graphs use 2048². Every size must
+be a multiple of 32.
 
 ## Settings
 
@@ -109,16 +113,31 @@ lens/medium, physical plausibility, and "visible, not implied".
 - **Describe the finished image**, not the operation, and state what is preserved: same pose, same fur,
   same position and scale, same camera angle.
 - **Local attribute changes work well** — a garment colour, an object swapped, a material changed — and
-  keep identity (freckles, hair, eyes, scars).
+  keep identity (freckles, hair, eyes, scars). Charcoal -> burgundy turtleneck: 21.2 s, Laplacian 364
+  vs 452 for T2I.
+- **Object replacement from `<Picture 2>` works structurally.** Bench -> red bicycle in a station scene:
+  2752×1536, 27.7 s, 9,293,605 B, Laplacian 2238. The edit path is grittier than T2I; the object lands
+  in the right place, but expect reference-latent noise.
 - **Whole-scene re-imagining only partly works.** Winter -> summer moved the palette but left 28 % of
   the frame reading as snow-white and came out noisy (Laplacian ~1192 vs 452 for T2I). The reference is
   a strong scene anchor; keep the change local.
-- The public edit graph is 2048². Set `width`/`height` to 0 to follow the reference size, or to another
-  multiple of 32.
-- All image slots default to `example.png`; upload the real reference before a run.
-- The public edit graph ships **one** reference. The node supports up to 16; add `images.image_2` …
-  `images.image_16` and refer to each `<Picture N>` in order. Multi-reference editing was not
-  exercised in this release.
+- **Adding references re-composes.** The cost is roughly linear (~+11 s per reference), and the output is
+  not stable across reference counts: 1↔4 is 20.19 dB at 256 px and 1↔8 is 9.87 dB. A fixed seed does
+  not isolate identity across ref counts; judge identity on the faces.
+- **Keep the reference set small.** 1–2 references cover identity and a prop. 4 is useful for a
+  garment/prop/setting composition. 8 is 5× the wall time of 1 and produces a different image; it is not
+  automatically better.
+- The public graphs ship **1, 2 and 4** references. Add `images.image_5` … `images.image_16` for more;
+  16 was not exercised in this release.
+- All image slots default to `example.png`; upload every reference before a run.
+
+Multi-reference cost, same target scene and seed:
+
+| Refs | Wall | Bytes | PSNR vs 1-ref (256 px) |
+| - | - | - | - |
+| 1 | 20.4 s | 6,134,363 | — |
+| 4 | 47.1 s | 6,095,759 | 20.19 dB |
+| 8 | 102.3 s | 6,561,145 | 9.87 dB |
 
 ## Prompt expander
 
@@ -142,6 +161,9 @@ hand-written path, and the official ComfyUI template can be used when you want t
 | wide | 5472×3072 | w4a8 | 27.7 s | 33,792,844 |
 | edit, charcoal -> burgundy | 2048² | w4a8 | 21.2 s | 5,989,148 |
 | edit, winter -> summer | 2048² | w4a8 | 20.7 s | 8,396,623 |
+| edit, replace object from `<Picture 2>` | 2752×1536 | w4a8 | 27.7 s | 9,293,605 |
+| edit, 4 references | 2048² | w4a8 | 47.1 s | 6,095,759 |
+| edit, 8 references | 2048² | w4a8 | 102.3 s | 6,561,145 |
 
 Every run completed first try with no OOM, offload tricks, tiled decode or chunked attention.
 
@@ -155,6 +177,10 @@ Every run completed first try with no OOM, offload tricks, tiled decode or chunk
   property in the positive caption.
 - **Editing is reference-anchored.** A large scene change fights the reference and gets noisy; change
   one attribute at a time.
+- **More references re-compose, not just inform.** 1↔4 is 20.19 dB and 1↔8 is 9.87 dB at 256 px. Each
+  reference costs ~+11 s; keep the set to 1–2 for identity and a prop, 4 for a full composition.
+- **The edit path is noisier than T2I.** Local attribute changes stay clean; object replacement and
+  scene changes carry more high-frequency energy (Laplacian 364–2238 vs ~450 for T2I).
 - **The expander rewrites the composition.** If exact text or layout matters, hand-write the caption.
 - **Outputs are PNGs.** Collect by `prompt_id`; do not change the save prefix.
 
@@ -164,5 +190,7 @@ Every run completed first try with no OOM, offload tricks, tiled decode or chunk
 python scripts/validate_workflow.py workflows/h3-image/h3-image-t2i-4mp.api.json --url http://<host>:<port>
 python scripts/validate_workflow.py workflows/h3-image/h3-image-t2i-16mp.api.json --url http://<host>:<port>
 python scripts/validate_workflow.py workflows/h3-image/h3-image-edit.api.json --url http://<host>:<port>
+python scripts/validate_workflow.py workflows/h3-image/h3-image-edit-2ref.api.json --url http://<host>:<port>
+python scripts/validate_workflow.py workflows/h3-image/h3-image-edit-4ref.api.json --url http://<host>:<port>
 comfy run --workflow workflows/h3-image/h3-image-t2i-4mp.api.json --print-prompt --host <host> --port <port>
 ```

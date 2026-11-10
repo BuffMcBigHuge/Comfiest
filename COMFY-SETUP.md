@@ -261,7 +261,8 @@ sharper, but it **changes the composition**, not just the detail — do not comp
 fixed seed. bf16 (40 GB) does not fit a 24 GB card. The Qwen3-VL-32B text encoder is already installed
 for H3 video and is reused unchanged. The optional Qwen3.5-9B prompt expander (7.3 GB) is not in the
 manifest; the H3-Image prompt writer covers the hand-written path. `--only h3image` fetches the DiT and
-VAE; add `h3` to also fetch the shared Qwen3-VL-32B text encoder (`--only h3,h3image`).
+VAE; add `h3` to also fetch the shared Qwen3-VL-32B text encoder (`--only h3,h3image`). The family ships
+1/2/4-reference edit graphs; the node accepts up to 16.
 
 `sheetsage2_bf16.safetensors` is YuE2's audio encoder companion. The YuE2 node loads it internally, so
 it does not appear as a workflow widget; keep it even though a JSON search will not find the filename.
@@ -442,6 +443,7 @@ comfy run --workflow workflows/ltx/api/ltx2-5-t2v.api.json --print-prompt --host
 comfy run --workflow workflows/relayvsr/api/video-upscale-relayvsr-x2.api.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/ph3-image/ph3-image-edit-4img.api.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/h3-image/h3-image-t2i-4mp.api.json --print-prompt --host 127.0.0.1 --port 8188
+comfy run --workflow workflows/h3-image/h3-image-edit-2ref.api.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/sam3/api/sam3-mask-video.api.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/text2music-yue2.json         --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/text2music-minimaxmusic3.json --print-prompt --host 127.0.0.1 --port 8188
@@ -473,6 +475,7 @@ For agent submission, install `comfy-mcp` and register the target with
 | `MiniMaxH3ImageConditioning` 404, or 200 with an empty input schema | ComfyUI older than 0.45.0, or a partial build | Update to 0.45.0+; re-query `/object_info/MiniMaxH3ImageConditioning` and confirm `clip`, `prompt`, `width`, `height`. |
 | H3-Image output is the wrong size or fails at 4096 | Width/height not a multiple of 32 | Use 4096×4096, 5472×3072, 4736×3552, etc. |
 | H3-Image edit is noisy or the scene only partly changes | Whole-scene re-imagining against a strong reference | Change one local attribute at a time; describe the finished image and state what is preserved. |
+| H3-Image multi-ref output changes between 1/4/8 refs | Adding references re-composes, not just informs | Judge identity on faces; keep 1–2 refs for identity and a prop, 4 for a full composition. |
 | H3-Image seed does not reproduce across builds | w4a8 and int8 change the composition at the same seed | Pick one build and stay on it; do not A/B a seed across builds. |
 | IC 2K looks grainy, grid-like, or over-sharp | The draft came from the fastvideo 4-step preset | Use a Pika H3 Flex 1344×768 draft (copy `pika-h3-t2v` to scratch and set `6.width`/`6.height`); re-run the IC pass. |
 | IC 2K re-composes the shot instead of preserving it | Wrong refiner or sigma grid | Use `upscale-minimax-2k-ic.api.json` with `up3`; the 2-step graph and `up4` both change more. |

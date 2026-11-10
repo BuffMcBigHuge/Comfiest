@@ -119,6 +119,14 @@ phone story). Sizes must be multiples of 32.
 - Local attribute changes work well (a garment colour, an object swapped, a material changed) and keep
   identity. Whole-scene re-imaginings fight the reference and come out noisy.
 - If the edit must hold the source exactly, say so and keep the change small.
+- **Object replacement:** `<Picture 1>` is the scene, `<Picture 2>` is the object. Say where the object
+  sits, its scale, perspective and contact shadow, and state that the scene, camera, lighting and every
+  other element of `<Picture 1>` are preserved.
+- **Multiple references:** order is semantic. `<Picture 1>` anchors identity; later pictures can supply a
+  garment, a prop or a setting. Keep the set to 1–2 for identity and a prop; 4 is useful for a full
+  composition. Each extra reference costs ~+11 s and re-composes the image (1↔4 is 20.19 dB, 1↔8 is
+  9.87 dB at 256 px), so more references are not automatically better. Judge identity on the faces, not
+  pixel similarity.
 
 ## Prompt expander
 

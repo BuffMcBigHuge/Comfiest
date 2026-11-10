@@ -53,8 +53,9 @@
 >   plus LMS Sharp, with no HyperFlow and no patching. It holds 32.4 dB PSNR to a Pika draft and keeps
 >   the draft audio bit-aligned. [IC upscale](workflows/minimaxh3/api/upscale-minimax-2k-ic.api.json)
 > - **16 MP native image model** — MiniMax-H3-Image: 33.1B, 6-step CFG 1, 4–16 MP natively, exact
->   multi-line text, and up to 16 editing references. [H3-Image T2I](workflows/h3-image/h3-image-t2i-16mp.api.json),
->   [edit](workflows/h3-image/h3-image-edit.api.json)
+>   multi-line text, and 1/2/4-reference edit graphs (up to 16 supported). [H3-Image T2I](workflows/h3-image/h3-image-t2i-16mp.api.json),
+>   [edit](workflows/h3-image/h3-image-edit.api.json), [2-ref](workflows/h3-image/h3-image-edit-2ref.api.json),
+>   [4-ref](workflows/h3-image/h3-image-edit-4ref.api.json)
 > - **Looping videos** — seamless 154-frame H3 loops with synchronized audio and a ×2 seam check,
 >   built on the [MiniMax H3 base](https://huggingface.co/Comfy-Org/MiniMax-H3).
 >   [Perfect loop](workflows/minimaxh3/api/perfect-loop-minimax-h3.api.json)
@@ -71,7 +72,7 @@ Built for the [Comfy Org Open Source Higgsfield](https://comfy.org/open-source-h
 | Create | Models and capabilities |
 | --- | --- |
 | **Images from text** | Krea 2 Turbo, Flux.2 Klein 9B, MOSS-Image, MiniMax-H3-Image, P-H3-Image |
-| **Image edits** | Krea 2 Edit, Flux.2 Klein 9B reference edit (1–4 references), MiniMax-H3-Image (up to 16 references), P-H3-Image (up to 9 references) |
+| **Image edits** | Krea 2 Edit, Flux.2 Klein 9B reference edit (1–4 references), MiniMax-H3-Image (1/2/4-ref graphs; up to 16 supported), P-H3-Image (up to 9 references) |
 | **Speech** | Fish Audio Drama 3 — single/dual speaker, voice clone |
 | **Music** | YuE2 3B, MiniMax Music 3 |
 | **Video from text or references** | MiniMax H3 — Pika H3 Flex 6-step default, fastvideo variants, 1–2 pictures, video/audio references, forced lip-sync, character swap |
@@ -207,7 +208,7 @@ host:
 | LTX-2.5 ref2v / i2v | `example.png` | Upload a subject image for ref2v, or a first frame for i2v; replace the file in `work/uploads/<project>/`. |
 | RelayVSR | `example.mp4` | Upload the source clip; output is 2× its size and keeps its audio. |
 | IC 2K refiner | `example.mp4` | Upload a Pika H3 Flex 1344×768 draft; the graph refines it to 2K and muxes its audio. |
-| H3-Image edit | `example.png` | Upload the source picture; the prompt edits it as `<Picture 1>`. |
+| H3-Image edit | `example.png` | Upload the source picture and each reference; every image slot defaults to `example.png`. |
 | P-H3-Image edit | `example.png` | Upload the subject plus 3–4 references; every image slot defaults to `example.png`. |
 
 > **Voice-clone inputs:** The transcripts in the TTS templates are placeholders (“The quick brown
@@ -224,7 +225,7 @@ host:
 | Fast photoreal still / keyframe | MOSS-Image | [Text to image](workflows/text2image-moss.json) | 8-step DMD; 1776×1184; optional prompt upsampler |
 | Multi-reference image edit | P-H3-Image | [4 ref](workflows/ph3-image/ph3-image-edit-4img.api.json), [5 ref](workflows/ph3-image/ph3-image-edit-5img.api.json), [T2I](workflows/ph3-image/ph3-image-t2i.json) | w4a8; up to 9 refs; 4 MP |
 | 16 MP text → image | MiniMax-H3-Image | [4 MP](workflows/h3-image/h3-image-t2i-4mp.api.json), [16 MP](workflows/h3-image/h3-image-t2i-16mp.api.json) | 6-step CFG 1; 4096² native; exact multi-line text |
-| H3-Image reference edit | MiniMax-H3-Image | [Edit](workflows/h3-image/h3-image-edit.api.json) | 2048²; `<Picture 1>`; local attribute changes |
+| H3-Image reference edit | MiniMax-H3-Image | [1 ref](workflows/h3-image/h3-image-edit.api.json), [2 ref](workflows/h3-image/h3-image-edit-2ref.api.json), [4 ref](workflows/h3-image/h3-image-edit-4ref.api.json) | object replacement; identity + garment + prop + setting; local attribute changes |
 | Song from style + lyrics | YuE2 3B | [Style + lyrics](workflows/text2music-yue2.json) | 120 s, vocals |
 | Song from caption + lyrics | MiniMax Music 3 | [Caption + lyrics](workflows/text2music-minimaxmusic3.json) | tiled audio decode |
 | Speech / voice clone | Fish Audio Drama 3 | [Speech workflows](workflows/fishdrama3/) | 4 variants, 1–2 speakers |
@@ -278,7 +279,7 @@ Music 3, and Drama 3; the index maps each to its workflow.
 │   ├── validate_workflow.py # check an API graph against a live target
 │   ├── wait_job.py          # poll /history when the MCP wait fails
 │   └── fetch_output.py      # download outputs when fetch_outputs fails
-├── workflows/               # 70 workflow templates
+├── workflows/               # 72 workflow templates
 │   ├── *.json
 │   ├── fishdrama3/          # TTS base + variants
 │   ├── h3-image/            # MiniMax-H3-Image T2I and edit
