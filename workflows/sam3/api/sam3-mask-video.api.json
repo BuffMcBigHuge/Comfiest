@@ -44,7 +44,7 @@
         "11",
         0
       ],
-      "image": "example.png",
+      "image": ["10", 0],
       "conditioning": [
         "12",
         0

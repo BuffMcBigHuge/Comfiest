@@ -355,7 +355,7 @@
     "inputs": {
       "upscale_method": "lanczos",
       "scale_by": 0.5,
-      "image": "example.png"
+      "image": ["22", 0]
     },
     "class_type": "ImageScaleBy",
     "_meta": {
@@ -364,7 +364,7 @@
   },
   "24": {
     "inputs": {
-      "image": "example.png"
+      "image": ["23", 0]
     },
     "class_type": "GetImageSize",
     "_meta": {
