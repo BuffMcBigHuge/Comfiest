@@ -10,6 +10,10 @@ MiniMax-H3. It is **native ComfyUI**: `PH3ImageConditioning` lives in
 `comfy_extras/nodes_minimax_h3.py`, and the `minimax` CLIP/VAE paths are core. Support landed in
 **ComfyUI 0.44.0**; 0.43.x does not have the node. No custom nodes, no LoRAs.
 
+**Not the same as MiniMax-H3-Image.** This is PrunaAI's 4 MP distillation using `PH3ImageConditioning`.
+The native 33.1B MiniMax-H3-Image uses `MiniMaxH3ImageConditioning`, runs at 4–16 MP, and needs ComfyUI
+0.45; see [`../h3-image/SKILL.md`](../h3-image/SKILL.md).
+
 ## Files
 
 Files live in `../../workflows/ph3-image/`.

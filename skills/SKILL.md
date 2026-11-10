@@ -20,19 +20,19 @@ one target for its lifetime.
 | `README.md` | Project overview, quick start, model list, and contribution guide. |
 | `COMFY-SETUP.md` | Install ComfyUI, custom nodes, models, and the TensorRT depth engine. |
 | `skills/SKILL.md` | This file: rules, routing, operating loop, and findings. |
-| `skills/*/SKILL.md` | Family and recipe subskills (MiniMax H3, LTX-2.5, character replacement, Fish Audio). |
+| `skills/*/SKILL.md` | Family and recipe subskills (MiniMax H3, H3-Image, P-H3-Image, LTX-2.5, character replacement, Fish Audio). |
 | `MCP-SETUP.md` | MCP transport, installation, client registration, and target setup. |
 | `scripts/` | `install_nodes.py`, `download_models.py` for machine setup. |
 | `workflows/` | Workflow templates; usage notes live in `skills/`. |
 | `work/` | Writable agent workspace (scratch, uploads, outputs, analysis, post, exports, logs). |
 | `LICENSE` | MIT license for this repository. |
 
-`workflows/minimaxh3/`, `workflows/ltx/`, `workflows/relayvsr/`, `workflows/ph3-image/`,
-`workflows/sam3/`, and `workflows/fishdrama3/` are workflow-family subdirectories. Their usage notes
-live in `skills/minimaxh3/`, `skills/minimaxh3-pika/`, `skills/minimaxh3-character-replace/`,
-`skills/minimaxh3-upscale/`, `skills/minimaxh3-perfect-loop/`, `skills/ltx2-5/`, `skills/relayvsr/`,
-`skills/ph3-image/`, `skills/sam3/`, `skills/workflow-development/`, `skills/prompt-writing/`, and
-`skills/fish-audio-drama3/`.
+`workflows/minimaxh3/`, `workflows/h3-image/`, `workflows/ltx/`, `workflows/relayvsr/`,
+`workflows/ph3-image/`, `workflows/sam3/`, and `workflows/fishdrama3/` are workflow-family
+subdirectories. Their usage notes live in `skills/minimaxh3/`, `skills/minimaxh3-pika/`,
+`skills/minimaxh3-character-replace/`, `skills/minimaxh3-upscale/`, `skills/minimaxh3-perfect-loop/`,
+`skills/h3-image/`, `skills/ltx2-5/`, `skills/relayvsr/`, `skills/ph3-image/`, `skills/sam3/`,
+`skills/workflow-development/`, `skills/prompt-writing/`, and `skills/fish-audio-drama3/`.
 `work/` is the only writable area of the repository.
 
 ```text
@@ -54,13 +54,15 @@ live in `skills/minimaxh3/`, `skills/minimaxh3-pika/`, `skills/minimaxh3-charact
 │   ├── ltx2-5/SKILL.md
 │   ├── relayvsr/SKILL.md
 │   ├── ph3-image/SKILL.md
+│   ├── h3-image/SKILL.md
 │   ├── sam3/SKILL.md
 │   ├── workflow-development/SKILL.md
-│   ├── prompt-writing/             # seven family prompt writers + README index
+│   ├── prompt-writing/             # eight family prompt writers + README index
 │   └── fish-audio-drama3/SKILL.md
 ├── workflows/
 │   ├── *.json                      # root workflows
 │   ├── fishdrama3/                 # TTS variants + base
+│   ├── h3-image/                   # MiniMax-H3-Image T2I and edit
 │   ├── ltx/                        # LTX-2.5 t2v/ref2v/i2v
 │   ├── ph3-image/                  # P-H3-Image T2I and multi-ref edits
 │   ├── relayvsr/                   # RelayVSR X2 video upscale
@@ -87,14 +89,15 @@ directory) and reuse that absolute prefix for the session.
 ### Workflow JSON is read-only
 
 - Never add, edit, reformat, re-save, rename, or delete a `.json` under `workflows/`, including
-  `workflows/minimaxh3/`, `workflows/minimaxh3/api/`, and `workflows/fishdrama3/`. Preserve bytes exactly:
+  `workflows/minimaxh3/`, `workflows/minimaxh3/api/`, `workflows/h3-image/`, and
+  `workflows/fishdrama3/`. Preserve bytes exactly:
   no line-ending, whitespace, or key-order normalization.
 - **Maintained additions:** the two `*-forced` UI files, their two API mirrors, the three
   `charreplace-*` API workflows, the four `upscale-*` API workflows, the three `sam3-*` API
   workflows, the three `pika-h3-*` API workflows, the three `image2image-fluxklein-{2,3,4}ref.json`
-  additions, the three `ltx2-5-*` API workflows, the RelayVSR UI/API pair, the P-H3-Image
-  UI/API additions, and `perfect-loop-minimax-h3.api.json` are maintained rather than one-off
-  templates.
+  additions, the three `ltx2-5-*` API workflows, the three H3-Image API graphs, the RelayVSR UI/API
+  pair, the P-H3-Image UI/API additions, and `perfect-loop-minimax-h3.api.json` are maintained rather
+  than one-off templates.
   Edit them only on an explicit user request.
 - **Markdown documentation lives in `skills/`.** Inventory and usage notes belong in this file or in
   the family/recipe subskills (`skills/minimaxh3/`, `skills/minimaxh3-character-replace/`,
@@ -227,6 +230,8 @@ explicit approval.
 | Video from text or references | MiniMax H3 / Pika H3 Flex | `workflows/minimaxh3/api/pika-h3-*.api.json` + fastvideo variants | Pika 6-step default; fastvideo 8-step variants; 3 Pika + 14 fastvideo + 3 charreplace |
 | Video with joint audio | LTX-2.5 22B distilled | `workflows/ltx/api/*.api.json` | t2v/ref2v/i2v; 512×960; 8.04 s |
 | Multi-reference image edit | P-H3-Image | `workflows/ph3-image/ph3-image-edit-{4,5}img*.json` | 4 MP; up to 9 refs; native w4a8 |
+| 16 MP text → image | MiniMax-H3-Image | `workflows/h3-image/h3-image-t2i-{4mp,16mp}.api.json` | 6-step CFG 1; 4096² native; exact multi-line text |
+| Reference edit (H3-Image) | MiniMax-H3-Image | `workflows/h3-image/h3-image-edit.api.json` | 2048²; `<Picture 1>`; local attribute changes |
 | Video 2× upscale | RelayVSR X2 | `workflows/relayvsr/api/video-upscale-relayvsr-x2.api.json` | pixel-space 2×; audio passthrough |
 | 2K upscale / refine | MiniMax H3 + refiner | `workflows/minimaxh3/api/upscale-*.api.json` | t2v/v2v latent upscale; 2-step re-synthesis or 3-step IC fidelity; 2560×1440 |
 | Seamless video loop | MiniMax H3 Perfect Loop | `workflows/minimaxh3/api/perfect-loop-minimax-h3.api.json` | 154 f / 6.42 s; audio included; ×2 seam check |
@@ -244,6 +249,7 @@ caption/lyrics form to produce arrangement rather than a static groove.
 | Krea 2 | `prompt-writing/krea2-prompt-writer/SKILL.md` |
 | Flux.2 Klein 9B | `prompt-writing/flux-klein-9b-prompt-writer/SKILL.md` |
 | MOSS-Image | `prompt-writing/moss-image-prompt-writer/SKILL.md` |
+| MiniMax-H3-Image | `prompt-writing/minimax-h3-image-prompt-writer/SKILL.md` |
 | LTX-2.5 | `prompt-writing/ltx2.5-prompt-writer/SKILL.md` |
 | YuE2 3B | `prompt-writing/yue2-prompt-writer/SKILL.md` |
 | MiniMax Music 3 | `prompt-writing/minimax-music3-prompt-writer/SKILL.md` |
@@ -264,8 +270,9 @@ How to use the table:
 
 Routing constraints:
 
-- One job at a time per target. Krea/Flux/MOSS are light; Music 3, MiniMax H3, the 2K upscale path,
-  the perfect loop, LTX-2.5, and RelayVSR are heavy; Drama 3 is heavy on system RAM.
+- One job at a time per target. Krea/Flux/MOSS/H3-Image are light per image; Music 3, MiniMax H3,
+  the 2K upscale path, the perfect loop, LTX-2.5, and RelayVSR are heavy; Drama 3 is heavy on system
+  RAM. H3-Image still pays the 27 GB text-encoder swap on the first run of a process.
 - The workflow JSON is the final authority on node IDs and model filenames. The family sections call
   out known traps: dead branches, decoy LoRA loaders, optional files that are not installed.
 - To build or adapt a graph, use [`workflow-development/SKILL.md`](workflow-development/SKILL.md).
@@ -954,11 +961,33 @@ passed through. Use it as a finishing pass on H3/LTX output, or when the H3 refi
 
 Full settings, cost, and gotchas: [`relayvsr/SKILL.md`](relayvsr/SKILL.md).
 
+### MiniMax-H3-Image — native 4–16 MP T2I and editing
+
+MiniMax-H3-Image is Comfy-Org's 33.1B H3 image model: the H3 architecture without the audio branch,
+one checkpoint for text-to-image and editing (up to 16 references), **6 steps at CFG 1**, and a native
+~16 MP with no upscaler. It is native ComfyUI **0.45.0+** (`MiniMaxH3ImageConditioning`), no custom
+nodes and no LoRAs. Three API graphs: 4 MP T2I, 16 MP T2I, and a 4 MP edit.
+
+- `KSampler`: 6 steps, `cfg 1.0`, `euler`, `simple`, denoise 1.0; the negative is a zeroed conditioning,
+  so there is no negative prompt and no guidance pass.
+- w4a8 is the 24 GB default. int8 is ~2 s faster/slightly sharper but changes the composition at the
+  same seed; do not A/B a seed across builds. bf16 does not fit.
+- Sizes are multiples of 32: 2048² for iteration, 4096² for production, 5472×3072 for wide.
+  `width`/`height` 0 follows `image_1`'s size after reference scaling, or 2048² without an image.
+- Edit: `<Picture 1>` is the edited image; describe the finished image and state what is preserved.
+  Local attribute changes work; whole-scene re-imagining is partial and noisy.
+- Text is the standout: quote exact wording, place it, and state the order. Read
+  [`prompt-writing/minimax-h3-image-prompt-writer/SKILL.md`](prompt-writing/minimax-h3-image-prompt-writer/SKILL.md)
+  before filling a prompt.
+
+Full addresses, model set, runs, expander, and gotchas: [`h3-image/SKILL.md`](h3-image/SKILL.md).
+
 ### P-H3-Image — native T2I and multi-reference edit
 
 P-H3-Image is PrunaAI's image distillation of MiniMax-H3. It is native ComfyUI 0.44.0+
 (`PH3ImageConditioning`), no custom nodes or LoRAs. The w4a8 set is the 24 GB option; bf16/int8 do not
-fit. Four graphs: 4-ref API/UI, 5-ref API, and T2I UI.
+fit. Four graphs: 4-ref API/UI, 5-ref API, and T2I UI. Not the same model as MiniMax-H3-Image above:
+this is the 4 MP distillation; the native 33.1B model runs at 4–16 MP on 0.45.
 
 - `image_1` is the subject and sets the 4 MP canvas; refs go to `PH3ImageConditioning` at native size.
 - `BatchImagesNode` + `StringFormat` feed the prompt upsampler one `<Picture N>` block per image;
@@ -1215,6 +1244,11 @@ Before production:
 | P-H3-Image `PH3ImageConditioning` missing | ComfyUI is older than 0.44.0 | Update ComfyUI; verify `/object_info/PH3ImageConditioning`. |
 | P-H3-Image OOM | bf16/int8 set or 8 MP on 24 GB | Use the w4a8 diffusion/encoder/upsampler/VAE set; 4 MP is the tested size. |
 | P-H3-Image ignores a reference | A slot is unset or the prompt does not bind `<Picture N>` | Set every image slot; name the subject/setting/garment/prop per picture. |
+| H3-Image `MiniMaxH3ImageConditioning` missing or empty | ComfyUI older than 0.45.0, or a partial build | Update to 0.45.0+; verify the node lists `clip`, `prompt`, `width`, `height`. |
+| H3-Image output is the wrong size | Width/height not a multiple of 32 | Use 2048², 4096², 5472×3072, 4736×3552, etc. |
+| H3-Image edit is noisy or only partly changes | Whole-scene re-imagining against a strong reference | Change one local attribute; describe the finished image and state what is preserved. |
+| H3-Image seed does not reproduce across builds | w4a8 and int8 change the composition at the same seed | Pick one build and stay on it. |
+| H3-Image text is wrong or missing | Unquoted or unplaced text | Quote exact wording, say where it sits, and state the order. |
 | SAM3 returns a nearly-full matte | Absent target falls back to the salient object, or categories union | Use one specific category, raise `13.threshold`, and check mean luma; never stack speculative categories. |
 | SAM3 video frame count multiplies | `13.individual_masks=true` on video | Keep it `false` for video. |
 | SAM3 classes missing or resolve to an old custom pack | ComfyUI lacks core `comfy_extras.nodes_sam3` | Update to 0.43.0+; verify `/object_info/SAM3_Detect` reports `comfy_extras.nodes_sam3`. |
@@ -1256,8 +1290,8 @@ This file is the repository's operating skill. Keep it portable and current.
 > A machine with nothing installed yet? Follow [`COMFY-SETUP.md`](../COMFY-SETUP.md) first. It covers
 > ComfyUI, PyTorch/CUDA, every custom-node pack, every model file, and the TensorRT depth engine.
 
-- ComfyUI 0.44.0 or newer (P-H3-Image needs `PH3ImageConditioning`; the perfect loop also needs
-  `CreateVideo`/`SaveVideo`).
+- ComfyUI 0.45.0 or newer (MiniMax-H3-Image needs `MiniMaxH3ImageConditioning`; P-H3-Image needs
+  0.44's `PH3ImageConditioning`; the perfect loop also needs `CreateVideo`/`SaveVideo`).
 - 2K upscale/refine needs `MiniMaxH3LatentUpscaleWithModel` (ComfyUI PR #17412 or newer). The IC path
   also needs 0.44's core `BlockSparseAttention`, `ModelAttentionBackend`, `ComfyMathExpression`, and
   `TrimAudioDuration`.
@@ -1277,6 +1311,8 @@ This file is the repository's operating skill. Keep it portable and current.
   and the Gemma 4 12B encoder (`CLIPLoader` type `ltxv`).
 - RelayVSR needs `Comfyui-Relay-VSR` and VideoHelperSuite; no extra pip packages.
 - P-H3-Image needs ComfyUI 0.44.0+ and its w4a8 model set; no custom pack or LoRA.
+- MiniMax-H3-Image needs ComfyUI 0.45.0+ and its w4a8 DiT + image VAE + the shared Qwen3-VL-32B
+  encoder; no custom pack or LoRA.
 - Models: see the family sections. Verify each target's loader option lists
   (`/object_info/<Class>`) rather than assuming the reference deployment's inventory or trusting
   `/models/<folder>`, which can be empty.
@@ -1298,8 +1334,9 @@ This file is the repository's operating skill. Keep it portable and current.
 - `skills/ltx2-5/SKILL.md` — LTX-2.5 t2v/ref2v/i2v with joint audio.
 - `skills/relayvsr/SKILL.md` — RelayVSR X2 2× video upscale and audio passthrough.
 - `skills/ph3-image/SKILL.md` — P-H3-Image native T2I and multi-reference edits.
+- `skills/h3-image/SKILL.md` — MiniMax-H3-Image native 4–16 MP T2I and reference editing.
 - `skills/sam3/SKILL.md` — native SAM3 image/video mattes, prompt grammar, and alpha compositing.
 - `skills/workflow-development/SKILL.md` — scratch edits, validation, MCP submission, and promotion.
-- `skills/prompt-writing/README.md` — index of the seven family prompt-writing skills.
+- `skills/prompt-writing/README.md` — index of the eight family prompt-writing skills.
 - `skills/fish-audio-drama3/SKILL.md` — TTS variant index and reference requirements.
 - `work/README.md` — workspace rules and the pointer to this file.

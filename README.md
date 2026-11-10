@@ -52,11 +52,14 @@
 > - **Fidelity 2K refiner** — a 0.2 GB rank-21 [Open-H3-Regenerate-2K-IC LoRA](https://huggingface.co/Kijai/MiniMax-H3-experimental/blob/main/loras/minimax_h3_open_regenerate_2k_ic_lora_avg_rank_21_bf16.safetensors)
 >   plus LMS Sharp, with no HyperFlow and no patching. It holds 32.4 dB PSNR to a Pika draft and keeps
 >   the draft audio bit-aligned. [IC upscale](workflows/minimaxh3/api/upscale-minimax-2k-ic.api.json)
+> - **16 MP native image model** — MiniMax-H3-Image: 33.1B, 6-step CFG 1, 4–16 MP natively, exact
+>   multi-line text, and up to 16 editing references. [H3-Image T2I](workflows/h3-image/h3-image-t2i-16mp.api.json),
+>   [edit](workflows/h3-image/h3-image-edit.api.json)
 > - **Looping videos** — seamless 154-frame H3 loops with synchronized audio and a ×2 seam check,
 >   built on the [MiniMax H3 base](https://huggingface.co/Comfy-Org/MiniMax-H3).
 >   [Perfect loop](workflows/minimaxh3/api/perfect-loop-minimax-h3.api.json)
 >
-> These are brand-new innovations in the MiniMax H3 ecosystem, and Comfiest supports all four.
+> These are brand-new innovations in the MiniMax H3 ecosystem, and Comfiest supports all five.
 
 Comfiest packages the parts of an AI production pipeline that normally live in someone's head:
 model routing, workflow templates, hardware limits, submission loops, output provenance, and the
@@ -67,8 +70,8 @@ Built for the [Comfy Org Open Source Higgsfield](https://comfy.org/open-source-h
 
 | Create | Models and capabilities |
 | --- | --- |
-| **Images from text** | Krea 2 Turbo, Flux.2 Klein 9B, MOSS-Image, P-H3-Image |
-| **Image edits** | Krea 2 Edit, Flux.2 Klein 9B reference edit (1–4 references), P-H3-Image (up to 9 references) |
+| **Images from text** | Krea 2 Turbo, Flux.2 Klein 9B, MOSS-Image, MiniMax-H3-Image, P-H3-Image |
+| **Image edits** | Krea 2 Edit, Flux.2 Klein 9B reference edit (1–4 references), MiniMax-H3-Image (up to 16 references), P-H3-Image (up to 9 references) |
 | **Speech** | Fish Audio Drama 3 — single/dual speaker, voice clone |
 | **Music** | YuE2 3B, MiniMax Music 3 |
 | **Video from text or references** | MiniMax H3 — Pika H3 Flex 6-step default, fastvideo variants, 1–2 pictures, video/audio references, forced lip-sync, character swap |
@@ -105,18 +108,18 @@ If your agent supports skills:
 - Copy `skills/SKILL.md` to `<client-skills>/comfiest/SKILL.md` for the umbrella rules and routing.
 - Copy `skills/minimaxh3/`, `skills/minimaxh3-pika/`, `skills/minimaxh3-character-replace/`,
   `skills/minimaxh3-upscale/`, `skills/minimaxh3-perfect-loop/`, `skills/ltx2-5/`, `skills/relayvsr/`,
-  `skills/ph3-image/`, `skills/sam3/`, `skills/prompt-writing/`, `skills/workflow-development/`, and
+  `skills/ph3-image/`, `skills/h3-image/`, `skills/sam3/`, `skills/prompt-writing/`, `skills/workflow-development/`, and
   `skills/fish-audio-drama3/` as sibling skill directories if your client discovers each skill
-  separately. `skills/prompt-writing/` contains seven family skills; copy its child directories
+  separately. `skills/prompt-writing/` contains eight family skills; copy its child directories
   individually if your client requires a flat layout.
 
 The umbrella carries the hard rules and routing; the subskills carry family and recipe detail.
 
 ## What your agent gets
 
-- **Routing that respects hardware.** Krea/Flux/MOSS for images, YuE2/Music 3 for songs, Drama 3 for
-  speech, MiniMax H3/Pika for video, 2K refine, and seamless loops. Heavy models are called out before
-  they blow up a 24 GB card.
+- **Routing that respects hardware.** Krea/Flux/MOSS/H3-Image for images, YuE2/Music 3 for songs,
+  Drama 3 for speech, MiniMax H3/Pika for video, 2K refine, and seamless loops. Heavy models are called
+  out before they blow up a 24 GB card.
 - **Workflow templates that actually run.** UI files for ComfyUI, pre-slimmed `api/*.api.json`
   mirrors for MCP execution, and conversion notes for the frontend-only nodes that break API runs.
 - **A development loop for new workflows.** Scratch copies, UI-to-API conversion, target preflight,
@@ -126,8 +129,8 @@ The umbrella carries the hard rules and routing; the subskills carry family and 
   checks, and alpha-WebM compositing — no character-replacement graph required.
 - **A second video family.** LTX-2.5 22B distilled generates video and audio in one pass from text,
   an identity reference, or a first frame.
-- **Prompt-writing skills for every family.** Krea, Flux, MOSS, LTX, YuE2, Music 3, and Drama 3
-  prompts get the model-specific structure instead of a one-line caption.
+- **Prompt-writing skills for every family.** Krea, Flux, MOSS, H3-Image, LTX, YuE2, Music 3, and
+  Drama 3 prompts get the model-specific structure instead of a one-line caption.
 - **A submission loop that survives real life.** `wait: false` + `/history` polling, direct output
   URL fallback when local job state lags, one-job-per-target discipline.
 - **Provenance by default.** Every file lands under a `prompt_id` folder with a run-log entry; vision
@@ -139,7 +142,7 @@ The umbrella carries the hard rules and routing; the subskills carry family and 
 
 ### 1. Set up ComfyUI
 
-Install ComfyUI 0.44 or newer with the node packs and models listed in
+Install ComfyUI 0.45 or newer with the node packs and models listed in
 [`skills/SKILL.md`](skills/SKILL.md#target-requirements). A 24 GB-class GPU is the baseline. Drama 3
 loads 38.6 GB of experts into system RAM; use a high-RAM host.
 
@@ -204,6 +207,7 @@ host:
 | LTX-2.5 ref2v / i2v | `example.png` | Upload a subject image for ref2v, or a first frame for i2v; replace the file in `work/uploads/<project>/`. |
 | RelayVSR | `example.mp4` | Upload the source clip; output is 2× its size and keeps its audio. |
 | IC 2K refiner | `example.mp4` | Upload a Pika H3 Flex 1344×768 draft; the graph refines it to 2K and muxes its audio. |
+| H3-Image edit | `example.png` | Upload the source picture; the prompt edits it as `<Picture 1>`. |
 | P-H3-Image edit | `example.png` | Upload the subject plus 3–4 references; every image slot defaults to `example.png`. |
 
 > **Voice-clone inputs:** The transcripts in the TTS templates are placeholders (“The quick brown
@@ -219,6 +223,8 @@ host:
 | Reference edit | Flux.2 Klein 9B | [1 ref](workflows/image2image-fluxklein.json), [2 ref](workflows/image2image-fluxklein-2ref.json), [3 ref](workflows/image2image-fluxklein-3ref.json), [4 ref](workflows/image2image-fluxklein-4ref.json) | ordered reference list; reference 1 sets the canvas |
 | Fast photoreal still / keyframe | MOSS-Image | [Text to image](workflows/text2image-moss.json) | 8-step DMD; 1776×1184; optional prompt upsampler |
 | Multi-reference image edit | P-H3-Image | [4 ref](workflows/ph3-image/ph3-image-edit-4img.api.json), [5 ref](workflows/ph3-image/ph3-image-edit-5img.api.json), [T2I](workflows/ph3-image/ph3-image-t2i.json) | w4a8; up to 9 refs; 4 MP |
+| 16 MP text → image | MiniMax-H3-Image | [4 MP](workflows/h3-image/h3-image-t2i-4mp.api.json), [16 MP](workflows/h3-image/h3-image-t2i-16mp.api.json) | 6-step CFG 1; 4096² native; exact multi-line text |
+| H3-Image reference edit | MiniMax-H3-Image | [Edit](workflows/h3-image/h3-image-edit.api.json) | 2048²; `<Picture 1>`; local attribute changes |
 | Song from style + lyrics | YuE2 3B | [Style + lyrics](workflows/text2music-yue2.json) | 120 s, vocals |
 | Song from caption + lyrics | MiniMax Music 3 | [Caption + lyrics](workflows/text2music-minimaxmusic3.json) | tiled audio decode |
 | Speech / voice clone | Fish Audio Drama 3 | [Speech workflows](workflows/fishdrama3/) | 4 variants, 1–2 speakers |
@@ -261,8 +267,9 @@ Music 3, and Drama 3; the index maps each to its workflow.
 │   ├── ltx2-5/SKILL.md                # LTX-2.5 video + joint audio
 │   ├── relayvsr/SKILL.md              # RelayVSR X2 video upscale
 │   ├── ph3-image/SKILL.md             # P-H3-Image multi-ref edit + T2I
+│   ├── h3-image/SKILL.md              # MiniMax-H3-Image 4–16 MP T2I + edit
 │   ├── sam3/SKILL.md                  # native masking family
-│   ├── prompt-writing/                # seven family prompt writers + README index
+│   ├── prompt-writing/                # eight family prompt writers + README index
 │   ├── workflow-development/SKILL.md   # edit -> validate -> run -> promote
 │   └── fish-audio-drama3/SKILL.md
 ├── scripts/
@@ -271,9 +278,10 @@ Music 3, and Drama 3; the index maps each to its workflow.
 │   ├── validate_workflow.py # check an API graph against a live target
 │   ├── wait_job.py          # poll /history when the MCP wait fails
 │   └── fetch_output.py      # download outputs when fetch_outputs fails
-├── workflows/               # 67 workflow templates
+├── workflows/               # 70 workflow templates
 │   ├── *.json
 │   ├── fishdrama3/          # TTS base + variants
+│   ├── h3-image/            # MiniMax-H3-Image T2I and edit
 │   ├── ltx/                 # LTX-2.5 t2v/ref2v/i2v graphs
 │   ├── ph3-image/           # P-H3-Image T2I and multi-ref edits
 │   ├── relayvsr/            # RelayVSR X2 video upscale
@@ -317,7 +325,7 @@ fork rather than editing the shipped template.
 
 ## Requirements
 
-- ComfyUI 0.44+ and frontend 1.57.1+.
+- ComfyUI 0.45+ and frontend 1.57.1+.
 - `comfy-cli` + `comfy-mcp` (Python 3.12 tested).
 - Node packs: the full set is installed by [`COMFY-SETUP.md`](COMFY-SETUP.md) — rgthree, RES4LYF,
   WAS, Easy-Use, various, KJNodes, VideoHelperSuite, Drama3, krea2edit, Conditioning Rebalance,
@@ -325,7 +333,8 @@ fork rather than editing the shipped template.
   Depth-Anything-TensorRT.
   Optional: Frame-Interpolation (the H3 graphs use Fill-Nodes `FL_RIFE`), the latent upscaler, and
   ComfyUI-GGUF (legacy GGUF graphs only).
-- Models: Krea 2 Turbo/Edit, Flux.2 Klein 9B + Qwen3-8B fp8mixed, MOSS-Image, P-H3-Image w4a8,
+- Models: Krea 2 Turbo/Edit, Flux.2 Klein 9B + Qwen3-8B fp8mixed, MOSS-Image, MiniMax-H3-Image w4a8 +
+  image VAE (16 MP), P-H3-Image w4a8,
   YuE2 3B, MiniMax Music 3, Fish Audio Drama 3, MiniMax H3 fastvideo stack + Pika H3 Flex adapters +
   2K re-synthesis refiner/upscaler + rank-21 IC fidelity LoRA and the loop Turbo adapter, LTX-2.5 22B
   distilled + Gemma 4 12B + Best-FaceID identity LoRA, RelayVSR X2, SAM3 segmentation. Exact filenames

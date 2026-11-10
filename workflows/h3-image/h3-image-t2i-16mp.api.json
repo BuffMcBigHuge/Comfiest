@@ -1,0 +1,122 @@
+{
+  "1": {
+    "inputs": {
+      "unet_name": "minimax_h3_image_pruned_w4a8.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "H3-Image DiT (w4a8)"
+    }
+  },
+  "2": {
+    "inputs": {
+      "clip_name": "qwen3vl_32b_minimax_h3_int8_convrot.safetensors",
+      "type": "minimax",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "Qwen3-VL 32B (minimax)"
+    }
+  },
+  "3": {
+    "inputs": {
+      "vae_name": "minimax_h3_image_vae_fp16.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "H3-Image VAE fp16"
+    }
+  },
+  "4": {
+    "inputs": {
+      "clip": [
+        "2",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ],
+      "prompt": "A red fox stands alert at the edge of a snow-covered pine forest at dawn, thick russet winter coat with a white chest and black-tipped ears, one front paw lifted mid-step, breath visible in the cold air. The fox is centered in the lower third of the frame, surrounded by undisturbed snow with a few tracks, dark pine trunks receding behind it. Low golden side light from screen-left, cool blue shadows, shallow depth of field, photographed on an 85mm lens at f/2, fine fur texture, crisp snow crystals, natural winter palette.",
+      "width": 4096,
+      "height": 4096
+    },
+    "class_type": "MiniMaxH3ImageConditioning",
+    "_meta": {
+      "title": "Prompt -> conditioning + latent"
+    }
+  },
+  "5": {
+    "inputs": {
+      "conditioning": [
+        "4",
+        0
+      ]
+    },
+    "class_type": "ConditioningZeroOut",
+    "_meta": {
+      "title": "Negative (zeroed)"
+    }
+  },
+  "6": {
+    "inputs": {
+      "model": [
+        "1",
+        0
+      ],
+      "positive": [
+        "4",
+        0
+      ],
+      "negative": [
+        "5",
+        0
+      ],
+      "latent_image": [
+        "4",
+        1
+      ],
+      "seed": 42,
+      "steps": 6,
+      "cfg": 1.0,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1.0
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "6 steps / cfg 1 / euler simple"
+    }
+  },
+  "7": {
+    "inputs": {
+      "samples": [
+        "6",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "Decode"
+    }
+  },
+  "8": {
+    "inputs": {
+      "images": [
+        "7",
+        0
+      ],
+      "filename_prefix": "H3_IMAGE/T2I_16MP"
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save 16 MP"
+    }
+  }
+}

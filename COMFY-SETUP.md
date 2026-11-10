@@ -4,13 +4,14 @@ This file is written for an AI agent (or a patient human) setting up a machine f
 in order. Every command is meant to be run by the agent, with the user's confirmation before large
 downloads or package changes.
 
-**Target:** a Linux or Windows machine with an NVIDIA GPU (24 GB class or better) and about **360 GB
+**Target:** a Linux or Windows machine with an NVIDIA GPU (24 GB class or better) and about **370 GB
 of free disk**. AMD, Apple Silicon, and CPU-only setups are not supported by this exact graph set:
 the workflows use CUDA `int8_convrot` models, TensorRT depth, and NVIDIA-oriented custom nodes.
 
-The shipped graphs are validated on **ComfyUI 0.44.0**; P-H3-Image requires that build's
-`PH3ImageConditioning` (`comfy_extras.nodes_minimax_h3.py`), and the IC 2K refiner uses 0.44's core
-`BlockSparseAttention`, `ModelAttentionBackend`, `ComfyMathExpression`, and `TrimAudioDuration`.
+The shipped graphs are validated on **ComfyUI 0.45.0**. P-H3-Image still needs only 0.44's
+`PH3ImageConditioning`; MiniMax-H3-Image requires 0.45's `MiniMaxH3ImageConditioning`, and the IC 2K
+refiner uses 0.44's core `BlockSparseAttention`, `ModelAttentionBackend`, `ComfyMathExpression`, and
+`TrimAudioDuration`.
 
 **What gets installed**
 
@@ -19,7 +20,7 @@ The shipped graphs are validated on **ComfyUI 0.44.0**; P-H3-Image requires that
 3. 18 required custom-node packs (plus 3 optional), including the MiniMax H3 compatibility/acceleration
 
    nodes.
-4. About 315 GB of model files, downloaded from Hugging Face into the right folders.
+4. About 330 GB of model files, downloaded from Hugging Face into the right folders.
 5. A TensorRT depth engine for the character-replacement workflows.
 6. Optionally, the `comfy-mcp` bridge from [`MCP-SETUP.md`](MCP-SETUP.md) so an agent can submit jobs.
 
@@ -240,6 +241,8 @@ Paths are relative to `ComfyUI/`. Sizes are approximate.
 | P-H3-Image | <https://huggingface.co/PrunaAI/P-H3-Image-Comfy> | `text_encoders/p-h3-image_text_encoder_w4a8.safetensors` | `models/text_encoders/p-h3-image_text_encoder_w4a8.safetensors` | 3.6 GB |
 | P-H3-Image | <https://huggingface.co/PrunaAI/P-H3-Image-Comfy> | `text_encoders/p-h3-image_prompt_upsampler_w4a8.safetensors` | `models/text_encoders/p-h3-image_prompt_upsampler_w4a8.safetensors` | 6.7 GB |
 | P-H3-Image | <https://huggingface.co/PrunaAI/P-H3-Image-Comfy> | `vae/p-h3-image_vae_int8_convrot.safetensors` | `models/vae/p-h3-image_vae_int8_convrot.safetensors` | 3.1 GB |
+| H3-Image | <https://huggingface.co/Comfy-Org/MiniMax-H3-Image> | `diffusion_models/minimax_h3_image_pruned_w4a8.safetensors` | `models/diffusion_models/minimax_h3_image_pruned_w4a8.safetensors` | 12.5 GB |
+| H3-Image | <https://huggingface.co/Comfy-Org/MiniMax-H3-Image> | `vae/minimax_h3_image_vae_fp16.safetensors` | `models/vae/minimax_h3_image_vae_fp16.safetensors` | 1.2 GB |
 | H3 2K | <https://huggingface.co/LBH-123-AI/Minimax_h3_latent_Upscaler> | `minimax_h3_latent_upscaler_3d_conv_v1/minimax_h3_latent_upscaler_3d_conv_v1_bf16.safetensors` | `models/latent_upscale_models/minimax_h3_latent_upscaler_3d_bf16.safetensors` | 0.7 GB |
 | H3 2K | <https://huggingface.co/Kijai/MiniMax-H3-experimental> | `loras/minimax_h3_open_regenerate_2k_refiner_rank_16_bf16.safetensors` | `models/loras/minimax/minimax_h3_open_regenerate_2k_refiner_rank_16_bf16.safetensors` | 0.2 GB |
 | H3 / 2K | <https://huggingface.co/lightx2v/Minimax-h3-Turbo> | `minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors` | `models/loras/minimax/minimax_h3_fl2v_turbo_4step_v1.2_768p_comfyui_bf16.safetensors` | 2.0 GB |
@@ -251,6 +254,14 @@ Paths are relative to `ComfyUI/`. Sizes are approximate.
 
 The optional character-swap LoRA is **not** in the shipped char-replace graphs; add it to a scratch
 copy if you want stronger identity transfer.
+
+The H3-Image DiT is a different checkpoint from P-H3-Image and the H3 video models. w4a8 is the 24 GB
+default: it fits 16 MP with about 11 GB headroom. The int8 build (21 GB) is ~2 s faster and slightly
+sharper, but it **changes the composition**, not just the detail — do not compare w4a8 and int8 at a
+fixed seed. bf16 (40 GB) does not fit a 24 GB card. The Qwen3-VL-32B text encoder is already installed
+for H3 video and is reused unchanged. The optional Qwen3.5-9B prompt expander (7.3 GB) is not in the
+manifest; the H3-Image prompt writer covers the hand-written path. `--only h3image` fetches the DiT and
+VAE; add `h3` to also fetch the shared Qwen3-VL-32B text encoder (`--only h3,h3image`).
 
 `sheetsage2_bf16.safetensors` is YuE2's audio encoder companion. The YuE2 node loads it internally, so
 it does not appear as a workflow widget; keep it even though a JSON search will not find the filename.
@@ -401,6 +412,7 @@ curl "http://127.0.0.1:8188/object_info/SAM3_VideoTrack"
 curl "http://127.0.0.1:8188/object_info/SAM3_TrackToMask"
 curl "http://127.0.0.1:8188/object_info/GrowMaskWithBlur"
 curl "http://127.0.0.1:8188/object_info/PH3ImageConditioning"
+curl "http://127.0.0.1:8188/object_info/MiniMaxH3ImageConditioning"
 ```
 
 A 200 response with a node definition means the class loaded. A 404 means the pack is missing or
@@ -429,6 +441,7 @@ comfy run --workflow workflows/minimaxh3/api/pika-h3-t2v.api.json --print-prompt
 comfy run --workflow workflows/ltx/api/ltx2-5-t2v.api.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/relayvsr/api/video-upscale-relayvsr-x2.api.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/ph3-image/ph3-image-edit-4img.api.json --print-prompt --host 127.0.0.1 --port 8188
+comfy run --workflow workflows/h3-image/h3-image-t2i-4mp.api.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/sam3/api/sam3-mask-video.api.json --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/text2music-yue2.json         --print-prompt --host 127.0.0.1 --port 8188
 comfy run --workflow workflows/text2music-minimaxmusic3.json --print-prompt --host 127.0.0.1 --port 8188
@@ -457,6 +470,10 @@ For agent submission, install `comfy-mcp` and register the target with
 | - | - | - |
 | `missing_node_type` for `H3AdaLNLoRAFix`, `FL_RIFE`, `SpectrumApplyMiniMaxH3`... | Pack not installed or failed to import | Re-run `scripts/install_nodes.py`; restart; check `comfy logs`. |
 | `missing_node_type` for `BlockSparseAttention` or `ModelAttentionBackend` | ComfyUI older than 0.44.0 | Update ComfyUI; the IC refiner needs the 0.44 core nodes. |
+| `MiniMaxH3ImageConditioning` 404, or 200 with an empty input schema | ComfyUI older than 0.45.0, or a partial build | Update to 0.45.0+; re-query `/object_info/MiniMaxH3ImageConditioning` and confirm `clip`, `prompt`, `width`, `height`. |
+| H3-Image output is the wrong size or fails at 4096 | Width/height not a multiple of 32 | Use 4096×4096, 5472×3072, 4736×3552, etc. |
+| H3-Image edit is noisy or the scene only partly changes | Whole-scene re-imagining against a strong reference | Change one local attribute at a time; describe the finished image and state what is preserved. |
+| H3-Image seed does not reproduce across builds | w4a8 and int8 change the composition at the same seed | Pick one build and stay on it; do not A/B a seed across builds. |
 | IC 2K looks grainy, grid-like, or over-sharp | The draft came from the fastvideo 4-step preset | Use a Pika H3 Flex 1344×768 draft (copy `pika-h3-t2v` to scratch and set `6.width`/`6.height`); re-run the IC pass. |
 | IC 2K re-composes the shot instead of preserving it | Wrong refiner or sigma grid | Use `upscale-minimax-2k-ic.api.json` with `up3`; the 2-step graph and `up4` both change more. |
 | IC LoRA alphas look "wrong" | Kijai folds the scale into `lora_B` and writes residual alpha scalars | Leave them alone; this is the same convention as the rank-16 2K refiner. |
@@ -508,6 +525,7 @@ Check each model card before commercial use:
 | Best_FaceID LoRA | See the Alissonerdx model card |
 | RelayVSR | See the LightX2V RelayVSR_X2 model card |
 | P-H3-Image | PrunaAI / MiniMax H3 license; see the model card |
+| MiniMax-H3-Image | MiniMax-H3-Image Community License Agreement; see the model card |
 
 If a use case requires commercial rights, verify the current model card rather than relying on this
 table.
@@ -518,12 +536,13 @@ table.
 
 Run in order, stopping to ask the user before the multi-gigabyte steps:
 
-- [ ] Confirm NVIDIA GPU, 24 GB+ VRAM, 360 GB free disk, Python 3.12.
+- [ ] Confirm NVIDIA GPU, 24 GB+ VRAM, 370 GB free disk, Python 3.12.
 - [ ] Install ComfyUI + CUDA 13 PyTorch (`comfy install --nvidia --cuda-version 13.0 --version latest`).
 - [ ] Verify `torch.cuda.is_available()`.
 - [ ] Run `python scripts/install_nodes.py --comfyui "$COMFYUI"`.
 - [ ] Restart ComfyUI; confirm no `IMPORT FAILED` in `comfy logs`.
-- [ ] Confirm ComfyUI 0.43.0+ and `/object_info/SaveVideo` for the perfect-loop graph.
+- [ ] Confirm ComfyUI 0.45.0+; verify `/object_info/MiniMaxH3ImageConditioning` for H3-Image and
+      `/object_info/SaveVideo` for the perfect-loop graph.
 - [ ] Run `python scripts/download_models.py --comfyui "$COMFYUI"`.
 - [ ] For char-replace: build `depth_anything_v2_vitl-fp16.engine`.
 - [ ] Run `python scripts/download_models.py --comfyui "$COMFYUI" --verify`.

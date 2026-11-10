@@ -147,6 +147,12 @@ MODELS = [
     ("ph3", "PrunaAI/P-H3-Image-Comfy", "vae/p-h3-image_vae_int8_convrot.safetensors",
      "models/vae/p-h3-image_vae_int8_convrot.safetensors", 3.1, False),
 
+    # MiniMax-H3-Image (native 16 MP H3 image model, w4a8 24 GB set)
+    ("h3image", "Comfy-Org/MiniMax-H3-Image", "diffusion_models/minimax_h3_image_pruned_w4a8.safetensors",
+     "models/diffusion_models/minimax_h3_image_pruned_w4a8.safetensors", 12.5, False),
+    ("h3image", "Comfy-Org/MiniMax-H3-Image", "vae/minimax_h3_image_vae_fp16.safetensors",
+     "models/vae/minimax_h3_image_vae_fp16.safetensors", 1.2, False),
+
     # SAM3 (native image/video mattes + character replacement)
     ("sam3", "Comfy-Org/sam3.1", "checkpoints/sam3.1_multiplex_fp16.safetensors",
      "models/checkpoints/sam3.1_multiplex_fp16.safetensors", 1.7, False),
