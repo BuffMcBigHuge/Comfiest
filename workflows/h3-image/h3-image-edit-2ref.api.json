@@ -39,7 +39,7 @@
         "3",
         0
       ],
-      "prompt": "In <Picture 1>, replace the object at the centre of the scene with the object from <Picture 2>, placed naturally on the ground with correct scale, perspective and contact shadow. Preserve the scene, camera angle, lighting, background and every other element of <Picture 1> exactly. No extra objects, no text.",
+      "prompt": "The object in <Picture 2> is <Subject 1>. The scene in <Picture 1> - the armchair, Christmas tree, walls, windows, floor and lighting - is <Subject 2>. The target image is a replacement: the floor lamp standing at the centre of <Picture 1> is removed and <Subject 1> takes its place. <Subject 1> is partially preserved; its shape, material, colour, engraved detail and tassel remain, while its scale, orientation and contact are adapted to the scene. <Subject 2> is fully preserved. <Subject 1> stands upright where the floor lamp stood, at the same height and distance from camera, its bow resting on the floor with a contact shadow consistent with the existing light, and the former location of the lamp is filled by continuous floor and wall. No extra objects, no text.",
       "width": 0,
       "height": 0,
       "images.image_1": [
