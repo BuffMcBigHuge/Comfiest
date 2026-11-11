@@ -1,0 +1,57 @@
+{
+  "1": {
+    "inputs": {
+      "file": "example.mp4"
+    },
+    "class_type": "LoadVideo",
+    "_meta": {
+      "title": "Source clip (video + audio)"
+    }
+  },
+  "2": {
+    "inputs": {
+      "transformer": "transformer_int8_convrot.safetensors"
+    },
+    "class_type": "ReCaVSRLoader",
+    "_meta": {
+      "title": "ReCaVSR int8 ConvRot"
+    }
+  },
+  "3": {
+    "inputs": {
+      "model": [
+        "2",
+        0
+      ],
+      "scale": 4,
+      "color_fix": "none",
+      "seed": 42,
+      "decoder": "flashdecoder",
+      "kernels": "fast",
+      "kv_offload": false,
+      "encoder": "auto",
+      "video": [
+        "1",
+        0
+      ]
+    },
+    "class_type": "ReCaVSRUpscale",
+    "_meta": {
+      "title": "Streaming 4x upscale"
+    }
+  },
+  "4": {
+    "inputs": {
+      "video": [
+        "3",
+        0
+      ],
+      "filename_prefix": "COMFY_WORKFLOWS/RECAVSR_X4",
+      "format": "mp4"
+    },
+    "class_type": "SaveVideo",
+    "_meta": {
+      "title": "Save 4x"
+    }
+  }
+}

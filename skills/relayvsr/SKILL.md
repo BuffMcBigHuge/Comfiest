@@ -10,6 +10,9 @@ and `../ltx2-5/SKILL.md`. RelayVSR is a one-step distilled, **pixel-space** vide
 model: Wan backbone plus a Flash decoder, no VAE, no CLIP, no text encoder. It is a finishing pass for
 H3/LTX output, not a re-generation.
 
+**For 4×, use ReCaVSR** ([`../recavsr/SKILL.md`](../recavsr/SKILL.md)); RelayVSR is the smaller, cheaper
+2× path.
+
 ## Files
 
 Files live in `../../workflows/relayvsr/` and `.../api/`.
@@ -103,7 +106,8 @@ packages.
 
 Generate with the H3 1 MP path (768×1376), stage the result in the target's `input/`, then run a copy of
 the RelayVSR API graph with `force_rate 0` and `VHS_VideoCombine.frame_rate 48` to preserve the model's
-48 fps cadence. The shipped 24 fps default resamples a 48 fps source and drops half the frames.
+48 fps cadence. The shipped 24 fps default resamples a 48 fps source and drops half the frames. For a
+4× pass, use ReCaVSR instead.
 
 ## Cost
 

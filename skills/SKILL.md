@@ -28,11 +28,12 @@ one target for its lifetime.
 | `LICENSE` | MIT license for this repository. |
 
 `workflows/minimaxh3/`, `workflows/h3-image/`, `workflows/ltx/`, `workflows/relayvsr/`,
-`workflows/ph3-image/`, `workflows/sam3/`, and `workflows/fishdrama3/` are workflow-family
-subdirectories. Their usage notes live in `skills/minimaxh3/`, `skills/minimaxh3-pika/`,
+`workflows/recavsr/`, `workflows/ph3-image/`, `workflows/sam3/`, and `workflows/fishdrama3/` are
+workflow-family subdirectories. Their usage notes live in `skills/minimaxh3/`, `skills/minimaxh3-pika/`,
 `skills/minimaxh3-character-replace/`, `skills/minimaxh3-upscale/`, `skills/minimaxh3-perfect-loop/`,
-`skills/h3-image/`, `skills/ltx2-5/`, `skills/relayvsr/`, `skills/ph3-image/`, `skills/sam3/`,
-`skills/workflow-development/`, `skills/prompt-writing/`, and `skills/fish-audio-drama3/`.
+`skills/h3-image/`, `skills/ltx2-5/`, `skills/relayvsr/`, `skills/recavsr/`, `skills/ph3-image/`,
+`skills/sam3/`, `skills/workflow-development/`, `skills/prompt-writing/`, and
+`skills/fish-audio-drama3/`.
 `work/` is the only writable area of the repository.
 
 ```text
@@ -57,6 +58,7 @@ subdirectories. Their usage notes live in `skills/minimaxh3/`, `skills/minimaxh3
 │   ├── minimaxh3-perfect-loop/SKILL.md
 │   ├── ltx2-5/SKILL.md
 │   ├── relayvsr/SKILL.md
+│   ├── recavsr/SKILL.md
 │   ├── ph3-image/SKILL.md
 │   ├── h3-image/SKILL.md
 │   ├── sam3/SKILL.md
@@ -70,6 +72,7 @@ subdirectories. Their usage notes live in `skills/minimaxh3/`, `skills/minimaxh3
 │   ├── ltx/                        # LTX-2.5 t2v/ref2v/i2v
 │   ├── ph3-image/                  # P-H3-Image T2I and multi-ref edits
 │   ├── relayvsr/                   # RelayVSR X2 video upscale
+│   ├── recavsr/                    # ReCaVSR X4 streaming video upscale
 │   ├── sam3/                       # native image/video matte graphs
 │   └── minimaxh3/                  # H3 base, UI variants, api/ mirrors
 └── work/                           # writable workspace; see Working directory
@@ -100,8 +103,8 @@ directory) and reuse that absolute prefix for the session.
   `charreplace-*` API workflows, the four `upscale-*` API workflows, the three `sam3-*` API
   workflows, the three `pika-h3-*` API workflows, the three `image2image-fluxklein-{2,3,4}ref.json`
   additions, the three `ltx2-5-*` API workflows, the five H3-Image API graphs, the RelayVSR UI/API
-  pair, the P-H3-Image UI/API additions, and `perfect-loop-minimax-h3.api.json` are maintained rather
-  than one-off templates.
+  pair, the ReCaVSR UI/API pair, the P-H3-Image UI/API additions, and
+  `perfect-loop-minimax-h3.api.json` are maintained rather than one-off templates.
   Edit them only on an explicit user request.
 - **Markdown documentation lives in `skills/`.** Inventory and usage notes belong in this file or in
   the family/recipe subskills (`skills/minimaxh3/`, `skills/minimaxh3-character-replace/`,
@@ -237,6 +240,7 @@ explicit approval.
 | 16 MP text → image | MiniMax-H3-Image | `workflows/h3-image/h3-image-t2i-{4mp,16mp}.api.json` | 6-step CFG 1; 4096² native; exact multi-line text |
 | Reference edit (H3-Image) | MiniMax-H3-Image | `workflows/h3-image/h3-image-edit{,-2ref,-4ref}.api.json` | 1/2/4 refs; object replacement; local attribute changes |
 | Video 2× upscale | RelayVSR X2 | `workflows/relayvsr/api/video-upscale-relayvsr-x2.api.json` | pixel-space 2×; audio passthrough |
+| Video 4× upscale | ReCaVSR X4 | `workflows/recavsr/api/video-upscale-recavsr-x4.api.json` | one-step streaming; 4× trained; audio and fps preserved |
 | 2K upscale / refine | MiniMax H3 + refiner | `workflows/minimaxh3/api/upscale-*.api.json` | t2v/v2v latent upscale; 2-step re-synthesis or 3-step IC fidelity; 2560×1440 |
 | Seamless video loop | MiniMax H3 Perfect Loop | `workflows/minimaxh3/api/perfect-loop-minimax-h3.api.json` | 154 f / 6.42 s; audio included; ×2 seam check |
 | Image or video matte | SAM3 (native) | `workflows/sam3/api/*.api.json` | text-prompted luma matte; image, video, tracker |
@@ -275,8 +279,8 @@ How to use the table:
 Routing constraints:
 
 - One job at a time per target. Krea/Flux/MOSS/H3-Image are light per image; Music 3, MiniMax H3,
-  the 2K upscale path, the perfect loop, LTX-2.5, and RelayVSR are heavy; Drama 3 is heavy on system
-  RAM. H3-Image still pays the 27 GB text-encoder swap on the first run of a process.
+  the 2K upscale path, the perfect loop, LTX-2.5, RelayVSR, and ReCaVSR are heavy; Drama 3 is heavy on
+  system RAM. H3-Image still pays the 27 GB text-encoder swap on the first run of a process.
 - The workflow JSON is the final authority on node IDs and model filenames. The family sections call
   out known traps: dead branches, decoy LoRA loaders, optional files that are not installed.
 - To build or adapt a graph, use [`workflow-development/SKILL.md`](workflow-development/SKILL.md).
@@ -968,8 +972,29 @@ passed through. Use it as a finishing pass on H3/LTX output, or when the H3 refi
   `CreateVideo` → `SaveVideo` if the exact tail matters.
 - Models: `models/relayvsr/RelayVSR_X2/{wan_x2,flash_x2}.safetensors`; node pack
   `Comfyui-Relay-VSR`.
+- For a 4× pass, use ReCaVSR below; RelayVSR is the smaller 2× option.
 
 Full settings, cost, and gotchas: [`relayvsr/SKILL.md`](relayvsr/SKILL.md).
+
+### ReCaVSR X4 — one-step streaming 4× video super-resolution
+
+`workflows/recavsr/` contains a UI/API pair around four functional nodes. ReCaVSR is a one-step streaming
+diffusion VSR on Wan2.2 TI2V-5B: 21 frames, then 8 at a time, one denoising step per block, recycled
+latents and cached K/V, decoded block by block with its own FlashDecoder. It preserves the source audio
+and frame rate.
+
+- `LoadVideo #1` → `ReCaVSRUpscale #3` → `SaveVideo #4`; `ReCaVSRLoader #2` feeds `.model`.
+- `scale=4` is the trained path; `color_fix=none` (or `adain`/`wavelet`), `seed=42`,
+  `decoder=flashdecoder`, `kernels=fast`, `kv_offload=false`, `encoder=auto`.
+- Models in `models/recavsr/`: `transformer_int8_convrot.safetensors` (6.27 GB),
+  `flashdecoder.safetensors` (229 MB), `prompt.safetensors` (4.2 MB). Node pack `ComfyUI-ReCaVSR`
+  (GPL-3.0). bf16 transformer is optional; the Wan 2.2 VAE decoder is not shipped.
+- Cost ≈ `frames × output_MP × 0.030` s on a 4090. H3 0.3 MP → 4.9 MP in ~57 s per 8 s; 1 MP → 16.9 MP
+  in ~195 s. 16.9 MP fits 24 GB via the node's 4-frame input projection.
+- Gotchas: identical inputs are cached; the loader lists all three files (pick the transformer); scene
+  cuts shimmer; do not re-encode the output.
+
+Full settings, cost, quality, and gotchas: [`recavsr/SKILL.md`](recavsr/SKILL.md).
 
 ### MiniMax-H3-Image — native 4–16 MP T2I and editing
 
@@ -1256,6 +1281,12 @@ Before production:
 | RelayVSR output plays fast/slow | `force_rate` and save `frame_rate` disagree | Set both to the source rate, or `force_rate 0` and the source fps. |
 | RelayVSR OOM at 1080p | `offload` disabled or chunk too large | Keep `offload=true`, reduce `chunk_len`, or lower source resolution. |
 | RelayVSR bundle missing after adding weights | Bundle list is scanned at import | Restart ComfyUI or set the loader's advanced `path`. |
+| ReCaVSR loader lists `prompt`/`flashdecoder` as transformers | The loader lists every file in `models/recavsr` | Pick `transformer_int8_convrot.safetensors`. |
+| ReCaVSR re-run finishes in 0.2 s | ComfyUI cached identical node inputs | Change the seed for a real repeat timing. |
+| ReCaVSR output shimmers just after a scene cut | The node carries recycled latents/history across the cut | Split each shot and upscale it as its own clip. |
+| ReCaVSR cold run is much slower than warm | Triton builds attention kernels per output size | Warm up once at that size, then compare warm runs. |
+| ReCaVSR `decoder: vae` is very slow or OOMs at 4K | Wan 2.2 VAE decodes the whole video and tiles at 4K | Use `flashdecoder`; the VAE is for final texture only. |
+| `ReCaVSRLoader` missing | `ComfyUI-ReCaVSR` not installed on that target | Install the pack, restart, and verify `/object_info/ReCaVSRLoader`. |
 | P-H3-Image `PH3ImageConditioning` missing | ComfyUI is older than 0.44.0 | Update ComfyUI; verify `/object_info/PH3ImageConditioning`. |
 | P-H3-Image OOM | bf16/int8 set or 8 MP on 24 GB | Use the w4a8 diffusion/encoder/upsampler/VAE set; 4 MP is the tested size. |
 | P-H3-Image ignores a reference | A slot is unset or the prompt does not bind `<Picture N>` | Set every image slot; name the subject/setting/garment/prop per picture. |
@@ -1317,7 +1348,7 @@ This file is the repository's operating skill. Keep it portable and current.
   `comfyui-easy-use`, `comfyui-various`, `ComfyUI-KJNodes`, `ComfyUI-VideoHelperSuite`,
   `ComfyUI-Drama3`, `comfyui-krea2edit`, `ComfyUI-ConditioningKrea2Rebalance`,
   `comfyui-plaguekind-nodes`, `ComfyUI-MiniMaxH3-Context-Loop`, `ComfyUI-BFSNodes`,
-  `Comfyui-Relay-VSR`, `ComfyUI_Fill-Nodes`,
+  `Comfyui-Relay-VSR`, `ComfyUI-ReCaVSR`, `ComfyUI_Fill-Nodes`,
   `ComfyUI-Spectrum-MiniMax-H3`, `ComfyUI-Impact-Pack`,
   `ComfyUI-Depth-Anything-Tensorrt`.
   Optional: `ComfyUI-Frame-Interpolation` (the H3 graphs use Fill-Nodes `FL_RIFE`), the latent
@@ -1326,6 +1357,9 @@ This file is the repository's operating skill. Keep it portable and current.
 - LTX-2.5 needs core `comfy_extras.nodes_lt*`, `ComfyUI-BFSNodes` for ref2v identity conditioning,
   and the Gemma 4 12B encoder (`CLIPLoader` type `ltxv`).
 - RelayVSR needs `Comfyui-Relay-VSR` and VideoHelperSuite; no extra pip packages.
+- ReCaVSR needs `ComfyUI-ReCaVSR` (its requirements install `triton` and `opencv-python-headless`, both
+  with fallbacks) and `models/recavsr/{transformer_int8_convrot,flashdecoder,prompt}.safetensors`. The
+  bf16 transformer and Wan 2.2 VAE decoder are optional and not shipped.
 - P-H3-Image needs ComfyUI 0.44.0+ and its w4a8 model set; no custom pack or LoRA.
 - MiniMax-H3-Image needs ComfyUI 0.45.0+ and its w4a8 DiT + image VAE + the shared Qwen3-VL-32B
   encoder; no custom pack or LoRA.
@@ -1349,6 +1383,7 @@ This file is the repository's operating skill. Keep it portable and current.
 - `skills/minimaxh3-perfect-loop/SKILL.md` — seamless 154-frame T2AV loop and seam checks.
 - `skills/ltx2-5/SKILL.md` — LTX-2.5 t2v/ref2v/i2v with joint audio.
 - `skills/relayvsr/SKILL.md` — RelayVSR X2 2× video upscale and audio passthrough.
+- `skills/recavsr/SKILL.md` — ReCaVSR X4 one-step streaming 4× video upscale and audio passthrough.
 - `skills/ph3-image/SKILL.md` — P-H3-Image native T2I and multi-reference edits.
 - `skills/h3-image/SKILL.md` — MiniMax-H3-Image native 4–16 MP T2I and reference editing.
 - `skills/sam3/SKILL.md` — native SAM3 image/video mattes, prompt grammar, and alpha compositing.

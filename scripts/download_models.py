@@ -137,6 +137,14 @@ MODELS = [
     ("relayvsr", "lightx2v/RelayVSR_X2", "flash_x2.safetensors",
      "models/relayvsr/RelayVSR_X2/flash_x2.safetensors", 0.13, False),
 
+    # ReCaVSR 4x (one-step streaming Wan2.2 video super-resolution)
+    ("recavsr", "PedroMarinhoDev/ReCaVSR-ComfyUI", "recavsr/transformer_int8_convrot.safetensors",
+     "models/recavsr/transformer_int8_convrot.safetensors", 6.3, False),
+    ("recavsr", "kopper/ReCaVSR", "flashdecoder.safetensors",
+     "models/recavsr/flashdecoder.safetensors", 0.2, False),
+    ("recavsr", "kopper/ReCaVSR", "prompt.safetensors",
+     "models/recavsr/prompt.safetensors", 0.0, False),
+
     # P-H3-Image (PrunaAI distilled H3 image model, w4a8 24 GB set)
     ("ph3", "PrunaAI/P-H3-Image-Comfy", "diffusion_models/p-h3-image_w4a8.safetensors",
      "models/diffusion_models/p-h3-image_w4a8.safetensors", 13.4, False),

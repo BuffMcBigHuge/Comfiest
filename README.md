@@ -56,11 +56,13 @@
 >   multi-line text, and 1/2/4-reference edit graphs (up to 16 supported). [H3-Image T2I](workflows/h3-image/h3-image-t2i-16mp.api.json),
 >   [edit](workflows/h3-image/h3-image-edit.api.json), [2-ref](workflows/h3-image/h3-image-edit-2ref.api.json),
 >   [4-ref](workflows/h3-image/h3-image-edit-4ref.api.json)
+> - **Streaming 4× video upscale** — ReCaVSR: one-step diffusion VSR on Wan2.2, 16.9 MP on 24 GB, with
+>   source audio and frame rate preserved. [ReCaVSR X4](workflows/recavsr/api/video-upscale-recavsr-x4.api.json)
 > - **Looping videos** — seamless 154-frame H3 loops with synchronized audio and a ×2 seam check,
 >   built on the [MiniMax H3 base](https://huggingface.co/Comfy-Org/MiniMax-H3).
 >   [Perfect loop](workflows/minimaxh3/api/perfect-loop-minimax-h3.api.json)
 >
-> These are brand-new innovations in the MiniMax H3 ecosystem, and Comfiest supports all five.
+> These are brand-new innovations in the MiniMax H3 ecosystem, and Comfiest supports all six.
 
 Comfiest packages the parts of an AI production pipeline that normally live in someone's head:
 model routing, workflow templates, hardware limits, submission loops, output provenance, and the
@@ -77,7 +79,7 @@ Built for the [Comfy Org Open Source Higgsfield](https://comfy.org/open-source-h
 | **Music** | YuE2 3B, MiniMax Music 3 |
 | **Video from text or references** | MiniMax H3 — Pika H3 Flex 6-step default, fastvideo variants, 1–2 pictures, video/audio references, forced lip-sync, character swap |
 | **Video with joint audio** | LTX-2.5 22B distilled — text, identity reference, or first frame |
-| **Video upscale / restoration** | RelayVSR X2 — one-step pixel-space 2× super-resolution with audio passthrough |
+| **Video upscale / restoration** | RelayVSR X2 — one-step pixel-space 2×; ReCaVSR X4 — one-step streaming 4× with audio passthrough |
 | **2K upscale / refine** | MiniMax H3 refiner — latent-space t2v/v2v upscale to 2560×1440, with 2-step re-synthesis or 3-step IC fidelity |
 | **Seamless loops** | MiniMax H3 Perfect Loop — text-to-looping-video with synchronized audio |
 | **Mattes / segmentation** | SAM3 — text-prompted image/video luma mattes, native ComfyUI nodes |
@@ -109,7 +111,7 @@ If your agent supports skills:
 - Copy `skills/SKILL.md` to `<client-skills>/comfiest/SKILL.md` for the umbrella rules and routing.
 - Copy `skills/minimaxh3/`, `skills/minimaxh3-pika/`, `skills/minimaxh3-character-replace/`,
   `skills/minimaxh3-upscale/`, `skills/minimaxh3-perfect-loop/`, `skills/ltx2-5/`, `skills/relayvsr/`,
-  `skills/ph3-image/`, `skills/h3-image/`, `skills/sam3/`, `skills/prompt-writing/`, `skills/workflow-development/`, and
+  `skills/ph3-image/`, `skills/h3-image/`, `skills/recavsr/`, `skills/sam3/`, `skills/prompt-writing/`, `skills/workflow-development/`, and
   `skills/fish-audio-drama3/` as sibling skill directories if your client discovers each skill
   separately. `skills/prompt-writing/` contains eight family skills; copy its child directories
   individually if your client requires a flat layout.
@@ -119,8 +121,8 @@ The umbrella carries the hard rules and routing; the subskills carry family and 
 ## What your agent gets
 
 - **Routing that respects hardware.** Krea/Flux/MOSS/H3-Image for images, YuE2/Music 3 for songs,
-  Drama 3 for speech, MiniMax H3/Pika for video, 2K refine, and seamless loops. Heavy models are called
-  out before they blow up a 24 GB card.
+  Drama 3 for speech, MiniMax H3/Pika for video, 2K refine, 4× upscale, and seamless loops. Heavy
+  models are called out before they blow up a 24 GB card.
 - **Workflow templates that actually run.** UI files for ComfyUI, pre-slimmed `api/*.api.json`
   mirrors for MCP execution, and conversion notes for the frontend-only nodes that break API runs.
 - **A development loop for new workflows.** Scratch copies, UI-to-API conversion, target preflight,
@@ -207,6 +209,7 @@ host:
 | MiniMax H3 reference variants | `example.png`, `example.mp4`, `example.wav` | Upload the slots the variant uses; every image slot uses the same placeholder. |
 | LTX-2.5 ref2v / i2v | `example.png` | Upload a subject image for ref2v, or a first frame for i2v; replace the file in `work/uploads/<project>/`. |
 | RelayVSR | `example.mp4` | Upload the source clip; output is 2× its size and keeps its audio. |
+| ReCaVSR | `example.mp4` | Upload the source clip; output is 4× its size and keeps its audio and frame rate. |
 | IC 2K refiner | `example.mp4` | Upload a Pika H3 Flex 1344×768 draft; the graph refines it to 2K and muxes its audio. |
 | H3-Image edit | `example.png` | Upload the source picture and each reference; every image slot defaults to `example.png`. |
 | P-H3-Image edit | `example.png` | Upload the subject plus 3–4 references; every image slot defaults to `example.png`. |
@@ -235,6 +238,7 @@ host:
 | Image or video matte | SAM3 | [SAM3 workflows](workflows/sam3/api/) | text-prompted luma matte; image + video + tracker |
 | Video with joint audio | LTX-2.5 22B distilled | [LTX workflows](workflows/ltx/api/) | t2v / ref2v / i2v; 512×960; 8.04 s |
 | Video 2× upscale | RelayVSR X2 | [RelayVSR workflow](workflows/relayvsr/api/video-upscale-relayvsr-x2.api.json) | pixel-space 2×; audio passthrough; 24/48 fps sources |
+| Video 4× upscale | ReCaVSR X4 | [ReCaVSR workflow](workflows/recavsr/api/video-upscale-recavsr-x4.api.json) | one-step streaming; 16.9 MP on 24 GB; audio + fps preserved |
 
 MiniMax H3 is the video workhorse: text-to-video, 1–2 picture references, video/audio references,
 forced-audio lip-sync, and character replacement. See
@@ -267,6 +271,7 @@ Music 3, and Drama 3; the index maps each to its workflow.
 │   ├── minimaxh3-perfect-loop/SKILL.md
 │   ├── ltx2-5/SKILL.md                # LTX-2.5 video + joint audio
 │   ├── relayvsr/SKILL.md              # RelayVSR X2 video upscale
+│   ├── recavsr/SKILL.md               # ReCaVSR X4 streaming video upscale
 │   ├── ph3-image/SKILL.md             # P-H3-Image multi-ref edit + T2I
 │   ├── h3-image/SKILL.md              # MiniMax-H3-Image 4–16 MP T2I + edit
 │   ├── sam3/SKILL.md                  # native masking family
@@ -280,12 +285,13 @@ Music 3, and Drama 3; the index maps each to its workflow.
 │   ├── wait_job.py          # poll /history when the MCP wait fails
 │   ├── fetch_output.py      # download outputs when fetch_outputs fails
 │   └── comfy_api.py         # shared /history lookup with the ?max_items fallback
-├── workflows/               # 72 workflow templates
+├── workflows/               # 74 workflow templates
 │   ├── *.json
 │   ├── fishdrama3/          # TTS base + variants
 │   ├── h3-image/            # MiniMax-H3-Image T2I and edit
 │   ├── ltx/                 # LTX-2.5 t2v/ref2v/i2v graphs
 │   ├── ph3-image/           # P-H3-Image T2I and multi-ref edits
+│   ├── recavsr/             # ReCaVSR X4 streaming video upscale
 │   ├── relayvsr/            # RelayVSR X2 video upscale
 │   ├── sam3/                # native image/video matte graphs
 │   └── minimaxh3/           # H3 base, UI variants, api/ mirrors
@@ -333,7 +339,7 @@ fork rather than editing the shipped template.
 - `comfy-cli` + `comfy-mcp` (Python 3.12 tested).
 - Node packs: the full set is installed by [`COMFY-SETUP.md`](COMFY-SETUP.md) — rgthree, RES4LYF,
   WAS, Easy-Use, various, KJNodes, VideoHelperSuite, Drama3, krea2edit, Conditioning Rebalance,
-  PlagueKind, Context-Loop, BFSNodes, RelayVSR, Fill-Nodes, Spectrum, Impact Pack, and
+  PlagueKind, Context-Loop, BFSNodes, RelayVSR, ReCaVSR, Fill-Nodes, Spectrum, Impact Pack, and
   Depth-Anything-TensorRT.
   Optional: Frame-Interpolation (the H3 graphs use Fill-Nodes `FL_RIFE`), the latent upscaler, and
   ComfyUI-GGUF (legacy GGUF graphs only).
@@ -341,8 +347,8 @@ fork rather than editing the shipped template.
   image VAE (16 MP), P-H3-Image w4a8,
   YuE2 3B, MiniMax Music 3, Fish Audio Drama 3, MiniMax H3 fastvideo stack + Pika H3 Flex adapters +
   2K re-synthesis refiner/upscaler + rank-21 IC fidelity LoRA and the loop Turbo adapter, LTX-2.5 22B
-  distilled + Gemma 4 12B + Best-FaceID identity LoRA, RelayVSR X2, SAM3 segmentation. Exact filenames
-  live in the workflow sections of
+  distilled + Gemma 4 12B + Best-FaceID identity LoRA, RelayVSR X2, ReCaVSR X4, SAM3 segmentation.
+  Exact filenames live in the workflow sections of
   [`skills/SKILL.md`](skills/SKILL.md); verify each host with `/object_info/<LoaderClass>` option
   lists. `/models/<folder>` can return an empty body even when the model is installed.
   The full download list, Hugging Face locations, and folder layout are in
