@@ -39,7 +39,7 @@
         "3",
         0
       ],
-      "prompt": "A medium shot of the subject in <Picture 1>, wearing the garment from <Picture 2>, holding the prop from <Picture 3>, and standing in the setting from <Picture 4>. Preserve the subject's face, hair, body proportions and identifying features from <Picture 1> exactly. Natural pose, soft directional light, shallow depth of field, 50mm at f/2, photoreal, no text.",
+      "prompt": "The subject in <Picture 1> is <Subject 1>. The garment in <Picture 2> is <Subject 2>. The prop in <Picture 3> is <Subject 3>. The setting in <Picture 4> is <Subject 4>. The target image is a new medium shot composing them together. <Subject 1> is partially preserved; their face, hair, body proportions and identifying features remain, while pose, wardrobe and placement change. <Subject 2> is partially preserved; its cut, material and colour remain, while it is fitted to <Subject 1>'s body and its folds follow the new pose. <Subject 3> is partially preserved; its shape, material and colour remain, while its scale and grip position are set by <Subject 1>'s hands. <Subject 4> serves as a weak reference for the setting, with freely adapted forms and layout. <Subject 1> stands at medium-shot framing, centred, wearing <Subject 2> and holding <Subject 3> at waist height, with <Subject 4> behind them under soft directional light. Shallow depth of field, 50mm at f/2, photoreal, no text.",
       "width": 2048,
       "height": 2048,
       "images.image_1": [

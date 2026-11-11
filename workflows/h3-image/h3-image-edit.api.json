@@ -39,7 +39,7 @@
         "3",
         0
       ],
-      "prompt": "In <Picture 1>, change the jacket to dark brown leather. Preserve the person's face, hair, pose, body proportions, camera angle, background, and lighting exactly. Keep the change local to the garment, with natural leather folds and subtle highlights.",
+      "prompt": "The jacket worn by the person in <Picture 1> is <Subject 1>. The person's face, hair, hands, pose, body proportions, the camera angle, the background and the lighting in <Picture 1> are <Subject 2>. The target image is a local material change on <Subject 1>. <Subject 1> is partially preserved; its cut, collar, seams, stitching, pockets, the name badge pinned to the chest, and its position and scale in frame all remain, while its material and colour change to dark brown leather. <Subject 2> is fully preserved. The leather follows the jacket's existing drape and the light falling on the shoulders, with natural creases at the elbows and a soft sheen along the collar, so the garment still reads as the same jacket in a heavier hide.",
       "width": 2048,
       "height": 2048,
       "images.image_1": [

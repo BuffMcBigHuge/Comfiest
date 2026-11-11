@@ -266,8 +266,9 @@ If you set the canvas yourself, state the size in the prompt only when it change
 (panorama, poster, phone story). Sizes must be multiples of 32.
 
 In Comfiest's graphs the canvas comes from the conditioning node's `width`/`height`
-(`4.width` / `4.height`), not from the prompt: the reference is reframed into that aspect. Set those
-two fields to change the canvas, and do not expect prompt wording to override them.
+(`4.width` / `4.height`), and prompt wording cannot override it. With both set, the reference is
+reframed into that aspect. With `0`/`0` the graph derives the canvas from the reference — the 2-ref
+graph ships that way, and a 1600×505 lobby came back 3232×1024. Set both fields to force a canvas.
 
 | Ratio | 16 MP size |
 | - | - |
